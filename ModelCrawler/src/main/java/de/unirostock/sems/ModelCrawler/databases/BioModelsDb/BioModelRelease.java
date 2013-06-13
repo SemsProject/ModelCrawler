@@ -1,4 +1,4 @@
-package de.unirostock.sems.ModelCrawler.BioModelsDb;
+package de.unirostock.sems.ModelCrawler.databases.BioModelsDb;
 
 import java.io.File;
 import java.util.Date;
@@ -17,6 +17,12 @@ public class BioModelRelease {
 		this.ftpDirectory	= ftpDirectory;
 		this.releaseDate	= releaseDate;
 		this.archivFile 	= archivFile;
+	}
+	
+	public BioModelRelease( String releaseName, String ftpDirectory, Date releaseDate ) {
+		this.releaseName	= releaseName;
+		this.ftpDirectory	= ftpDirectory;
+		this.releaseDate	= releaseDate;
 	}
 	
 	public String getReleaseName() {
