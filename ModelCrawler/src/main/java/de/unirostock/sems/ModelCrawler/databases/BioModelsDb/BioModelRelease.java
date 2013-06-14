@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 
-public class BioModelRelease {
+public class BioModelRelease implements Comparable<BioModelRelease> {
 	
 	private String releaseName;
 	private String ftpDirectory;
@@ -39,6 +39,11 @@ public class BioModelRelease {
 	}
 	public String getFtpDirectory() {
 		return ftpDirectory;
+	}
+
+	@Override
+	public int compareTo( BioModelRelease model ) {		
+		return this.getReleaseDate().compareTo( model.getReleaseDate() );
 	}
 	
 }
