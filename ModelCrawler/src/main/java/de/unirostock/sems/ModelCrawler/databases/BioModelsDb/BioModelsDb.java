@@ -7,7 +7,6 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -41,8 +40,16 @@ public class BioModelsDb {
 			// connect to FTP Server
 			ftpClient.connect(ftpUrl.getHost(), ftpUrl.getPort() == -1 ? 21
 					: ftpUrl.getPort());
+			
+			// login in
+			if( ftpClient.login( "anonymous", "anonymous" ) == false ) {
+				return false;
+			}
+			
 			// change directory to the release directory
-			ftpClient.changeWorkingDirectory(ftpUrl.getPath());
+			if( ftpClient.changeWorkingDirectory(ftpUrl.getPath()) == false ) {
+				return false;
+			}
 
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
@@ -55,6 +62,15 @@ public class BioModelsDb {
 		}
 
 		return false;
+	}
+	
+	public void disconnect() {
+		try {
+			ftpClient.logout();
+			ftpClient.disconnect();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public List<BioModelRelease> retrieveReleaseList() throws IOException {
