@@ -40,6 +40,16 @@ public class App
 	        			release.getFtpDirectory() ));
 	        }
 	        
+	        System.out.println( "Download the latest release!" );
+	        BioModelRelease latest = list.get( 0 );
+	        if( db.downloadRelease(latest) == true ) {
+	        	System.out.println( MessageFormat.format( "{0}: {1}", latest.getReleaseName(), latest.getArchivFile().getAbsolutePath() ));
+	        }
+	        else
+	        	System.out.println( "Failed to download file!" );
+	        
+	        db.disconnect();
+	        
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

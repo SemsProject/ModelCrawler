@@ -34,6 +34,9 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 	public File getArchivFile() {
 		return archivFile;
 	}
+	public void setArchivFile(File archivFile) {
+		this.archivFile = archivFile;
+	}
 	public List<String> getModelList() {
 		return modelList;
 	}
