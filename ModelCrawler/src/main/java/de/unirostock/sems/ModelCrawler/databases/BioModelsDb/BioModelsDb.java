@@ -15,8 +15,11 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -83,17 +86,30 @@ public class BioModelsDb implements ModelDatabase {
 
 	@Override
 	public void run() {
+		List<BioModelRelease> newReleases = new ArrayList<BioModelRelease>();
 		
 		try {
 			
 			connect();
 			retrieveReleaseList();
-		
-			// removing the already indexed releases from the list
-			String[] knownReleases = config.getProperty("knownReleases", "").split(",");
-			for( int index = 0; index < knownReleases.length; index++ ) {
-				//...
+			
+			List<String> knownReleases = Arrays.asList( config.getProperty("knownReleases", "").split(",") );
+			
+			// getting only the new releases
+			Iterator<BioModelRelease> iter = releaseList.iterator();
+			while( iter.hasNext() ) {
+				BioModelRelease release = iter.next();
+				if( knownReleases.contains( release.getReleaseName() ) == false ) {
+					// the release is new and must be downloaded
+					newReleases.add(release);
+				}
 			}
+			
+			// sorting, just in case...
+			Collections.sort(newReleases);
+			
+			
+			
 		
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
