@@ -41,7 +41,7 @@ public class App
 	        }
 	        
 	        System.out.println( "Download the latest release!" );
-	        BioModelRelease latest = list.get( 0 );
+	        BioModelRelease latest = list.get( list.size()-1 );
 	        if( db.downloadRelease(latest) == true ) {
 	        	System.out.println( MessageFormat.format( "{0}: {1}", latest.getReleaseName(), latest.getArchivFile().getAbsolutePath() ));
 	        }

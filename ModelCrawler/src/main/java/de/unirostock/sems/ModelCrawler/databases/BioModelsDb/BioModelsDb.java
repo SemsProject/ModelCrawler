@@ -20,7 +20,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.compress.archivers.dump.UnsupportedCompressionAlgorithmException;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -58,12 +60,13 @@ public class BioModelsDb {
 				// TODO throwing exception
 				return false;
 			}
-			
+
 			// switches to passiv mode
 			ftpClient.enterLocalPassiveMode();
 			// set filetype to binary (we should only handle this type of files)
+			// DO NOT REMOVE THIS LINE!! ;)
 			ftpClient.setFileType( FTP.BINARY_FILE_TYPE );
-			
+
 			// change directory to the release directory
 			if( ftpClient.changeWorkingDirectory(ftpUrl.getPath()) == false ) {
 				// TODO throwing exception
@@ -137,10 +140,10 @@ public class BioModelsDb {
 		return releaseList;
 	}
 
-	public boolean downloadRelease( BioModelRelease release ) {
+	public boolean downloadRelease( BioModelRelease release ) throws UnsupportedCompressionAlgorithmException {
 		String archiv;
 		File target;
-		byte[] buffer = new byte[ 1024 ];
+		byte[] buffer = new byte[ 4096 ];
 
 		if( release == null )
 			return false;
@@ -157,20 +160,37 @@ public class BioModelsDb {
 			}
 
 			// Creating a TempFile and open OutputStream
-			target = File.createTempFile( "BioModelsDb_" + release.getReleaseName() + "_", ".tar.gz" );
+			target = File.createTempFile( "BioModelsDb_" + release.getReleaseName() + "_", ".tar" );
 			BufferedOutputStream targetStream = new BufferedOutputStream( new FileOutputStream(target) );
 
 			// download it...
 			InputStream downStream = ftpClient.retrieveFileStream(archiv);
 
+			// do the uncompress
+			InputStream uncompressedStream;
+			if( archiv.endsWith(".gz") ) {
+				// use gzip uncompression
+				uncompressedStream = new GzipCompressorInputStream(downStream);
+			}
+			else if( archiv.endsWith(".bzip") || archiv.endsWith(".bz") || archiv.endsWith(".bzip2") || archiv.endsWith(".bz2") ) {
+				// use bzip2 uncompression
+				uncompressedStream = new BZip2CompressorInputStream(downStream);
+			}
+			else if( archiv.endsWith(".tar") ) {
+				// uncompressed tar-ball
+				uncompressedStream = downStream;
+			}
+			else {
+				targetStream.close();
+				throw new UnsupportedCompressionAlgorithmException( "Unknown compression format!" );
+			}
+
 			// do it...
 			int total = 0, red = 0;
-			while( downStream.available() > 0 ) {
-				while( (red = downStream.read(buffer)) != -1 ) {
-					targetStream.write(buffer, 0, red);
-					total = total + red;
-					System.out.println( MessageFormat.format("{0} ({2})", total, red) );
-				}
+			while( (red = uncompressedStream.read(buffer)) != -1 ) {
+				targetStream.write(buffer, 0, red);
+				total = total + red;
+				System.out.println( MessageFormat.format("{0} ({1})", total, red) );
 			}
 
 			// close the output Stream
@@ -190,7 +210,11 @@ public class BioModelsDb {
 			// setting position of tar-ball in Release DataHolder
 			release.setArchivFile(target);			
 
-		} catch (IOException e) {
+		}
+		catch (UnsupportedCompressionAlgorithmException e) {
+			throw e;
+		}
+		catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
