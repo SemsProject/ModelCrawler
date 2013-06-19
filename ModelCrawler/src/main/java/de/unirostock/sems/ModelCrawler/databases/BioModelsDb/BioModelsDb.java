@@ -106,7 +106,7 @@ public class BioModelsDb {
 			throw new IOException( "Not connected to the server!" );
 
 		// prepare the date parser
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyy-mm-dd");
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
 		// retrieve the dir list
 		FTPFile[] dirs = ftpClient.listDirectories();
@@ -135,7 +135,7 @@ public class BioModelsDb {
 		}
 
 		// sorting the list after release date ascending
-		//		Collections.sort( releaseList );
+		Collections.sort( releaseList );
 
 		return releaseList;
 	}

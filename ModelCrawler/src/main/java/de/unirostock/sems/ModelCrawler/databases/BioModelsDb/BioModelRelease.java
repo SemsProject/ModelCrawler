@@ -45,8 +45,8 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 	}
 
 	@Override
-	public int compareTo( BioModelRelease model ) {		
-		return this.getReleaseDate().compareTo( model.getReleaseDate() );
+	public int compareTo( BioModelRelease model ) {
+		return releaseDate.compareTo( model.getReleaseDate() );
 	}
 	
 }

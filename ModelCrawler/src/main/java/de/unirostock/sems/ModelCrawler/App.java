@@ -30,7 +30,7 @@ public class App
 	        System.out.println( "Start retrieving ReleaseList..." );
 	        List<BioModelRelease> list = db.retrieveReleaseList();
 	        
-	        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.mm.yyyy");
+	        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 	        Iterator<BioModelRelease> iter = list.iterator();
 	        
 	        while( iter.hasNext() ) {
@@ -40,13 +40,13 @@ public class App
 	        			release.getFtpDirectory() ));
 	        }
 	        
-	        System.out.println( "Download the latest release!" );
-	        BioModelRelease latest = list.get( list.size()-1 );
-	        if( db.downloadRelease(latest) == true ) {
-	        	System.out.println( MessageFormat.format( "{0}: {1}", latest.getReleaseName(), latest.getArchivFile().getAbsolutePath() ));
-	        }
-	        else
-	        	System.out.println( "Failed to download file!" );
+//	        System.out.println( "Download the latest release!" );
+//	        BioModelRelease latest = list.get( list.size()-1 );
+//	        if( db.downloadRelease(latest) == true ) {
+//	        	System.out.println( MessageFormat.format( "{0}: {1}", latest.getReleaseName(), latest.getArchivFile().getAbsolutePath() ));
+//	        }
+//	        else
+//	        	System.out.println( "Failed to download file!" );
 	        
 	        db.disconnect();
 	        
