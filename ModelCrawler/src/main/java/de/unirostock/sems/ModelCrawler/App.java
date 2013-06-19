@@ -16,14 +16,17 @@ import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
  */
 public class App 
 {
-    public static void main( String[] args )
-    {
+    public static void main( String[] args ) {
+    	// inits the Properties System
+    	Properties.init();
+    	
     	System.out.println("creating db connector");
+    	
     	
     	BioModelsDb db = null;
     	try {
 			
-    		db = new BioModelsDb( "ftp://ftp.ebi.ac.uk/pub/databases/biomodels/releases/" );
+    		db = new BioModelsDb( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl") );
 			System.out.println("connecting...");
 	    	db.connect();    	
 	    	
