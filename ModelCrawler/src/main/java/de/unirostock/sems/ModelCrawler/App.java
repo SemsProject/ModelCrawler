@@ -1,5 +1,6 @@
 package de.unirostock.sems.ModelCrawler;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.text.MessageFormat;
@@ -16,12 +17,14 @@ import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
  */
 public class App 
 {
+	
     public static void main( String[] args ) {
     	// inits the Properties System
     	Properties.init();
+    	// working dir
+    	checkAndInitWorkingDir();
     	
     	System.out.println("creating db connector");
-    	
     	
     	BioModelsDb db = null;
     	try {
@@ -64,6 +67,17 @@ public class App
 			e.printStackTrace();
 		}
     	
+    	
+    }
+    
+    private static void checkAndInitWorkingDir() {
+    	
+    	// scanning for working directory
+    	File workingDir = new File( Properties.getProperty("de.unirostock.sems.ModelCrawler.workingDir") );
+    	if( !workingDir.exists() ) {
+    		// not existing, creates it!
+    		workingDir.mkdirs();
+    	}
     	
     }
 }
