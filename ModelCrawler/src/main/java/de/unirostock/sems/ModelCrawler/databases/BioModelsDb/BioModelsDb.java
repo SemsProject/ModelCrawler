@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.io.Util;
@@ -56,7 +58,12 @@ public class BioModelsDb {
 				// TODO throwing exception
 				return false;
 			}
-
+			
+			// switches to passiv mode
+			ftpClient.enterLocalPassiveMode();
+			// set filetype to binary (we should only handle this type of files)
+			ftpClient.setFileType( FTP.BINARY_FILE_TYPE );
+			
 			// change directory to the release directory
 			if( ftpClient.changeWorkingDirectory(ftpUrl.getPath()) == false ) {
 				// TODO throwing exception
@@ -150,13 +157,11 @@ public class BioModelsDb {
 			}
 
 			// Creating a TempFile and open OutputStream
-			target = File.createTempFile( "BioModelsDb_" + release.getReleaseName() + "_", ".tar" );
+			target = File.createTempFile( "BioModelsDb_" + release.getReleaseName() + "_", ".tar.gz" );
 			BufferedOutputStream targetStream = new BufferedOutputStream( new FileOutputStream(target) );
 
 			// download it...
-			// preparing InputStream and passing it to the Bzip2 Decompressor
 			InputStream downStream = ftpClient.retrieveFileStream(archiv);
-			//			InputStream uncompressedStream = new BZip2CompressorInputStream( downStream );
 
 			// do it...
 			int total = 0, red = 0;
@@ -164,7 +169,7 @@ public class BioModelsDb {
 				while( (red = downStream.read(buffer)) != -1 ) {
 					targetStream.write(buffer, 0, red);
 					total = total + red;
-					System.out.println( total );
+					System.out.println( MessageFormat.format("{0}/{1} ({2})", total, 0, red) );
 				}
 			}
 
@@ -174,7 +179,6 @@ public class BioModelsDb {
 
 			// close the input Stream
 			downStream.close();
-			//			uncompressedStream.close();
 
 			if( ftpClient.completePendingCommand() == false ) {
 				// file transfer was not successful!
