@@ -22,7 +22,7 @@ public class App
     	// inits the Properties System
     	Properties.init();
     	// working dir
-    	checkAndInitWorkingDir();
+    	Properties.checkAndInitWorkingDir();
     	
     	System.out.println("creating db connector");
     	
@@ -70,14 +70,4 @@ public class App
     	
     }
     
-    private static void checkAndInitWorkingDir() {
-    	
-    	// scanning for working directory
-    	File workingDir = new File( Properties.getProperty("de.unirostock.sems.ModelCrawler.workingDir") );
-    	if( !workingDir.exists() ) {
-    		// not existing, creates it!
-    		workingDir.mkdirs();
-    	}
-    	
-    }
 }

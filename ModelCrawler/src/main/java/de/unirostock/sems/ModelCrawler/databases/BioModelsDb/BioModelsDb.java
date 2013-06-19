@@ -1,11 +1,10 @@
 package de.unirostock.sems.ModelCrawler.databases.BioModelsDb;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.compress.archivers.dump.UnsupportedCompressionAlgorithmException;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
@@ -26,13 +26,19 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.io.Util;
 
-public class BioModelsDb {
+import de.unirostock.sems.ModelCrawler.Properties;
+import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
+import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
+
+public class BioModelsDb implements ModelDatabase {
 
 	private URL ftpUrl;
 	private FTPClient ftpClient;
 	private List<BioModelRelease> releaseList = new ArrayList<BioModelRelease>();
+
+	protected File workingDir, tempDir;
+	protected java.util.Properties config;
 
 	public BioModelsDb(String ftpUrl) throws MalformedURLException,
 	IllegalArgumentException {
@@ -47,7 +53,103 @@ public class BioModelsDb {
 		ftpClient = new FTPClient();
 	}
 
-	public boolean connect() {
+	public BioModelsDb() throws MalformedURLException, IllegalArgumentException {
+		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl") );
+	}
+
+	@Override
+	public List<String> listModels() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<String, ChangeSet> listChanges() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ChangeSet getModelChanges(String modelId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void cleanUp() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void run() {
+		
+		try {
+			
+			connect();
+			retrieveReleaseList();
+		
+			// removing the already indexed releases from the list
+			String[] knownReleases = config.getProperty("knownReleases", "").split(",");
+			for( int index = 0; index < knownReleases.length; index++ ) {
+				//...
+			}
+		
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	protected void checkAndInitWorkingDir() {
+
+		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subWorkingDir") );
+		tempDir = new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subTempDir") );
+
+		if( workingDir.exists() == false ) {
+			// creates it!
+			workingDir.mkdirs();
+		}
+		if( tempDir.exists() == false ) {
+			// creates it!
+			tempDir.mkdirs();
+		}
+
+		// inits the config
+		config = new java.util.Properties();
+		try {
+			FileReader configFile = new FileReader( new File( workingDir, Properties.getProperty("", "config.properties") ));
+			if( configFile != null )
+				config.load(configFile);
+
+		}
+		catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	protected void saveProperties() {
+		
+		if( config == null ) {
+			config = new java.util.Properties();
+		}
+		
+		try {
+			FileWriter configFile = new FileWriter( new File( workingDir, Properties.getProperty("", "config.properties") ));
+			config.store(configFile, null);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+
+	protected boolean connect() {
 
 		try {
 
@@ -86,17 +188,17 @@ public class BioModelsDb {
 		return false;
 	}
 
-	public void disconnect() {
+	protected void disconnect() {
 		try {
 			ftpClient.logout();
 			ftpClient.disconnect();
 		} catch (IOException e) {
-			// TODO
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	public List<BioModelRelease> retrieveReleaseList() throws IOException {
+	protected List<BioModelRelease> retrieveReleaseList() throws IOException {
 
 		// cleares the list
 		releaseList.clear();
@@ -140,7 +242,7 @@ public class BioModelsDb {
 		return releaseList;
 	}
 
-	public boolean downloadRelease( BioModelRelease release ) throws UnsupportedCompressionAlgorithmException {
+	protected boolean downloadRelease( BioModelRelease release ) throws UnsupportedCompressionAlgorithmException {
 		String archiv;
 		File target;
 		byte[] buffer = new byte[ 4096 ];
@@ -237,7 +339,6 @@ public class BioModelsDb {
 				return files[index].getName();
 			}
 		}
-
 
 		return null;
 	}
