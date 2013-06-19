@@ -169,7 +169,7 @@ public class BioModelsDb {
 				while( (red = downStream.read(buffer)) != -1 ) {
 					targetStream.write(buffer, 0, red);
 					total = total + red;
-					System.out.println( MessageFormat.format("{0}/{1} ({2})", total, 0, red) );
+					System.out.println( MessageFormat.format("{0} ({2})", total, red) );
 				}
 			}
 
