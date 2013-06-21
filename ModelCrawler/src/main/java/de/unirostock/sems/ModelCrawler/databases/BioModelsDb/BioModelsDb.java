@@ -26,6 +26,8 @@ import java.util.Map;
 import org.apache.commons.compress.archivers.dump.UnsupportedCompressionAlgorithmException;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -35,7 +37,9 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 
 public class BioModelsDb implements ModelDatabase {
-
+	
+	private final Log log = LogFactory.getLog( BioModelsDb.class );
+	
 	private URL ftpUrl;
 	private FTPClient ftpClient;
 	private List<BioModelRelease> releaseList = new ArrayList<BioModelRelease>();
@@ -49,6 +53,7 @@ public class BioModelsDb implements ModelDatabase {
 
 		if (!this.ftpUrl.getProtocol().toLowerCase().equals("ftp")) {
 			// Protocoll is not ftp -> not (yet) supported
+			log.error("Only ftp is support at the moment for BioModelsDataBase!");
 			throw new IllegalArgumentException(
 					"Only ftp ist support at the moment!");
 		}
@@ -108,12 +113,11 @@ public class BioModelsDb implements ModelDatabase {
 			// sorting, just in case...
 			Collections.sort(newReleases);
 			
-			
+			// TODO
 			
 		
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.fatal( "IOException while getting the Releases!", e );
 		}
 
 	}
@@ -135,14 +139,19 @@ public class BioModelsDb implements ModelDatabase {
 		// inits the config
 		config = new java.util.Properties();
 		try {
-			FileReader configFile = new FileReader( new File( workingDir, Properties.getProperty("", "config.properties") ));
-			if( configFile != null )
-				config.load(configFile);
+			File configFile = new File( workingDir, Properties.getProperty("", "config.properties") );
+			if( configFile.exists() ) {
+				FileReader configFileReader = new FileReader( configFile );
+				if( configFileReader != null ) {
+					config.load(configFileReader);
+					configFileReader.close();
+				}
+				
+			}
 
 		}
 		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.fatal( "IOException while reading the workingdir config file", e );
 		}
 		
 	}
@@ -158,8 +167,7 @@ public class BioModelsDb implements ModelDatabase {
 			config.store(configFile, null);
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error( "Can not write the workingDir config file!", e );
 		}
 		
 	}
@@ -192,12 +200,10 @@ public class BioModelsDb implements ModelDatabase {
 			}
 
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Can not connect to ftp server!", e);
 			return false;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.fatal("Can not connect to ftp server, IOException", e);
 			return false;
 		}
 
@@ -209,8 +215,7 @@ public class BioModelsDb implements ModelDatabase {
 			ftpClient.logout();
 			ftpClient.disconnect();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Error while disconnecting from ftp server, IOException", e);
 		}
 	}
 
@@ -330,11 +335,11 @@ public class BioModelsDb implements ModelDatabase {
 
 		}
 		catch (UnsupportedCompressionAlgorithmException e) {
-			throw e;
+			log.error("Can not uncompress the release! Unsupported Compression Algo!", e);
+			return false;
 		}
 		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("IOException while downloading and extracting the release!", e);
 			return false;
 		}
 

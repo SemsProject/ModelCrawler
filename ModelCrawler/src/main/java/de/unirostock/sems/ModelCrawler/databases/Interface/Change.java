@@ -9,27 +9,26 @@ public abstract class Change {
 	private Date crawledDate;
 	private String revisionId;
 	
-	private File xmlFile = null;
-	private String fileHash = null;
+	protected File xmlFile = null;
 	
 	public File getXmlFile() {
 		return xmlFile;
 	}
-
-	public boolean setXmlFile(File xmlFile, String hash) {
+	
+	public boolean setXmlFile( File xmlFile ) {
 		//REMIND the xml file can only be setted once in a Change
 		if( this.xmlFile == null ) {
 			this.xmlFile = xmlFile;
-			this.fileHash = hash;
 			return true;
 		}
 		else
 			return false;
 	}
 	
-	public boolean setXmlFile( File xmlFile ) {
-		if( this.xmlFile == null )
-			return setXmlFile( xmlFile, calcXmlHash(xmlFile) );
+	public boolean setXmlFile( String xmlFile ) {
+		if( this.xmlFile == null ) {
+			return setXmlFile( new File(xmlFile) );
+		}
 		else
 			return false;
 	}
@@ -52,5 +51,4 @@ public abstract class Change {
 		this.revisionId = revisionId;
 	}
 	
-	abstract protected String calcXmlHash( File xmlFile ); 
 }

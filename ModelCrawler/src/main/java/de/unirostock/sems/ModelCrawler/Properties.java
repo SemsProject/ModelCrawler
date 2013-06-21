@@ -3,10 +3,15 @@ package de.unirostock.sems.ModelCrawler;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public class Properties {
 
 	private static java.util.Properties prop = null;
 	private static File workingDir = null;
+	
+	private static final Log log = LogFactory.getLog( Properties.class );
 
 	/**
 	 * Init the Properties System
@@ -25,8 +30,7 @@ public class Properties {
 			}
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.fatal( "Can not read Properties file for config!", e );
 		}
 
 	}

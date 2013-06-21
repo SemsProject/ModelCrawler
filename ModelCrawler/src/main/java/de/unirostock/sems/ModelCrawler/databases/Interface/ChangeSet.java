@@ -5,7 +5,8 @@ import java.util.List;
 
 public abstract class ChangeSet {
 	
-	private List<Change> changes;
+	protected String modelId;
+	protected List<Change> changes;
 	
 	public List<Change> getChanges() {
 		return changes;
@@ -14,8 +15,13 @@ public abstract class ChangeSet {
 		this.changes.add(change);
 	}
 	
-	public ChangeSet() {
+	public ChangeSet( String modelId ) {
 		changes = new ArrayList<Change>();
+		this.modelId = modelId;
+	}
+	
+	public String getModelId() {
+		return modelId;
 	}
 	
 }
