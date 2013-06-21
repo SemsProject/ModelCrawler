@@ -148,11 +148,12 @@ public class BioModelsDb implements ModelDatabase {
 		Iterator<BioModelRelease> iter = newReleases.iterator();
 		while( iter.hasNext() ) {
 			BioModelRelease release = iter.next();
-			
+			// do it (download, extract, compare to previous versions)
+			processRelease( release );
 			
 			// if the download was succesfull, add the release to the known releases
 			//XXX should I add it already here to the knownRelease list??
-			if( release.isDownloaded() )
+			if( release.isDownloaded() && release.isExtracted() )
 				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
 		}
 
@@ -165,7 +166,11 @@ public class BioModelsDb implements ModelDatabase {
 	public List<BioModelRelease> getBioModelReleases() {
 		return releaseList;
 	}
-
+	
+	protected void processRelease( BioModelRelease release ) {
+		
+	}
+	
 	protected void checkAndInitWorkingDir() {
 
 		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subWorkingDir") );
@@ -334,22 +339,40 @@ public class BioModelsDb implements ModelDatabase {
 
 		if( release == null )
 			return false;
-
+		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format( "Start download release {0} from {1}", release.getReleaseName(), release.getFtpDirectory() ) );
+		
+		// if release already downloaded or extracted
+		if( release.isDownloaded() || release.isExtracted() ) {
+			log.warn( "The release is already download and/or extracted!" );
+			return true;
+		}
+		
 		try {
 			// Changes the directory
+			if( log.isInfoEnabled() )
+				log.info("changes to release directory");
 			ftpClient.changeToParentDirectory();
 			ftpClient.changeWorkingDirectory( release.getFtpDirectory() );
 
 			// Finding the right file to download
+			if( log.isInfoEnabled() )
+				log.info("trying to find the smbl only file");
+			
 			if( (archiv = findSbmlArchivFile()) == null ) {
-				// TODO no matching file found
+				log.error("No matching file found!");
 				return false;
 			}
 
 			// Creating a TempFile and open OutputStream
-			target = File.createTempFile( "BioModelsDb_" + release.getReleaseName() + "_", ".tar" );
+			target = new File( tempDir, "BioModelsDb_" + release.getReleaseName() + ".tar" );
+			//target = File.createTempFile( "BioModelsDb_" + release.getReleaseName() + "_", ".tar" );
 			BufferedOutputStream targetStream = new BufferedOutputStream( new FileOutputStream(target) );
-
+			
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("download and extract {0} to {1}", archiv, target.getAbsolutePath() ));
+			
 			// download it...
 			InputStream downStream = ftpClient.retrieveFileStream(archiv);
 
@@ -358,18 +381,24 @@ public class BioModelsDb implements ModelDatabase {
 			if( archiv.endsWith(".gz") ) {
 				// use gzip uncompression
 				uncompressedStream = new GzipCompressorInputStream(downStream);
+				if( log.isTraceEnabled() )
+					log.trace("using gzip");
 			}
 			else if( archiv.endsWith(".bzip") || archiv.endsWith(".bz") || archiv.endsWith(".bzip2") || archiv.endsWith(".bz2") ) {
 				// use bzip2 uncompression
 				uncompressedStream = new BZip2CompressorInputStream(downStream);
+				if( log.isTraceEnabled() )
+					log.trace("using bzip");
 			}
 			else if( archiv.endsWith(".tar") ) {
 				// uncompressed tar-ball
 				uncompressedStream = downStream;
+				if( log.isTraceEnabled() )
+					log.trace("no compression, just a simple tar ball");
 			}
 			else {
 				targetStream.close();
-				throw new UnsupportedCompressionAlgorithmException( "Unknown compression format!" );
+				throw new UnsupportedCompressionAlgorithmException( "Unknown file extension!" );
 			}
 
 			// do it...
@@ -386,7 +415,10 @@ public class BioModelsDb implements ModelDatabase {
 
 			// close the input Stream
 			downStream.close();
-
+			
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("download complete, {0} bytes", total) );
+			
 			if( ftpClient.completePendingCommand() == false ) {
 				// file transfer was not successful!
 				//				target.delete();
