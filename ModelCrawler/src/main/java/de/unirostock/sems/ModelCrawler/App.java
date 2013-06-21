@@ -30,14 +30,11 @@ public class App
     	try {
 			
     		db = new BioModelsDb( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl") );
-			System.out.println("connecting...");
-	    	db.connect();    	
-	    	
-	        System.out.println( "Start retrieving ReleaseList..." );
-	        List<BioModelRelease> list = db.retrieveReleaseList();
+			// do it...
+    		db.run();
 	        
 	        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-	        Iterator<BioModelRelease> iter = list.iterator();
+	        Iterator<BioModelRelease> iter = db.getBioModelReleases().iterator();
 	        
 	        while( iter.hasNext() ) {
 	        	BioModelRelease release = iter.next();
@@ -54,7 +51,6 @@ public class App
 //	        else
 //	        	System.out.println( "Failed to download file!" );
 	        
-	        db.disconnect();
 	        
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block

@@ -121,6 +121,10 @@ public class BioModelsDb implements ModelDatabase {
 		}
 
 	}
+	
+	public List<BioModelRelease> getBioModelReleases() {
+		return releaseList;
+	}
 
 	protected void checkAndInitWorkingDir() {
 
