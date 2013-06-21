@@ -3,7 +3,7 @@ package de.unirostock.sems.ModelCrawler.databases.Interface;
 import java.io.File;
 import java.util.Date;
 
-public abstract class Change {
+public abstract class Change implements Comparable<Change> {
 	
 	private Date revisionDate;
 	private Date crawledDate;
@@ -49,6 +49,11 @@ public abstract class Change {
 		this.revisionDate = revisionDate;
 		this.crawledDate = crawledDate;
 		this.revisionId = revisionId;
+	}
+	
+	@Override
+	public int compareTo( Change change ) {
+		return change.getRevisionDate().compareTo(revisionDate);
 	}
 	
 }

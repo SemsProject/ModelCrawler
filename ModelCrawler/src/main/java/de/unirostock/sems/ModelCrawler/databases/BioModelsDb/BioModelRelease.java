@@ -9,7 +9,10 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 	private String releaseName;
 	private String ftpDirectory;
 	private Date releaseDate;
-	private File archivFile;
+	
+	private File archivFile = null;
+	private File contentDir = null;
+	
 	private List<String> modelList;
 	
 	public BioModelRelease( String releaseName, String ftpDirectory, Date releaseDate, File archivFile ) {
@@ -34,8 +37,14 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 	public File getArchivFile() {
 		return archivFile;
 	}
-	public void setArchivFile(File archivFile) {
-		this.archivFile = archivFile;
+	public boolean setArchivFile(File archivFile) {
+		//REMIND the archiv file could only be setted once!
+		if( this.archivFile == null ) {
+			this.archivFile = archivFile;
+			return true;
+		}
+		else
+			return false;
 	}
 	public List<String> getModelList() {
 		return modelList;
@@ -44,6 +53,28 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 		return ftpDirectory;
 	}
 
+	public File getContentDir() {
+		return contentDir;
+	}
+
+	public boolean setContentDir(File contentDir) {
+		// REMIND the contentDir can only be setted once!
+		if( this.contentDir == null ) {
+			this.contentDir = contentDir;
+			return true;
+		}
+		else
+			return false;
+	}
+
+	public boolean isDownloaded() {
+		return archivFile == null ? false : true;
+	}
+	
+	public boolean isExtracted() {
+		return contentDir == null ? false : true;
+	}
+	
 	@Override
 	public int compareTo( BioModelRelease model ) {
 		return releaseDate.compareTo( model.getReleaseDate() );

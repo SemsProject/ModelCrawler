@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelRelease;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 
@@ -17,6 +20,7 @@ import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
  */
 public class App 
 {
+	private static final Log log = LogFactory.getLog( App.class );
 	
     public static void main( String[] args ) {
     	// inits the Properties System
@@ -53,14 +57,11 @@ public class App
 	        
 	        
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e);
 		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e);
 		}
     	
     	

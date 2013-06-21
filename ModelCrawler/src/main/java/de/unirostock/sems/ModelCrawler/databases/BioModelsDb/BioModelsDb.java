@@ -2,7 +2,6 @@ package de.unirostock.sems.ModelCrawler.databases.BioModelsDb;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -33,11 +32,12 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
 import de.unirostock.sems.ModelCrawler.Properties;
+import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 
 public class BioModelsDb implements ModelDatabase {
-	
+
 	private final Log log = LogFactory.getLog( BioModelsDb.class );
 	
 	private URL ftpUrl;
@@ -46,6 +46,8 @@ public class BioModelsDb implements ModelDatabase {
 
 	protected File workingDir, tempDir;
 	protected java.util.Properties config;
+	
+	protected Map<String, BioModelsChangeSet> changeSetMap = new HashMap<String, BioModelsChangeSet>();
 
 	public BioModelsDb(String ftpUrl) throws MalformedURLException,
 	IllegalArgumentException {
@@ -58,7 +60,13 @@ public class BioModelsDb implements ModelDatabase {
 					"Only ftp ist support at the moment!");
 		}
 
+		log.info("Init new BioModels Database connector. URL: " + ftpUrl );
+		// creating a ftp client
 		ftpClient = new FTPClient();
+
+		// prepares the working directory
+		checkAndInitWorkingDir();
+
 	}
 
 	public BioModelsDb() throws MalformedURLException, IllegalArgumentException {
@@ -92,14 +100,25 @@ public class BioModelsDb implements ModelDatabase {
 	@Override
 	public void run() {
 		List<BioModelRelease> newReleases = new ArrayList<BioModelRelease>();
-		
+
+		log.info("Start cloning the BioModels DataBase by fetching the releases!");
+
+		// Establish connection
 		try {
-			
+
 			connect();
 			retrieveReleaseList();
-			
+
+		} catch (IOException e) {
+			log.fatal( "IOException while connecting and getting the releases!", e );
+		} catch (FtpConnectionException e) {
+			log.fatal( e );
+		}
+
+		if( config.getProperty("knownReleases", null) != null ) {
+			// there are some releases we already indexed!
 			List<String> knownReleases = Arrays.asList( config.getProperty("knownReleases", "").split(",") );
-			
+
 			// getting only the new releases
 			Iterator<BioModelRelease> iter = releaseList.iterator();
 			while( iter.hasNext() ) {
@@ -109,19 +128,40 @@ public class BioModelsDb implements ModelDatabase {
 					newReleases.add(release);
 				}
 			}
-			
-			// sorting, just in case...
-			Collections.sort(newReleases);
-			
-			// TODO
-			
-		
-		} catch (IOException e) {
-			log.fatal( "IOException while getting the Releases!", e );
+
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format( "{0} new release(s)", newReleases.size() ) );
+		}
+		else {
+			// no releases were indexed before. Sadly now we have indexed them all
+			// on the other hand, we could simply copy the list with all release now :)
+			newReleases.addAll(releaseList);
+			if( log.isInfoEnabled() )
+				log.info("every release is a new release...");
 		}
 
+		// sorting, just in case...
+		Collections.sort(newReleases);
+
+		// TODO download the unkwnow releases
+		// going throw the new release list an downloads every
+		Iterator<BioModelRelease> iter = newReleases.iterator();
+		while( iter.hasNext() ) {
+			BioModelRelease release = iter.next();
+			
+			
+			// if the download was succesfull, add the release to the known releases
+			//XXX should I add it already here to the knownRelease list??
+			if( release.isDownloaded() )
+				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
+		}
+
+
+
+		// saving the properties
+		saveProperties();
 	}
-	
+
 	public List<BioModelRelease> getBioModelReleases() {
 		return releaseList;
 	}
@@ -130,6 +170,8 @@ public class BioModelsDb implements ModelDatabase {
 
 		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subWorkingDir") );
 		tempDir = new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subTempDir") );
+
+		log.trace( "Preparing working dir " + workingDir.getAbsolutePath() );
 
 		if( workingDir.exists() == false ) {
 			// creates it!
@@ -142,6 +184,7 @@ public class BioModelsDb implements ModelDatabase {
 
 		// inits the config
 		config = new java.util.Properties();
+		log.info("Loading working dir config");
 		try {
 			File configFile = new File( workingDir, Properties.getProperty("", "config.properties") );
 			if( configFile.exists() ) {
@@ -150,68 +193,79 @@ public class BioModelsDb implements ModelDatabase {
 					config.load(configFileReader);
 					configFileReader.close();
 				}
-				
+
 			}
 
 		}
 		catch (IOException e) {
 			log.fatal( "IOException while reading the workingdir config file", e );
 		}
-		
+
 	}
-	
+
 	protected void saveProperties() {
-		
+
 		if( config == null ) {
 			config = new java.util.Properties();
 		}
-		
+
 		try {
 			FileWriter configFile = new FileWriter( new File( workingDir, Properties.getProperty("", "config.properties") ));
 			config.store(configFile, null);
-			
+			log.info("working dir config saved!");
 		} catch (IOException e) {
 			log.error( "Can not write the workingDir config file!", e );
 		}
-		
+
 	}
 
 
-	protected boolean connect() {
+	protected void connect() throws FtpConnectionException, IOException, SocketException {
+
+		log.info("connecting to ftp server");
 
 		try {
 
 			// connect to FTP Server
+			if( log.isTraceEnabled() )
+				log.trace("establish socket connection");
+
 			ftpClient.connect(ftpUrl.getHost(), ftpUrl.getPort() == -1 ? 21
 					: ftpUrl.getPort());
 
 			// login in
+			if( log.isTraceEnabled() )
+				log.trace("logging in");
+
 			if( ftpClient.login( "anonymous", "anonymous" ) == false ) {
-				// TODO throwing exception
-				return false;
+				throw new FtpConnectionException("Can not login with anonymous account!");
 			}
 
 			// switches to passiv mode
+			if( log.isTraceEnabled() )
+				log.trace("entering passiv mode");
+
 			ftpClient.enterLocalPassiveMode();
 			// set filetype to binary (we should only handle this type of files)
 			// DO NOT REMOVE THIS LINE!! ;)
 			ftpClient.setFileType( FTP.BINARY_FILE_TYPE );
 
 			// change directory to the release directory
+			if( log.isTraceEnabled() )
+				log.trace("change directory to release directory");
+
 			if( ftpClient.changeWorkingDirectory(ftpUrl.getPath()) == false ) {
-				// TODO throwing exception
-				return false;
+				throw new FtpConnectionException("Can not change directory to release directory!");
 			}
 
 		} catch (SocketException e) {
 			log.error("Can not connect to ftp server!", e);
-			return false;
+			throw e;
 		} catch (IOException e) {
 			log.fatal("Can not connect to ftp server, IOException", e);
-			return false;
+			throw e;
 		}
 
-		return false;
 	}
 
 	protected void disconnect() {
@@ -227,6 +281,9 @@ public class BioModelsDb implements ModelDatabase {
 
 		// cleares the list
 		releaseList.clear();
+
+		if( log.isInfoEnabled() )
+			log.info("retrieving release list form ftp server");
 
 		// check if ftp client is connected
 		if( ftpClient.isConnected() == false )
@@ -263,6 +320,9 @@ public class BioModelsDb implements ModelDatabase {
 
 		// sorting the list after release date ascending
 		Collections.sort( releaseList );
+
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("{0} releases on the server", releaseList.size() ) );
 
 		return releaseList;
 	}

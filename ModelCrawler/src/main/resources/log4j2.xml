@@ -1,28 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration status="debug" strict="true" name="XMLConfigTest" 
-		packages="org.apache.logging.log4j.test">
+<configuration status="warn">
 		
 	<properties>
 		<property name="mainLogFile">target/main.log</property>
 		<property name="bioModelsDbLogFile">target/BioModelsDb.log</property>
 		
-		<property name="DefaultPatternLayout">%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</property>
+		<property name="DefaultPatternLayout">%d{HH:mm:ss.SSS} [%-5level@%t] %logger{36} - %msg%n</property>
 	</properties>
 	
 	<filter type="ThresholdFilter" level="trace" />
 
 	<appenders>
-		<appender type="Console" name="STDOUT">
-			<layout type="PatternLayout" pattern="${DefaultPatternLayout}" />
-		</appender>
+		<Console name="STDOUT">
+			<patternLayout pattern="${DefaultPatternLayout}" />
+		</Console>
 		
-		<appender type="File" name="mainFile" fileName="${mainLogFile}">
-			<layout type="PatternLayout" pattern="${DefaultPatternLayout}" />
-		</appender>
+		<File name="mainFile" fileName="${mainLogFile}">
+			<patternLayout pattern="${DefaultPatternLayout}" />
+		</File>
 		
-		<appender type="File" name="bioModelsDbFile" fileName="${bioModelsDbLogFile}">
-			<layout type="PatternLayout" pattern="${DefaultPatternLayout}" />
-		</appender>
+		<File name="bioModelsDbFile" fileName="${bioModelsDbLogFile}">
+			<patternLayout pattern="${DefaultPatternLayout}" />
+		</File>
 		
 	</appenders>
 
@@ -39,7 +38,7 @@
 		</logger>
 		
 		<logger name="de.unirostock.sems.ModelCrawler.databases.BioModelsDb"
-				level="trace"additivity="false">
+				level="trace" additivity="false">
 			<appender-ref ref="STDOUT" />
 			<appender-ref ref="bioModelsDbFile" />
 		</logger>
