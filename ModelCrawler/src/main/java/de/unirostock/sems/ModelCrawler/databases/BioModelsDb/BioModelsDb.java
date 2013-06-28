@@ -167,6 +167,13 @@ public class BioModelsDb implements ModelDatabase {
 		return releaseList;
 	}
 	
+	
+	/**
+	 * Downloads, extracts and indexes the gives release
+	 * must called for each new release CHRONOLOGICAL
+	 * 
+	 * @param release
+	 */
 	protected void processRelease( BioModelRelease release ) {
 		
 	}
