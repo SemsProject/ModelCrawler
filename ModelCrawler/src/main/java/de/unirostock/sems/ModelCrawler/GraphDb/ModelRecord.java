@@ -2,10 +2,10 @@ package de.unirostock.sems.ModelCrawler.GraphDb;
 
 import java.net.URI;
 import java.util.Date;
+import java.util.HashMap;
 
-public class QueryResult {
+public class ModelRecord {
 	
-	private float score;
 	private String modelId;
 	private long databaseId;
 	
@@ -14,10 +14,12 @@ public class QueryResult {
 	private URI documentUri;
 	private String filename;
 	
-	private String revisionId;
-	private Date revisionDate;
+	private String versionId;
+	private Date versionDate;
 	
-	public QueryResult( String modelId, long databaseId, String modelName, URI documentUri, String filename ) {
+	private HashMap<String, Object> meta;
+	
+	public ModelRecord( String modelId, long databaseId, String modelName, URI documentUri, String filename ) {
 		this.modelId = modelId;
 		this.databaseId = databaseId;
 		this.modelName = modelName;
@@ -25,18 +27,14 @@ public class QueryResult {
 		this.filename = filename;
 	}
 	
-	public QueryResult( String modelId, long databaseId, String modelName, URI documentUri, String filename, String revisionId, Date revisioDate ) {
+	public ModelRecord( String modelId, long databaseId, String modelName, URI documentUri, String filename, String versionId, Date versionDate ) {
 		this.modelId = modelId;
 		this.databaseId = databaseId;
 		this.modelName = modelName;
 		this.documentUri = documentUri;
 		this.filename = filename;
-		this.revisionId = revisionId;
-		this.revisionDate = revisioDate;
-	}
-
-	public float getScore() {
-		return score;
+		this.versionId = versionId;
+		this.versionDate = versionDate;
 	}
 
 	public String getModelId() {
@@ -59,12 +57,12 @@ public class QueryResult {
 		return filename;
 	}
 
-	public String getRevisionId() {
-		return revisionId;
+	public String getVersionId() {
+		return versionId;
 	}
 
-	public Date getRevisionDate() {
-		return revisionDate;
+	public Date getVersionDate() {
+		return versionDate;
 	}
 
 }

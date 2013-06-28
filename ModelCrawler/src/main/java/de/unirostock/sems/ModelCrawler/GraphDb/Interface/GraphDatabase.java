@@ -1,15 +1,12 @@
 package de.unirostock.sems.ModelCrawler.GraphDb.Interface;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import de.unirostock.sems.ModelCrawler.GraphDb.QueryResult;
+import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
 
 public interface GraphDatabase {
-	
-	public final String FEAUTURE_ID = "ID";
-	public final String FEAUTURE_NAME = "NAME";
-	//TODO to be continued...
 	
 	/**
 	 * Checks if database is available
@@ -30,6 +27,7 @@ public interface GraphDatabase {
 	 * 
 	 * @return
 	 */
+	@Deprecated
 	public String[] cellMlModelQueryFeatures();
 	
 	/**
@@ -39,7 +37,8 @@ public interface GraphDatabase {
 	 * @param modelId
 	 * @return QueryResult or NULL if no match found
 	 */
-	public QueryResult getCellMlModelFromId( String modelId );
+	@Deprecated
+	public ModelRecord getCellMlModelFromId( String modelId );
 	
 	/**
 	 * Generates and executes a Query to the GraphDB
@@ -47,5 +46,23 @@ public interface GraphDatabase {
 	 * @param feautures e.g. ID, NAME, COMPONENT, VARIABLE, CREATOR, AUTHOR
 	 * @return
 	 */
-	public List<QueryResult> cellMlModelQuery( Map<String, String> feautures );
+	@Deprecated
+	public List<ModelRecord> cellMlModelQuery( Map<String, String> feautures );
+	
+	
+	// ------------------------------------------------------------------------
+	
+	public String[] getAllModelIds();
+	
+	public List<ModelRecord> getModelVersions( String modelId );
+	
+	public ModelRecord getLatestModelVersion( String modelId );
+	
+	public ModelRecord getModel( String modelId, String versionId );
+	
+	public boolean modifyModelMeta( String modelId, String versionId, Map<String, String> meta );
+	
+	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model, Map<String, String> meta );
+	
+	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model );
 }
