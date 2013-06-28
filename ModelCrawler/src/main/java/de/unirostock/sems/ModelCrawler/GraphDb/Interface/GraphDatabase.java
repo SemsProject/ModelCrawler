@@ -52,17 +52,68 @@ public interface GraphDatabase {
 	
 	// ------------------------------------------------------------------------
 	
+	/**
+	 * Get the IDs from all models stored in the GraphDB
+	 * 
+	 * @return String[]
+	 */
 	public String[] getAllModelIds();
 	
+	/**
+	 * Returns a list of ModelRecords with all versions of the model with the given ID
+	 * 
+	 * @param modelId
+	 * @return List of ModelRecord
+	 */
 	public List<ModelRecord> getModelVersions( String modelId );
 	
+	/**
+	 * Returns the latest version from the model with the given ID
+	 * 
+	 * @param modelId
+	 * @return ModelRecord
+	 */
 	public ModelRecord getLatestModelVersion( String modelId );
 	
+	/**
+	 * Returns the specific version of a model
+	 * 
+	 * @param modelId
+	 * @param versionId
+	 * @return
+	 */
 	public ModelRecord getModel( String modelId, String versionId );
 	
+	/**
+	 * Modifies the meta-data of a model-version
+	 * 
+	 * @param modelId
+	 * @param versionId
+	 * @param meta
+	 * @return 
+	 */
 	public boolean modifyModelMeta( String modelId, String versionId, Map<String, String> meta );
 	
+	/**
+	 * Inserts a new model version with meta-data
+	 * 
+	 * @param modelId
+	 * @param versionId
+	 * @param parentVersion
+	 * @param model
+	 * @param meta
+	 * @return
+	 */
 	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model, Map<String, String> meta );
 	
+	/**
+	 * Inserts a new model version
+	 * 
+	 * @param modelId
+	 * @param versionId
+	 * @param parentVersion
+	 * @param model
+	 * @return
+	 */
 	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model );
 }
