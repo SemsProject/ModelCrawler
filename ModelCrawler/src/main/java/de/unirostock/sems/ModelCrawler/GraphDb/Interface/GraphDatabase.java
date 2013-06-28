@@ -11,7 +11,6 @@ public interface GraphDatabase {
 	public final String FEAUTURE_NAME = "NAME";
 	//TODO to be continued...
 	
-	
 	/**
 	 * Checks if database is available
 	 * 
