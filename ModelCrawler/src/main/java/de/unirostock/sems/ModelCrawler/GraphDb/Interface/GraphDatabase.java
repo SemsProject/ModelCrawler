@@ -1,8 +1,16 @@
 package de.unirostock.sems.ModelCrawler.GraphDb.Interface;
 
+import java.util.List;
+import java.util.Map;
+
 import de.unirostock.sems.ModelCrawler.GraphDb.QueryResult;
 
 public interface GraphDatabase {
+	
+	public final String FEAUTURE_ID = "ID";
+	public final String FEAUTURE_NAME = "NAME";
+	//TODO to be continued...
+	
 	
 	/**
 	 * Checks if database is available
@@ -34,5 +42,11 @@ public interface GraphDatabase {
 	 */
 	public QueryResult getCellMlModelFromId( String modelId );
 	
-	
+	/**
+	 * Generates and executes a Query to the GraphDB
+	 *  
+	 * @param feautures e.g. ID, NAME, COMPONENT, VARIABLE, CREATOR, AUTHOR
+	 * @return
+	 */
+	public List<QueryResult> cellMlModelQuery( Map<String, String> feautures );
 }
