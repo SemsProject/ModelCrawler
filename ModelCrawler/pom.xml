@@ -9,6 +9,16 @@
 
 	<name>ModelCrawler</name>
 	<url>http://sems.uni-rostock.de</url>
+	
+	<scm>
+		<connection>GIT</connection>
+		<url>ssh://sems.uni-rostock.de/modelcrawler</url>
+		<developerConnection>Martin Peters</developerConnection>
+	</scm>
+	<organization>
+		<name>SEMS (Simulation Experiment Management for Systems Biology)</name>
+		<url>http://sems.uni-rostock.de</url>
+	</organization>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -84,4 +94,5 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 </project>
