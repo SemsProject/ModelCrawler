@@ -12,27 +12,24 @@ public class ModelRecord {
 	private String modelName;
 	
 	private URI documentUri;
-	private String filename;
 	
 	private String versionId;
 	private Date versionDate;
 	
 	private HashMap<String, Object> meta;
 	
-	public ModelRecord( String modelId, long databaseId, String modelName, URI documentUri, String filename ) {
+	public ModelRecord( String modelId, long databaseId, String modelName, URI documentUri ) {
 		this.modelId = modelId;
 		this.databaseId = databaseId;
 		this.modelName = modelName;
 		this.documentUri = documentUri;
-		this.filename = filename;
 	}
 	
-	public ModelRecord( String modelId, long databaseId, String modelName, URI documentUri, String filename, String versionId, Date versionDate ) {
+	public ModelRecord( String modelId, long databaseId, String modelName, URI documentUri, String versionId, Date versionDate ) {
 		this.modelId = modelId;
 		this.databaseId = databaseId;
 		this.modelName = modelName;
 		this.documentUri = documentUri;
-		this.filename = filename;
 		this.versionId = versionId;
 		this.versionDate = versionDate;
 	}
@@ -51,10 +48,6 @@ public class ModelRecord {
 
 	public URI getDocumentUri() {
 		return documentUri;
-	}
-
-	public String getFilename() {
-		return filename;
 	}
 
 	public String getVersionId() {

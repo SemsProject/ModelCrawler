@@ -11,20 +11,25 @@ public interface GraphDatabase {
 	/**
 	 * Checks if database is available
 	 * 
+	 * @deprecated
 	 * @return
 	 */
+	@Deprecated
 	public boolean isModelManagerAlive();
 	
 	/**
 	 * Checks if database contains data
 	 * 
+	 * @deprecated
 	 * @return
 	 */
+	@Deprecated
 	public boolean isDatabaseEmpty();
 	
 	/**
 	 * Returns all features included by an cellMl query
 	 * 
+	 * @deprecated
 	 * @return
 	 */
 	@Deprecated
@@ -33,7 +38,7 @@ public interface GraphDatabase {
 	/**
 	 * Requests a single Model by its ModelId
 	 * 
-	 * 
+	 * @deprecated
 	 * @param modelId
 	 * @return QueryResult or NULL if no match found
 	 */
@@ -43,6 +48,7 @@ public interface GraphDatabase {
 	/**
 	 * Generates and executes a Query to the GraphDB
 	 *  
+	 * @deprecated
 	 * @param feautures e.g. ID, NAME, COMPONENT, VARIABLE, CREATOR, AUTHOR
 	 * @return
 	 */
@@ -65,7 +71,7 @@ public interface GraphDatabase {
 	 * @param modelId
 	 * @return List of ModelRecord
 	 */
-	public List<ModelRecord> getModelVersions( String modelId );
+	public String[] getModelVersions( String modelId );
 	
 	/**
 	 * Returns the latest version from the model with the given ID
