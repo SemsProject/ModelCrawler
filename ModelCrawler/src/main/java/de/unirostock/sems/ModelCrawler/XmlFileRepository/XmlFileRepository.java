@@ -117,10 +117,10 @@ public class XmlFileRepository implements XmlFileServer {
 	public URI pushModel(String modelId, String versionId, InputStream modelSource) throws IOException, UnsupportedUriException {
 		URI model = null;
 		
-		if( modelId == null || modelId.equals("") || modelId.equals("..") || modelId.equals(".") )
+		if( modelId == null || modelId.isEmpty()|| modelId.equals("..") || modelId.equals(".") )
 			throw new IllegalArgumentException("modelId can not be empty!");
 		
-		if( versionId == null || versionId.equals("") || versionId.equals("..") || versionId.equals(".") )
+		if( versionId == null || versionId.isEmpty() || versionId.equals("..") || versionId.equals(".") )
 			throw new IllegalArgumentException("versionId can not be empty!");
 		
 		if( modelSource == null )
@@ -163,6 +163,9 @@ public class XmlFileRepository implements XmlFileServer {
 			return null;
 		
 		String[] pathParts = path.split("/");
+		if( pathParts.length < 2 )
+			return null;
+		
 		if( pathParts[0].equals("..") || pathParts[1].equals(".") )
 			return null;
 		
