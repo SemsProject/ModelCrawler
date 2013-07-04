@@ -68,6 +68,9 @@ public class XmlFileRepository implements XmlFileServer {
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Opening  XmlFileRepository at {0}", location.getAbsolutePath()) );
 		
+		// set this as instance!
+//		if( XmlFileRepository.xmlFileRepository == null )
+//			XmlFileRepository.xmlFileRepository = this;
 	}
 	
 	/**
