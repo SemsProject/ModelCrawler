@@ -4,7 +4,10 @@ import java.io.IOException;
 
 public class GraphDatabaseCommunicationException extends IOException {
 
+	private static final long serialVersionUID = 1589736586376163967L;
+
 	public GraphDatabaseCommunicationException() {
+		super();
 	}
 
 	public GraphDatabaseCommunicationException(String message) {
