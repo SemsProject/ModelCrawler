@@ -70,7 +70,7 @@ public class GraphDb implements GraphDatabase {
 	private final String FEAUTURE_META_VERSION_DATE = "versionDate";
 	private final String FEAUTURE_META_SOURCE = "source";
 
-	private final String FEAUTURE_RESULT = "result";
+	private final String FEAUTURE_RETURN = "return";
 	private final String FEAUTURE_ERROR = "error";
 
 	private final String RESULT_FAILED = "failed";
@@ -305,13 +305,13 @@ public class GraphDb implements GraphDatabase {
 			return null;
 
 		// check if result failed
-		if( json.get(FEAUTURE_RESULT).equals(RESULT_FAILED) ) {
+		if( json.get(FEAUTURE_RETURN).equals(RESULT_FAILED) ) {
 			log.error( MessageFormat.format( "Getting all models failed: {0}", json.get(FEAUTURE_ERROR) ));
 			throw new GraphDatabaseError( (String) json.get(FEAUTURE_ERROR) );
 		}
 
 		// generating key set -> all model names
-		Set<String> models = ((JSONObject) json.get(FEAUTURE_RESULT)).keySet();
+		Set<String> models = ((JSONObject) json.get(FEAUTURE_RETURN)).keySet();
 		String[] result = new String[models.size()];
 
 		Iterator<String> iter = models.iterator();
@@ -344,12 +344,12 @@ public class GraphDb implements GraphDatabase {
 			return null;
 
 		// check if result failed
-		if( json.get(FEAUTURE_RESULT).equals(RESULT_FAILED) ) {
+		if( json.get(FEAUTURE_RETURN).equals(RESULT_FAILED) ) {
 			log.error( MessageFormat.format( "Getting model failed: {0}", json.get(FEAUTURE_ERROR) ));
 			throw new GraphDatabaseError( (String) json.get(FEAUTURE_ERROR) );
 		}
 
-		JSONArray versions = (JSONArray) ((JSONObject) json.get(FEAUTURE_RESULT)).get(modelId);
+		JSONArray versions = (JSONArray) ((JSONObject) json.get(FEAUTURE_RETURN)).get(modelId);
 		if( versions == null )
 			return null;
 
@@ -383,12 +383,12 @@ public class GraphDb implements GraphDatabase {
 			return null;
 
 		// check if result failed
-		if( json.get(FEAUTURE_RESULT).equals(RESULT_FAILED) ) {
+		if( json.get(FEAUTURE_RETURN).equals(RESULT_FAILED) ) {
 			log.error( MessageFormat.format( "Getting latest model failed: {0}", json.get(FEAUTURE_ERROR) ));
 			throw new GraphDatabaseError( (String) json.get(FEAUTURE_ERROR) );
 		}
 
-		return getModelRecordFromJson( (JSONObject) json.get(FEAUTURE_RESULT) );
+		return getModelRecordFromJson( (JSONObject) json.get(FEAUTURE_RETURN) );
 	}
 
 	@Override
@@ -410,12 +410,12 @@ public class GraphDb implements GraphDatabase {
 			return null;
 
 		// check if result failed
-		if( json.get(FEAUTURE_RESULT).equals(RESULT_FAILED) ) {
+		if( json.get(FEAUTURE_RETURN).equals(RESULT_FAILED) ) {
 			log.error( MessageFormat.format( "Getting latest model failed: {0}", json.get(FEAUTURE_ERROR) ));
 			throw new GraphDatabaseError( (String) json.get(FEAUTURE_ERROR) );
 		}
 
-		return getModelRecordFromJson( (JSONObject) json.get(FEAUTURE_RESULT) );
+		return getModelRecordFromJson( (JSONObject) json.get(FEAUTURE_RETURN) );
 	}
 
 	@Override
@@ -444,7 +444,7 @@ public class GraphDb implements GraphDatabase {
 		if( json == null )
 			return false;
 
-		if( ((Boolean) json.get(FEAUTURE_RESULT)) == Boolean.TRUE )
+		if( ((Boolean) json.get(FEAUTURE_RETURN)) == Boolean.TRUE )
 			return true;
 		else {
 			String message = (String) json.get(FEAUTURE_ERROR);
@@ -485,13 +485,17 @@ public class GraphDb implements GraphDatabase {
 		JSONObject json = (JSONObject) performHttpRequestJSON(request);
 		if( json == null )
 			return false;
-
-		if( ((Boolean) json.get(FEAUTURE_RESULT)) == Boolean.TRUE )
-			return true;
-		else {
+		
+		if( json.get(FEAUTURE_RETURN).equals(RESULT_FAILED) ) {
 			String message = (String) json.get(FEAUTURE_ERROR);
 			log.error( MessageFormat.format("{0} while modifying model record", message) );
 			throw new GraphDatabaseError(message);
+		}
+		else if( ((Boolean) json.get(FEAUTURE_RETURN)) == Boolean.TRUE )
+			return true;
+		else {
+			log.error( "Unknown error while inserting model!" );
+			throw new GraphDatabaseError("Unknown error while inserting model!");
 		}
 		
 	}

@@ -2,6 +2,8 @@ package de.unirostock.sems.ModelCrawler.GraphDb.exceptions;
 
 public class GraphDatabaseError extends Exception {
 
+	private static final long serialVersionUID = -7629276841894307941L;
+
 	public GraphDatabaseError() {
 		// TODO Auto-generated constructor stub
 	}
