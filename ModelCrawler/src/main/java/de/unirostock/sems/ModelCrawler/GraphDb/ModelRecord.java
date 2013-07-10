@@ -37,6 +37,34 @@ public class ModelRecord {
 		meta.put(META_VERSION_DATE, parser.format(versionDate) );
 		meta.put(META_CRAWLED_DATE, parser.format(crawledDate) );
 	}
+	
+	/**
+	 * For calling out of Change class
+	 * when XmlUri is not known
+	 * 
+	 * @param modelId
+	 * @param versionId
+	 * @param versionDate
+	 * @param crawledDate
+	 */
+	protected ModelRecord( String modelId, String versionId, Date versionDate, Date crawledDate ) {
+		this.modelId = modelId;
+		this.versionId = versionId;
+		this.documentUri = null;
+		
+		SimpleDateFormat parser = new SimpleDateFormat(DATE_FORMAT);
+		meta.put(META_VERSION_DATE, parser.format(versionDate) );
+		meta.put(META_CRAWLED_DATE, parser.format(crawledDate) );
+	}
+	
+	/**
+	 * For calling out of Change class
+	 * 
+	 * @param document
+	 */
+	protected void setDocumentUri(URI document) {
+		this.documentUri = document;
+	}
 
 	public String getModelId() {
 		return modelId;

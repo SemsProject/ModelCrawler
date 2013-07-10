@@ -23,8 +23,8 @@ public class BioModelsChange extends Change {
 	public final String HASH_ALGORITHM = "SHA256";
 	public final String HASH_ALGORITHM_FALLBACK = "SHA";
 
-	public BioModelsChange(Date revisionDate, Date crawledDate, String revisionId) {
-		super( revisionDate, crawledDate, revisionId );
+	public BioModelsChange( String modelId, String versionId, Date versionDate, Date crawledDate ) {
+		super(modelId, versionId, versionDate, crawledDate);
 	}
 
 	public boolean setXmlFile(File xmlFile, String hash) {
@@ -46,11 +46,6 @@ public class BioModelsChange extends Change {
 	@Override
 	public boolean setXmlFile( File xmlFile ) {
 		return setXmlFile( xmlFile, calcXmlHash(xmlFile) );
-	}
-
-	@Override
-	public boolean setXmlFile( String xmlFile ) {
-		return setXmlFile( new File(xmlFile) );
 	}
 
 	protected String calcXmlHash( File xmlFile ) {

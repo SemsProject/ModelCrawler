@@ -152,4 +152,16 @@ public interface GraphDatabase {
 	 * @throws GraphDatabaseError 
 	 */
 	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
+	
+	/**
+	 * Insert a new model version based on the model record
+	 * 
+	 * @param record
+	 * @param parentVersion
+	 * @return
+	 * @throws GraphDatabaseInterfaceException
+	 * @throws GraphDatabaseCommunicationException
+	 * @throws GraphDatabaseError
+	 */
+	public boolean insertModel( ModelRecord record, String parentVersion ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
 }

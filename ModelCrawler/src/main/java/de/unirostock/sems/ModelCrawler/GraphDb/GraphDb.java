@@ -155,9 +155,6 @@ public class GraphDb implements GraphDatabase {
 
 	// ------------------------------------------------------------------------
 
-
-	// TODO 1 -> more exceptions!!!
-
 	private HttpPost generateHttpRequest( String query ) throws GraphDatabaseInterfaceException {
 		return generateHttpRequest(query, null);
 	}
@@ -504,5 +501,10 @@ public class GraphDb implements GraphDatabase {
 	public boolean insertModel(String modelId, String versionId, String parentVersion, URI model) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
 		return insertModel(modelId, versionId, parentVersion, model, null);
 	}
-
+	
+	@Override
+	public boolean insertModel( ModelRecord record, String parentVersion ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
+		return insertModel( record.getModelId(), record.getVersionId(), parentVersion, record.getDocumentUri(), record.getMetaMap() );
+	}
+	
 }

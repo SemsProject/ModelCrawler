@@ -22,6 +22,8 @@ import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 
 public class XmlFileRepository implements XmlFileServer {
 	
+	//TODO 2 -> more exceptions!?
+	
 	private static XmlFileRepository xmlFileRepository = null;
 	
 	/**
