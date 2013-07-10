@@ -5,7 +5,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.text.NumberFormat;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
