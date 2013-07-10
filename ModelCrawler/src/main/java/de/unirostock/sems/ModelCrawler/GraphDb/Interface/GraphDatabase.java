@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseInterfaceException;
 
 public interface GraphDatabase {
 	
@@ -13,27 +16,31 @@ public interface GraphDatabase {
 	 * 
 	 * @deprecated
 	 * @return
+	 * @throws GraphDatabaseCommunicationException 
 	 */
 	@Deprecated
-	public boolean isModelManagerAlive();
+	public boolean isModelManagerAlive() throws GraphDatabaseCommunicationException;
 	
 	/**
 	 * Checks if database contains data
 	 * 
 	 * @deprecated
 	 * @return
+	 * @throws GraphDatabaseCommunicationException 
 	 */
 	@Deprecated
-	public boolean isDatabaseEmpty();
+	public boolean isDatabaseEmpty() throws GraphDatabaseCommunicationException;
 	
 	/**
 	 * Returns all features included by an cellMl query
 	 * 
 	 * @deprecated
 	 * @return
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseInterfaceException 
 	 */
 	@Deprecated
-	public String[] cellMlModelQueryFeatures();
+	public String[] cellMlModelQueryFeatures() throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException;
 	
 	/**
 	 * Requests a single Model by its ModelId
@@ -41,9 +48,11 @@ public interface GraphDatabase {
 	 * @deprecated
 	 * @param modelId
 	 * @return QueryResult or NULL if no match found
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseInterfaceException 
 	 */
 	@Deprecated
-	public ModelRecord getCellMlModelFromId( String modelId );
+	public ModelRecord getCellMlModelFromId( String modelId ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException;
 	
 	/**
 	 * Generates and executes a Query to the GraphDB
@@ -62,24 +71,33 @@ public interface GraphDatabase {
 	 * Get the IDs from all models stored in the GraphDB
 	 * 
 	 * @return String[]
+	 * @throws GraphDatabaseInterfaceException 
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseError 
 	 */
-	public String[] getAllModelIds();
+	public String[] getAllModelIds() throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
 	
 	/**
 	 * Returns a list of ModelRecords with all versions of the model with the given ID
 	 * 
 	 * @param modelId
 	 * @return List of ModelRecord
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseInterfaceException 
+	 * @throws GraphDatabaseError 
 	 */
-	public String[] getModelVersions( String modelId );
+	public String[] getModelVersions( String modelId ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
 	
 	/**
 	 * Returns the latest version from the model with the given ID
 	 * 
 	 * @param modelId
 	 * @return ModelRecord
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseInterfaceException 
+	 * @throws GraphDatabaseError 
 	 */
-	public ModelRecord getLatestModelVersion( String modelId );
+	public ModelRecord getLatestModelVersion( String modelId ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
 	
 	/**
 	 * Returns the specific version of a model
@@ -87,8 +105,11 @@ public interface GraphDatabase {
 	 * @param modelId
 	 * @param versionId
 	 * @return
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseInterfaceException 
+	 * @throws GraphDatabaseError 
 	 */
-	public ModelRecord getModel( String modelId, String versionId );
+	public ModelRecord getModel( String modelId, String versionId ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
 	
 	/**
 	 * Modifies the meta-data of a model-version
@@ -97,8 +118,11 @@ public interface GraphDatabase {
 	 * @param versionId
 	 * @param meta
 	 * @return 
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseInterfaceException 
+	 * @throws GraphDatabaseError 
 	 */
-	public boolean modifyModelMeta( String modelId, String versionId, Map<String, String> meta );
+	public boolean modifyModelMeta( String modelId, String versionId, Map<String, String> meta ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
 	
 	/**
 	 * Inserts a new model version with meta-data
@@ -109,8 +133,11 @@ public interface GraphDatabase {
 	 * @param model
 	 * @param meta
 	 * @return
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseInterfaceException 
+	 * @throws GraphDatabaseError 
 	 */
-	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model, Map<String, String> meta );
+	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model, Map<String, String> meta ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
 	
 	/**
 	 * Inserts a new model version
@@ -120,6 +147,9 @@ public interface GraphDatabase {
 	 * @param parentVersion
 	 * @param model
 	 * @return
+	 * @throws GraphDatabaseCommunicationException 
+	 * @throws GraphDatabaseInterfaceException 
+	 * @throws GraphDatabaseError 
 	 */
-	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model );
+	public boolean insertModel( String modelId, String versionId, String parentVersion, URI model ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError;
 }

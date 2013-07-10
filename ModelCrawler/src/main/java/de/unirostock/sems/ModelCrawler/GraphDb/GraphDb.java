@@ -31,6 +31,9 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseInterfaceException;
 
 public class GraphDb implements GraphDatabase {
 
@@ -68,8 +71,9 @@ public class GraphDb implements GraphDatabase {
 	private final String FEAUTURE_META_SOURCE = "source";
 
 	private final String FEAUTURE_RESULT = "result";
-	private final String RESULT_FAILED = "failed";
 	private final String FEAUTURE_ERROR = "error";
+
+	private final String RESULT_FAILED = "failed";
 	//TODO to be continued...
 
 	public GraphDb( URL databaseInterface ) {
@@ -82,7 +86,7 @@ public class GraphDb implements GraphDatabase {
 	}
 
 	@Override
-	public boolean isModelManagerAlive() {
+	public boolean isModelManagerAlive() throws GraphDatabaseCommunicationException {
 
 		HttpPost request = generateHttpRequest(QUERY_MODEL_MANAGER_ALIVE);
 		String result = performHttpRequestString(request).toLowerCase();
@@ -94,7 +98,7 @@ public class GraphDb implements GraphDatabase {
 	}
 
 	@Override
-	public boolean isDatabaseEmpty() {
+	public boolean isDatabaseEmpty() throws GraphDatabaseCommunicationException {
 		HttpPost request = generateHttpRequest(QUERY_DATABASE_EMPTY);
 		String result = performHttpRequestString(request).toLowerCase();
 
@@ -105,7 +109,7 @@ public class GraphDb implements GraphDatabase {
 	}
 
 	@Override
-	public String[] cellMlModelQueryFeatures() {
+	public String[] cellMlModelQueryFeatures() throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException {
 		HttpPost request = generateHttpRequest(QUERY_CELLML_MODEL);
 		JSONArray array = (JSONArray) performHttpRequestJSON(request);
 
@@ -114,7 +118,7 @@ public class GraphDb implements GraphDatabase {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public ModelRecord getCellMlModelFromId(String modelId) {
+	public ModelRecord getCellMlModelFromId(String modelId) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException {
 		// curl -X POST http://morre.sems.uni-rostock.de:7474/morre/query/cellml_model_query/ -H "Content-Type: application/json" -d '{"features":["ID"], "keywords":["novak_1993"]}'
 		ModelRecord record = null;
 
@@ -151,11 +155,14 @@ public class GraphDb implements GraphDatabase {
 
 	// ------------------------------------------------------------------------
 
-	private HttpPost generateHttpRequest( String query ) {
+
+	// TODO 1 -> more exceptions!!!
+
+	private HttpPost generateHttpRequest( String query ) throws GraphDatabaseInterfaceException {
 		return generateHttpRequest(query, null);
 	}
 
-	private HttpPost generateHttpRequest( String query, JSONObject parameter ) {
+	private HttpPost generateHttpRequest( String query, JSONObject parameter ) throws GraphDatabaseInterfaceException {
 		HttpPost request = null;
 		String json = null;
 
@@ -177,17 +184,17 @@ public class GraphDb implements GraphDatabase {
 			}
 
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Malformed Url! Maybe a config mistake?");
+			throw new GraphDatabaseInterfaceException("Malformed Url! Maybe a config mistake?", e);
 		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Bad Url syntax! Maybe a config mistake?");
+			throw new GraphDatabaseInterfaceException("Bad Url syntax! Maybe a config mistake?", e);
 		}
 
 		return request;
 	}
 
-	private Object performHttpRequestJSON( HttpPost request ) {
+	private Object performHttpRequestJSON( HttpPost request ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException {
 		Object json = null;
 		HttpResponse response = null;
 
@@ -204,14 +211,11 @@ public class GraphDb implements GraphDatabase {
 			// ensure the entity is fully consumed aka. cleanUp
 			EntityUtils.consume(entity);
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new GraphDatabaseCommunicationException("Protocoll Exception", e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new GraphDatabaseCommunicationException("IOException while downloading and parsing response data", e);
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new GraphDatabaseInterfaceException("Error while parsing the json response.", e);
 		}
 		finally {
 			// ensures the the request entity is consumed fully
@@ -221,7 +225,7 @@ public class GraphDb implements GraphDatabase {
 		return json;
 	}
 
-	private String performHttpRequestString( HttpPost request ) {
+	private String performHttpRequestString( HttpPost request ) throws GraphDatabaseCommunicationException {
 		String result = null;
 		HttpResponse response = null;
 
@@ -237,13 +241,12 @@ public class GraphDb implements GraphDatabase {
 
 			// ensure the entity is fully consumed aka. cleanUp
 			EntityUtils.consume(entity);
+
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new GraphDatabaseCommunicationException("Protocoll Exception", e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			throw new GraphDatabaseCommunicationException("IOException while downloading and reading response data", e);
+		} 
 		finally {
 			// ensures the the request entity is consumed fully
 			EntityUtils.consumeQuietly( request.getEntity() );
@@ -252,13 +255,50 @@ public class GraphDb implements GraphDatabase {
 		return result;
 	}
 
+	private ModelRecord getModelRecordFromJson( JSONObject json ) {
+
+		ModelRecord record = null;
+		String modelId		= (String) json.get(FEAUTURE_MODEL_ID);
+		String versionId	= (String) json.get(FEAUTURE_VERSION_ID);
+		String docURI		= (String) json.get(FEAUTURE_XML_URI);
+
+		// check if something is not set
+		if( modelId == null || modelId.isEmpty() || versionId == null || versionId.isEmpty() || docURI == null || docURI.isEmpty() )
+			return null;
+
+		// parsing the URI
+		URI model = null;
+		try {
+			model = new URI(docURI);
+		} catch (URISyntaxException e) {
+			log.error("model record from database contains a record with an invalid model uri!", e);
+			//			e.printStackTrace();
+		}
+
+		// create a new model record object
+		record = new ModelRecord(modelId, versionId, model);
+
+		// setting meta information
+		JSONObject meta = (JSONObject) json.get(FEAUTURE_MODEL_META);
+		Iterator<String> keys = meta.keySet().iterator();
+		while( keys.hasNext() ) {
+			String key = keys.next();
+			record.setMeta(key, (String) meta.get(key) );
+		}
+
+		return record;
+	}
+
 	// ------------------------------------------------------------------------
 
 	@Override
-	public String[] getAllModelIds() {
+	public String[] getAllModelIds() throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
 
 		// performing the request!
 		HttpPost request = generateHttpRequest(QUERY_GET_MODEL);
+		if( request == null )
+			return null;
+
 		JSONObject json = (JSONObject) performHttpRequestJSON(request);
 
 		if( json == null )
@@ -267,7 +307,7 @@ public class GraphDb implements GraphDatabase {
 		// check if result failed
 		if( json.get(FEAUTURE_RESULT).equals(RESULT_FAILED) ) {
 			log.error( MessageFormat.format( "Getting all models failed: {0}", json.get(FEAUTURE_ERROR) ));
-			return null;
+			throw new GraphDatabaseError( (String) json.get(FEAUTURE_ERROR) );
 		}
 
 		// generating key set -> all model names
@@ -286,7 +326,7 @@ public class GraphDb implements GraphDatabase {
 	}
 
 	@Override
-	public String[] getModelVersions(String modelId) {
+	public String[] getModelVersions(String modelId) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
 
 		if( modelId == null || modelId.isEmpty() )
 			throw new IllegalArgumentException("modelId can not be null or empty");
@@ -295,6 +335,9 @@ public class GraphDb implements GraphDatabase {
 		parameter.put(FEAUTURE_MODEL_ID, modelId);
 
 		HttpPost request = generateHttpRequest(QUERY_GET_MODEL, parameter);
+		if( request == null )
+			return null;
+
 		JSONObject json = (JSONObject) performHttpRequestJSON(request);
 
 		if( json == null )
@@ -302,14 +345,14 @@ public class GraphDb implements GraphDatabase {
 
 		// check if result failed
 		if( json.get(FEAUTURE_RESULT).equals(RESULT_FAILED) ) {
-			log.error( MessageFormat.format( "Getting all models failed: {0}", json.get(FEAUTURE_ERROR) ));
-			return null;
+			log.error( MessageFormat.format( "Getting model failed: {0}", json.get(FEAUTURE_ERROR) ));
+			throw new GraphDatabaseError( (String) json.get(FEAUTURE_ERROR) );
 		}
-		
+
 		JSONArray versions = (JSONArray) ((JSONObject) json.get(FEAUTURE_RESULT)).get(modelId);
 		if( versions == null )
 			return null;
-		
+
 		String[] result = new String[versions.size()];
 		Iterator<String> iter = versions.iterator();
 		for( int index = 0; index < result.length; index++ ) {
@@ -323,35 +366,139 @@ public class GraphDb implements GraphDatabase {
 	}
 
 	@Override
-	public ModelRecord getLatestModelVersion(String modelId) {
-		// TODO Auto-generated method stub
-		return null;
+	public ModelRecord getLatestModelVersion(String modelId) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
+		if( modelId == null || modelId.isEmpty() )
+			throw new IllegalArgumentException("modelId can not be null or empty");
+
+		JSONObject parameter = new JSONObject();
+		parameter.put(FEAUTURE_MODEL_ID, modelId);
+
+		HttpPost request = generateHttpRequest(QUERY_GET_LATEST, parameter);
+		if( request == null )
+			return null;
+
+		JSONObject json = (JSONObject) performHttpRequestJSON(request);
+
+		if( json == null )
+			return null;
+
+		// check if result failed
+		if( json.get(FEAUTURE_RESULT).equals(RESULT_FAILED) ) {
+			log.error( MessageFormat.format( "Getting latest model failed: {0}", json.get(FEAUTURE_ERROR) ));
+			throw new GraphDatabaseError( (String) json.get(FEAUTURE_ERROR) );
+		}
+
+		return getModelRecordFromJson( (JSONObject) json.get(FEAUTURE_RESULT) );
 	}
 
 	@Override
-	public ModelRecord getModel(String modelId, String versionId) {
-		// TODO Auto-generated method stub
-		return null;
+	public ModelRecord getModel(String modelId, String versionId) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
+		if( modelId == null || modelId.isEmpty() || versionId == null || versionId.isEmpty() )
+			throw new IllegalArgumentException("modelId and/or can not be null or empty");
+
+		JSONObject parameter = new JSONObject();
+		parameter.put(FEAUTURE_MODEL_ID, modelId);
+		parameter.put(FEAUTURE_VERSION_ID, versionId);
+
+		HttpPost request = generateHttpRequest(QUERY_GET_MODEL, parameter);
+		if( request == null )
+			return null;
+
+		JSONObject json = (JSONObject) performHttpRequestJSON(request);
+
+		if( json == null )
+			return null;
+
+		// check if result failed
+		if( json.get(FEAUTURE_RESULT).equals(RESULT_FAILED) ) {
+			log.error( MessageFormat.format( "Getting latest model failed: {0}", json.get(FEAUTURE_ERROR) ));
+			throw new GraphDatabaseError( (String) json.get(FEAUTURE_ERROR) );
+		}
+
+		return getModelRecordFromJson( (JSONObject) json.get(FEAUTURE_RESULT) );
 	}
 
 	@Override
-	public boolean modifyModelMeta(String modelId, String versionId,
-			Map<String, String> meta) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean modifyModelMeta(String modelId, String versionId, Map<String, String> meta) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
+		if( modelId == null || modelId.isEmpty() || versionId == null || versionId.isEmpty() )
+			throw new IllegalArgumentException("modelId and/or can not be null or empty");
+
+		if( meta == null )
+			throw new IllegalArgumentException("the meta map should not be null, if you want to change some meta information!");
+
+		// set modelId and versionId
+		JSONObject parameter = new JSONObject();
+		parameter.put(FEAUTURE_MODEL_ID, modelId);
+		parameter.put(FEAUTURE_VERSION_ID, versionId);
+
+		// imports all meta key/value pairs which are going to be modified
+		JSONObject metaJson = new JSONObject();
+		metaJson.putAll(meta);
+
+		// generate request
+		HttpPost request = generateHttpRequest(QUERY_GET_MODEL, parameter);
+		if( request == null )
+			return false;
+
+		JSONObject json = (JSONObject) performHttpRequestJSON(request);
+		if( json == null )
+			return false;
+
+		if( ((Boolean) json.get(FEAUTURE_RESULT)) == Boolean.TRUE )
+			return true;
+		else {
+			String message = (String) json.get(FEAUTURE_ERROR);
+			log.error( MessageFormat.format("{0} while modifying model record", message) );
+			throw new GraphDatabaseError(message);
+		}
+
 	}
 
 	@Override
-	public boolean insertModel(String modelId, String versionId,
-			String parentVersion, URI model, Map<String, String> meta) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean insertModel(String modelId, String versionId, String parentVersion, URI model, Map<String, String> meta) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
+		if( modelId == null || modelId.isEmpty() || versionId == null || versionId.isEmpty() )
+			throw new IllegalArgumentException("modelId and/or can not be null or empty");
+
+		if( log.isWarnEnabled() ) {
+			if( parentVersion == null || parentVersion.isEmpty() )
+				log.warn( MessageFormat.format("Inserting {0}/{1} parentVersion is not set! This model should be the first version!" , modelId, versionId) );
+		}
+
+		// set modelId, versionId, xmlDoc aka modelUri
+		JSONObject parameter = new JSONObject();
+		parameter.put(FEAUTURE_MODEL_ID, modelId);
+		parameter.put(FEAUTURE_VERSION_ID, versionId);
+		parameter.put(FEAUTURE_XML_URI, model.toString());
+
+		// if meta data are set...
+		if( meta != null && !meta.isEmpty() ) {
+			// ... imports all meta key/value pairs which are going to be modified
+			JSONObject metaJson = new JSONObject();
+			metaJson.putAll(meta);
+		}
+
+		// generate request
+		HttpPost request = generateHttpRequest(QUERY_INSERT_MODEL, parameter);
+		if( request == null )
+			return false;
+
+		JSONObject json = (JSONObject) performHttpRequestJSON(request);
+		if( json == null )
+			return false;
+
+		if( ((Boolean) json.get(FEAUTURE_RESULT)) == Boolean.TRUE )
+			return true;
+		else {
+			String message = (String) json.get(FEAUTURE_ERROR);
+			log.error( MessageFormat.format("{0} while modifying model record", message) );
+			throw new GraphDatabaseError(message);
+		}
+		
 	}
 
 	@Override
-	public boolean insertModel(String modelId, String versionId,
-			String parentVersion, URI model) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean insertModel(String modelId, String versionId, String parentVersion, URI model) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
+		return insertModel(modelId, versionId, parentVersion, model, null);
 	}
+
 }
