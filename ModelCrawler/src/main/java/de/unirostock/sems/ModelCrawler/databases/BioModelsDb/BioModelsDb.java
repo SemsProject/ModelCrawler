@@ -87,8 +87,7 @@ public class BioModelsDb implements ModelDatabase {
 
 	@Override
 	public ChangeSet getModelChanges(String modelId) {
-		// TODO Auto-generated method stub
-		return null;
+		return changeSetMap.get(modelId);
 	}
 
 	@Override
@@ -176,6 +175,19 @@ public class BioModelsDb implements ModelDatabase {
 	 */
 	protected void processRelease( BioModelRelease release ) {
 		
+		// try to download
+		try {
+			if( downloadRelease(release) == false ) {
+				log.fatal( MessageFormat.format("Can not process release {0}", release.getReleaseName()) );
+				return;
+			}
+		} catch (UnsupportedCompressionAlgorithmException e) {
+			log.fatal("Can not download-extract the release! Unsupported CompressionAlgorithm" , e);
+			return;
+		}
+		
+		//TODO extract tar archiv
+		// see TarArchiveOutputStream
 	}
 	
 	protected void checkAndInitWorkingDir() {

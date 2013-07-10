@@ -2,7 +2,8 @@ package de.unirostock.sems.ModelCrawler.databases.BioModelsDb;
 
 import java.io.File;
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class BioModelRelease implements Comparable<BioModelRelease> {
 	
@@ -13,7 +14,7 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 	private File archivFile = null;
 	private File contentDir = null;
 	
-	private List<String> modelList;
+	private Map<String, String> modelMap;
 	
 	public BioModelRelease( String releaseName, String ftpDirectory, Date releaseDate, File archivFile ) {
 		this.releaseName	= releaseName;
@@ -37,6 +38,7 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 	public File getArchivFile() {
 		return archivFile;
 	}
+	
 	public boolean setArchivFile(File archivFile) {
 		//REMIND the archiv file could only be setted once!
 		if( this.archivFile == null ) {
@@ -46,9 +48,15 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 		else
 			return false;
 	}
-	public List<String> getModelList() {
-		return modelList;
+	
+	public Set<String> getModelList() {
+		return modelMap.keySet();
 	}
+	
+	public String getModelPath( String modelId ) {
+		return modelMap.get(modelId);
+	}
+	
 	public String getFtpDirectory() {
 		return ftpDirectory;
 	}
@@ -80,4 +88,10 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 		return releaseDate.compareTo( model.getReleaseDate() );
 	}
 	
+	
+	public void extractArchivFile() {
+		
+		//TODO extract and indexe it!
+		// after all delete tar file!
+	}
 }

@@ -11,8 +11,10 @@ public abstract class ChangeSet {
 	public List<Change> getChanges() {
 		return changes;
 	}
+	
 	public void addChange(Change change) {
-		this.changes.add(change);
+		if( change.getModelId().equals(modelId) )
+			this.changes.add(change);
 	}
 	
 	public ChangeSet( String modelId ) {
