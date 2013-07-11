@@ -478,5 +478,10 @@ public class BioModelsDb implements ModelDatabase {
 
 		return null;
 	}
+	
+	private void extractRelease( BioModelRelease release ) {
+		
+		//TODO
+	}
 
 }

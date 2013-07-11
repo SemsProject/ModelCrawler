@@ -88,10 +88,4 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 		return releaseDate.compareTo( model.getReleaseDate() );
 	}
 	
-	
-	public void extractArchivFile() {
-		
-		//TODO extract and indexe it!
-		// after all delete tar file!
-	}
 }
