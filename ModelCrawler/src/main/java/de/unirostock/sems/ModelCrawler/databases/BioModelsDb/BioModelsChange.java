@@ -18,10 +18,10 @@ public class BioModelsChange extends Change {
 
 	private final Log log = LogFactory.getLog( BioModelsChange.class );
 
-	protected String fileHash = null;
-
 	public final String HASH_ALGORITHM = "SHA256";
 	public final String HASH_ALGORITHM_FALLBACK = "SHA";
+	
+	public final String META_HASH = "filehash";
 
 	public BioModelsChange( String modelId, String versionId, Date versionDate, Date crawledDate ) {
 		super(modelId, versionId, versionDate, crawledDate);
@@ -31,7 +31,7 @@ public class BioModelsChange extends Change {
 		//REMIND the xml file can only be setted once in a Change
 		if( this.xmlFile == null && hash != null ) {
 			this.xmlFile = xmlFile;
-			this.fileHash = hash;
+			meta.put(META_HASH, hash);
 
 			return true;
 		}
@@ -46,6 +46,10 @@ public class BioModelsChange extends Change {
 	@Override
 	public boolean setXmlFile( File xmlFile ) {
 		return setXmlFile( xmlFile, calcXmlHash(xmlFile) );
+	}
+	
+	public String getHash() {
+		return meta.get(META_HASH);
 	}
 
 	protected String calcXmlHash( File xmlFile ) {

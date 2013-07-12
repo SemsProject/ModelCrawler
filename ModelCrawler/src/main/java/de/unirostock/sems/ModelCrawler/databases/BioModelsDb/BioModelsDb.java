@@ -2,11 +2,13 @@ package de.unirostock.sems.ModelCrawler.databases.BioModelsDb;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
@@ -22,9 +24,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.dump.UnsupportedCompressionAlgorithmException;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.ftp.FTP;
@@ -32,6 +39,11 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
 import de.unirostock.sems.ModelCrawler.Properties;
+import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseInterfaceException;
+import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
@@ -39,19 +51,22 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 public class BioModelsDb implements ModelDatabase {
 
 	private final Log log = LogFactory.getLog( BioModelsDb.class );
-	
+
 	private URL ftpUrl;
 	private FTPClient ftpClient;
 	private List<BioModelRelease> releaseList = new ArrayList<BioModelRelease>();
 
 	protected File workingDir, tempDir;
 	protected java.util.Properties config;
-	
+
 	protected Map<String, BioModelsChangeSet> changeSetMap = new HashMap<String, BioModelsChangeSet>();
 
-	public BioModelsDb(String ftpUrl) throws MalformedURLException,
+	protected GraphDatabase graphDb = null;
+
+	public BioModelsDb(String ftpUrl, GraphDatabase graphDb) throws MalformedURLException,
 	IllegalArgumentException {
 		this.ftpUrl = new URL(ftpUrl);
+		this.graphDb = graphDb;
 
 		if (!this.ftpUrl.getProtocol().toLowerCase().equals("ftp")) {
 			// Protocoll is not ftp -> not (yet) supported
@@ -69,8 +84,8 @@ public class BioModelsDb implements ModelDatabase {
 
 	}
 
-	public BioModelsDb() throws MalformedURLException, IllegalArgumentException {
-		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl") );
+	public BioModelsDb( GraphDatabase graphDb ) throws MalformedURLException, IllegalArgumentException {
+		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl"), graphDb );
 	}
 
 	@Override
@@ -149,9 +164,8 @@ public class BioModelsDb implements ModelDatabase {
 			BioModelRelease release = iter.next();
 			// do it (download, extract, compare to previous versions)
 			processRelease( release );
-			
+
 			// if the download was succesfull, add the release to the known releases
-			//XXX should I add it already here to the knownRelease list??
 			if( release.isDownloaded() && release.isExtracted() )
 				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
 		}
@@ -165,8 +179,8 @@ public class BioModelsDb implements ModelDatabase {
 	public List<BioModelRelease> getBioModelReleases() {
 		return releaseList;
 	}
-	
-	
+
+
 	/**
 	 * Downloads, extracts and indexes the gives release
 	 * must called for each new release CHRONOLOGICAL
@@ -174,7 +188,10 @@ public class BioModelsDb implements ModelDatabase {
 	 * @param release
 	 */
 	protected void processRelease( BioModelRelease release ) {
-		
+
+		// getting the current Date, for crawling TimeStamp
+		Date crawledDate = new Date();
+
 		// try to download
 		try {
 			if( downloadRelease(release) == false ) {
@@ -185,11 +202,26 @@ public class BioModelsDb implements ModelDatabase {
 			log.fatal("Can not download-extract the release! Unsupported CompressionAlgorithm" , e);
 			return;
 		}
-		
-		//TODO extract tar archiv
-		// see TarArchiveOutputStream
+
+		// try to extract
+		try {
+			extractRelease(release);
+		}
+		catch (IllegalArgumentException e) {
+			log.fatal("Something went wrong with the release Object! (IllegalArgumentException) ", e);MessageFormat.format("IOException while extracting release {0}", release.getReleaseName());
+			return;
+		} catch (ExtractException e) {
+			log.fatal("Error while extracting", e);
+			return;
+		}
+
+		// transfer the index from release
+		Iterator<String> iter = release.getModelList().iterator();
+		while( iter.hasNext() ) {
+			tranferChange( iter.next(), release, crawledDate );
+		}
 	}
-	
+
 	protected void checkAndInitWorkingDir() {
 
 		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subWorkingDir") );
@@ -351,23 +383,23 @@ public class BioModelsDb implements ModelDatabase {
 		return releaseList;
 	}
 
-	protected boolean downloadRelease( BioModelRelease release ) throws UnsupportedCompressionAlgorithmException {
+	private boolean downloadRelease( BioModelRelease release ) throws UnsupportedCompressionAlgorithmException {
 		String archiv;
 		File target;
 		byte[] buffer = new byte[ 4096 ];
 
 		if( release == null )
 			return false;
-		
+
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format( "Start download release {0} from {1}", release.getReleaseName(), release.getFtpDirectory() ) );
-		
+
 		// if release already downloaded or extracted
 		if( release.isDownloaded() || release.isExtracted() ) {
 			log.warn( "The release is already download and/or extracted!" );
 			return true;
 		}
-		
+
 		try {
 			// Changes the directory
 			if( log.isInfoEnabled() )
@@ -378,7 +410,7 @@ public class BioModelsDb implements ModelDatabase {
 			// Finding the right file to download
 			if( log.isInfoEnabled() )
 				log.info("trying to find the smbl only file");
-			
+
 			if( (archiv = findSbmlArchivFile()) == null ) {
 				log.error("No matching file found!");
 				return false;
@@ -388,10 +420,10 @@ public class BioModelsDb implements ModelDatabase {
 			target = new File( tempDir, "BioModelsDb_" + release.getReleaseName() + ".tar" );
 			//target = File.createTempFile( "BioModelsDb_" + release.getReleaseName() + "_", ".tar" );
 			BufferedOutputStream targetStream = new BufferedOutputStream( new FileOutputStream(target) );
-			
+
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format("download and extract {0} to {1}", archiv, target.getAbsolutePath() ));
-			
+
 			// download it...
 			InputStream downStream = ftpClient.retrieveFileStream(archiv);
 
@@ -434,10 +466,10 @@ public class BioModelsDb implements ModelDatabase {
 
 			// close the input Stream
 			downStream.close();
-			
+
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format("download complete, {0} bytes", total) );
-			
+
 			if( ftpClient.completePendingCommand() == false ) {
 				// file transfer was not successful!
 				//				target.delete();
@@ -478,10 +510,145 @@ public class BioModelsDb implements ModelDatabase {
 
 		return null;
 	}
-	
-	private void extractRelease( BioModelRelease release ) {
-		
-		//TODO
+
+	private void extractRelease( BioModelRelease release ) throws IllegalArgumentException, ExtractException {
+
+		// already extracted or not even downloaded - just for safety... 
+		if( !release.isDownloaded() || release.isExtracted() )
+			throw new IllegalArgumentException("The release is suposed to be downloaded and not extracted!");
+
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Start extracting release {0}", release.getReleaseName()) );
+
+		// Map for Biomodel-Files
+		// Key = modelId, Value = Path in ContentDirectory
+		Map<String, File> fileMap = new HashMap<String, File>();
+
+		// extract dir
+		File contentDir = new File(tempDir, release.getReleaseName() );
+		contentDir.mkdirs();	// creates content dir in temp dir
+
+		try {
+			if( log.isDebugEnabled() )
+				log.debug("Opening archive");
+
+			// opens Archivfile for reading
+			InputStream tarFileStream = new FileInputStream( release.getArchivFile() );
+			// creates InputStream for uncompressing - Format will be automatically detected
+			ArchiveInputStream archivStream = (ArchiveInputStream) new ArchiveStreamFactory().createArchiveInputStream(tarFileStream);
+
+			ArchiveEntry entry = null;
+
+			if( log.isDebugEnabled() )
+				log.debug("extract entries!");
+
+			// looping throw entries
+			while ( (entry = archivStream.getNextEntry()) != null ) {
+				File entryFile = new File( contentDir, entry.getName() );
+
+				if( entry.isDirectory() ) {
+					// directory
+
+					if( log.isDebugEnabled() )
+						log.debug( MessageFormat.format("Extract directory {0}", entryFile.getAbsolutePath() ));
+
+					if( !entryFile.exists() ) {
+						// directroy does not exists
+						if( !entryFile.mkdirs() )
+							throw new IllegalStateException("Can not create directory " + entryFile.getAbsolutePath() );
+					}
+				}
+				else {
+					// file
+
+					if( log.isDebugEnabled() )
+						log.debug( MessageFormat.format("Extract directory {0}", entryFile.getAbsolutePath() ));
+
+					OutputStream entryStream = new FileOutputStream(entryFile);
+					IOUtils.copy(archivStream, entryStream);
+					entryStream.close();
+
+					// add file to fileMap 
+					// in BioModelsDB the filename is the modelId + .xml
+					String fileName = entryFile.getName();
+					int extensionPos = fileName.lastIndexOf('.');
+					if( fileName.substring(extensionPos+1).toLowerCase().equals("xml") ) {
+						// filename as xml ending
+						String modelId = fileName.substring(0, extensionPos);
+
+						if( log.isInfoEnabled() )
+							log.info( MessageFormat.format("Found model {0} from file {1}", modelId, fileName) );
+
+						// put it in the map
+						fileMap.put(modelId, entryFile);
+					}
+				}
+
+				// looping
+			}
+
+			// set the result into the release
+			release.setContentDir(contentDir, fileMap);
+		}
+		catch (IllegalStateException e) {
+			log.error( e.getMessage() );
+			throw new ExtractException(e);
+		} catch (ArchiveException e) {
+			String message = MessageFormat.format("ArchiveException while extracting release {0}", release.getReleaseName());
+			log.error( message );
+			throw new ExtractException(message, e);
+		} catch (IOException e) {
+			String message = MessageFormat.format("IOException while extracting release {0}", release.getReleaseName());
+			log.error( message );
+			throw new ExtractException(message, e);
+		} 
+	}
+
+	private void tranferChange( String modelId, BioModelRelease release, Date crawledDate ) {
+		BioModelsChangeSet changeSet = null;
+
+		// create the Change-Entry
+		BioModelsChange change = new BioModelsChange(modelId, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+
+		// if GraphDb is available for this instance
+		if( graphDb != null ) {
+			
+			// try to get the latest version of this model
+			BioModelsChange latest = null;
+			try {
+				latest = (BioModelsChange) graphDb.getLatestModelVersion(modelId);
+			} catch (GraphDatabaseInterfaceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (GraphDatabaseCommunicationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (GraphDatabaseError e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			// TODO
+		}
+
+
+		if( changeSetMap.containsKey(modelId) ) {
+			// if modelId is already known -> get it from changeSetMap
+			changeSet = changeSetMap.get(modelId);
+		}
+
+		// otherwise or when changeSet is null
+		if( changeSet == null ) {
+			// create a new ChangeSet
+			changeSet = new BioModelsChangeSet(modelId);
+			// ... and put it into the map (the pointer)
+			changeSetMap.put(modelId, changeSet);
+		}
+
+
+		// pushs it into changeSet
+		changeSet.addChange(change);
+
 	}
 
 }

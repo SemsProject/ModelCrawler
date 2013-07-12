@@ -9,8 +9,11 @@ import java.util.Map;
 
 public class ModelRecord {
 	
-	protected String modelId;
-	protected String versionId;
+	protected String modelId = null;
+	protected String versionId = null;
+	
+	protected boolean awareOfParent = false;
+	protected String parentVersionId = null;
 		
 	protected URI documentUri;
 	
@@ -116,6 +119,25 @@ public class ModelRecord {
 	
 	public void setCrawledDate( Date crawledDate ) {
 		meta.put(META_CRAWLED_DATE, new SimpleDateFormat(DATE_FORMAT).format(crawledDate) );
+	}
+	
+	public boolean isAwareOfParent() {
+		return awareOfParent;
+	}
+	
+	public String getParentVersionId() {
+		return awareOfParent == true ? parentVersionId : null;
+	}
+	
+	public void setParentVersionId( String parentVersionId ) {
+		if( parentVersionId != null && !parentVersionId.isEmpty() ) {
+			this.parentVersionId = parentVersionId;
+			this.awareOfParent = true;
+		}
+		else {
+			this.parentVersionId = null;
+			this.awareOfParent = false;
+		}
 	}
 	
 	public String getMeta( String key ) {

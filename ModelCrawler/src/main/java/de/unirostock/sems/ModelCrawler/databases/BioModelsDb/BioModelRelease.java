@@ -14,7 +14,7 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 	private File archivFile = null;
 	private File contentDir = null;
 	
-	private Map<String, String> modelMap;
+	private Map<String, File> modelMap;
 	
 	public BioModelRelease( String releaseName, String ftpDirectory, Date releaseDate, File archivFile ) {
 		this.releaseName	= releaseName;
@@ -53,7 +53,7 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 		return modelMap.keySet();
 	}
 	
-	public String getModelPath( String modelId ) {
+	public File getModelPath( String modelId ) {
 		return modelMap.get(modelId);
 	}
 	
@@ -65,9 +65,10 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 		return contentDir;
 	}
 
-	public boolean setContentDir(File contentDir) {
+	public boolean setContentDir(File contentDir, Map<String, File> modelMap) {
 		// REMIND the contentDir can only be setted once!
-		if( this.contentDir == null ) {
+		if( this.contentDir == null && this.modelMap == null ) {
+			this.modelMap = modelMap;
 			this.contentDir = contentDir;
 			return true;
 		}
