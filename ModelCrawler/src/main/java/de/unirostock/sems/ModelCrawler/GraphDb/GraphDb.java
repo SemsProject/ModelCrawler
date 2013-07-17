@@ -64,7 +64,8 @@ public class GraphDb implements GraphDatabase {
 
 	private final String FEAUTURE_MODEL_ID = "modelID";
 	private final String FEAUTURE_VERSION_ID = "versionID";
-	private final String FEAUTURE_XML_URI = "xmlDoc";
+	private final String FEAUTURE_PARENT_VERSION = "parent";
+	private final String FEAUTURE_XML_URI = "xmldoc";
 	private final String FEAUTURE_MODEL_META = "meta";
 	private final String FEAUTURE_META_CRAWLED_DATE = "crawledDate";
 	private final String FEAUTURE_META_VERSION_DATE = "versionDate";
@@ -164,8 +165,11 @@ public class GraphDb implements GraphDatabase {
 		String json = null;
 
 		// building the json
-		if( parameter != null )
+		if( parameter != null ) {
 			json = parameter.toJSONString();
+			if( log.isDebugEnabled() )
+				log.debug( MessageFormat.format("generating HTTP JSON Request - json: {0}", json) );
+		}
 		//TODO throwing exception, if json building fails!
 
 		// generating the request
@@ -455,7 +459,8 @@ public class GraphDb implements GraphDatabase {
 	public boolean insertModel(String modelId, String versionId, String parentVersion, URI model, Map<String, String> meta) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
 		if( modelId == null || modelId.isEmpty() || versionId == null || versionId.isEmpty() )
 			throw new IllegalArgumentException("modelId and/or can not be null or empty");
-
+		
+		// when parent not set -> warn
 		if( log.isWarnEnabled() ) {
 			if( parentVersion == null || parentVersion.isEmpty() )
 				log.warn( MessageFormat.format("Inserting {0}/{1} parentVersion is not set! This model should be the first version!" , modelId, versionId) );
@@ -466,6 +471,10 @@ public class GraphDb implements GraphDatabase {
 		parameter.put(FEAUTURE_MODEL_ID, modelId);
 		parameter.put(FEAUTURE_VERSION_ID, versionId);
 		parameter.put(FEAUTURE_XML_URI, model.toString());
+		
+		// when parentversion is setted -> add it to the request
+		if( parentVersion != null && !parentVersion.isEmpty() )
+			parameter.put(FEAUTURE_PARENT_VERSION, parentVersion);
 
 		// if meta data are set...
 		if( meta != null && !meta.isEmpty() ) {
