@@ -189,11 +189,17 @@ public class BioModelsDb implements ModelDatabase {
 	 * @param release
 	 */
 	protected void processRelease( BioModelRelease release ) {
-
+		
 		// getting the current Date, for crawling TimeStamp
 		Date crawledDate = new Date();
-
+		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("start processing release {0}", release.getReleaseName()) );
+		
 		// try to download
+		if( log.isInfoEnabled() )
+			log.info( "start download" );
+		
 		try {
 			if( downloadRelease(release) == false ) {
 				log.fatal( MessageFormat.format("Can not process release {0}", release.getReleaseName()) );
@@ -205,6 +211,9 @@ public class BioModelsDb implements ModelDatabase {
 		}
 
 		// try to extract
+		if( log.isInfoEnabled() )
+			log.info("start extraction");
+		
 		try {
 			extractRelease(release);
 		}
@@ -416,6 +425,9 @@ public class BioModelsDb implements ModelDatabase {
 				log.error("No matching file found!");
 				return false;
 			}
+			
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("found sbml file: {0}", archiv) );
 
 			// Creating a TempFile and open OutputStream
 			target = new File( tempDir, "BioModelsDb_" + release.getReleaseName() + ".tar" );
@@ -458,7 +470,7 @@ public class BioModelsDb implements ModelDatabase {
 			while( (red = uncompressedStream.read(buffer)) != -1 ) {
 				targetStream.write(buffer, 0, red);
 				total = total + red;
-				System.out.println( MessageFormat.format("{0} ({1})", total, red) );
+//				System.out.println( MessageFormat.format("{0} ({1})", total, red) );
 			}
 
 			// close the output Stream
@@ -550,8 +562,8 @@ public class BioModelsDb implements ModelDatabase {
 				if( entry.isDirectory() ) {
 					// directory
 
-					if( log.isDebugEnabled() )
-						log.debug( MessageFormat.format("Extract directory {0}", entryFile.getAbsolutePath() ));
+					if( log.isTraceEnabled() )
+						log.trace( MessageFormat.format("Extract directory {0}", entryFile.getAbsolutePath() ));
 
 					if( !entryFile.exists() ) {
 						// directroy does not exists
@@ -562,8 +574,8 @@ public class BioModelsDb implements ModelDatabase {
 				else {
 					// file
 
-					if( log.isDebugEnabled() )
-						log.debug( MessageFormat.format("Extract directory {0}", entryFile.getAbsolutePath() ));
+					if( log.isTraceEnabled() )
+						log.trace( MessageFormat.format("Extract directory {0}", entryFile.getAbsolutePath() ));
 
 					OutputStream entryStream = new FileOutputStream(entryFile);
 					IOUtils.copy(archivStream, entryStream);
@@ -608,32 +620,49 @@ public class BioModelsDb implements ModelDatabase {
 	private void tranferChange( String modelId, BioModelRelease release, Date crawledDate ) {
 
 		boolean isChangeNew = false;
-
+		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Check if model {0} from release {1} is a new change", modelId, release.getReleaseName()) );
+		
 		BioModelsChangeSet changeSet = null;
 		if( changeSetMap.containsKey(modelId) ) {
 			// if modelId is already known -> get it from changeSetMap
 			changeSet = (BioModelsChangeSet) changeSetMap.get(modelId);
+			if( log.isInfoEnabled() )
+				log.info("ChangeSet exists, modelId is not unknown!");
 		}
 
 		// create the Change-Entry
 		BioModelsChange change = new BioModelsChange(modelId, release.getReleaseName(), release.getReleaseDate(), crawledDate);
 		// set up the xml file and calc the hash
 		change.setXmlFile( release.getModelPath(modelId) );
+		if( log.isTraceEnabled() )
+			log.trace( MessageFormat.format("calced file hash: {0}", change.getHash()) );
 
 		// is a changeSet for this model available?
 		if( changeSet != null ) {
 			// yes -> compare hashes from current and latest
-
+			
+			if( log.isTraceEnabled() )
+				log.trace("compare hash with latest from changeSet");
+			
 			BioModelsChange latest = ((BioModelsChange) changeSet.getLatestChange());
 			// null check
 			if( latest != null ) {
 				// Hashs are not equal -> is an unknown change!
-				if( latest.getHash().equals( change.getHash() ) == false )
+				if( latest.getHash().equals( change.getHash() ) == false ) {
 					isChangeNew = true;
+					if( log.isInfoEnabled() )
+						log.info("hashs are not equal -> new version");
+				}
 			}
 		}
 		else {
 			// no changeSet available -> create one
+			
+			if( log.isInfoEnabled() )
+				log.info("ChangeSet does not exists, checking database");
+			
 			changeSet = new BioModelsChangeSet(modelId);
 			// ... and put it into the map (the pointer)
 			changeSetMap.put(modelId, changeSet);
@@ -642,7 +671,10 @@ public class BioModelsDb implements ModelDatabase {
 			if( graphDb != null  ) {
 
 				// TODO cache the result of the latest request!
-
+				
+				if( log.isTraceEnabled() )
+					log.trace("start checking database");
+				
 				// try to get the latest version of this model
 				BioModelsChange latest = null;
 				try {
@@ -657,9 +689,16 @@ public class BioModelsDb implements ModelDatabase {
 				
 				if( latest != null ) {
 					// latest model available
+					
+					if( log.isTraceEnabled() )
+						log.trace("successfully received latest from database");
+					
 					// compare hashes
-					if( latest.getHash().equals( change.getHash() ) == false )
+					if( latest.getHash().equals( change.getHash() ) == false ) {
 						isChangeNew = true;
+						if( log.isInfoEnabled() )
+							log.info("hashs are not equal -> new version");
+					}
 				}
 			}
 
@@ -668,6 +707,8 @@ public class BioModelsDb implements ModelDatabase {
 		if( isChangeNew )  {
 			// pushs it into changeSet
 			changeSet.addChange(change);
+			if( log.isInfoEnabled() )
+				log.info("put new version into change set");
 		}
 
 	}

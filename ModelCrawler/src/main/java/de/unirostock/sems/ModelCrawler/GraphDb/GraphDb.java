@@ -58,7 +58,6 @@ public class GraphDb implements GraphDatabase {
 	private final String FEAUTURE_ERROR = "error";
 
 	private final String RESULT_FAILED = "failed";
-	//TODO to be continued...
 
 	public GraphDb( URL databaseInterface ) {
 		this.databaseInterface = databaseInterface;
