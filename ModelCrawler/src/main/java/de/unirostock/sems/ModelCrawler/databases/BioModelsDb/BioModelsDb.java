@@ -32,6 +32,7 @@ import org.apache.commons.compress.archivers.dump.UnsupportedCompressionAlgorith
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.ftp.FTP;
@@ -42,7 +43,6 @@ import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
 import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
 import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseInterfaceException;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
@@ -59,7 +59,7 @@ public class BioModelsDb implements ModelDatabase {
 	protected File workingDir, tempDir;
 	protected java.util.Properties config;
 
-	protected Map<String, BioModelsChangeSet> changeSetMap = new HashMap<String, BioModelsChangeSet>();
+	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 
 	protected GraphDatabase graphDb = null;
 
@@ -90,16 +90,14 @@ public class BioModelsDb implements ModelDatabase {
 
 	@Override
 	public List<String> listModels() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<String>( changeSetMap.keySet() );
 	}
 
 	@Override
 	public Map<String, ChangeSet> listChanges() {
-		// TODO Auto-generated method stub
-		return null;
+		return changeSetMap;
 	}
-
+	
 	@Override
 	public ChangeSet getModelChanges(String modelId) {
 		return changeSetMap.get(modelId);
@@ -107,10 +105,14 @@ public class BioModelsDb implements ModelDatabase {
 
 	@Override
 	public void cleanUp() {
-		// TODO Auto-generated method stub
-
+		// deletes the tempDir recursively
+		try {
+			FileUtils.deleteDirectory(tempDir);
+		} catch (IOException e) {
+			log.error("Error while cleaning up the temp dir!", e);
+		}
 	}
-
+	
 	@Override
 	public void run() {
 		List<BioModelRelease> newReleases = new ArrayList<BioModelRelease>();
@@ -147,8 +149,8 @@ public class BioModelsDb implements ModelDatabase {
 				log.info( MessageFormat.format( "{0} new release(s)", newReleases.size() ) );
 		}
 		else {
-			// no releases were indexed before. Sadly now we have indexed them all
-			// on the other hand, we could simply copy the list with all release now :)
+			// no releases were indexed before. Sadly now we have process them all
+			// on the other hand, we could simply copy the list with all releases now :)
 			newReleases.addAll(releaseList);
 			if( log.isInfoEnabled() )
 				log.info("every release is a new release...");
@@ -157,7 +159,6 @@ public class BioModelsDb implements ModelDatabase {
 		// sorting, just in case...
 		Collections.sort(newReleases);
 
-		// TODO download the unkwnow releases
 		// going throw the new release list an downloads every
 		Iterator<BioModelRelease> iter = newReleases.iterator();
 		while( iter.hasNext() ) {
@@ -208,7 +209,7 @@ public class BioModelsDb implements ModelDatabase {
 			extractRelease(release);
 		}
 		catch (IllegalArgumentException e) {
-			log.fatal("Something went wrong with the release Object! (IllegalArgumentException) ", e);MessageFormat.format("IOException while extracting release {0}", release.getReleaseName());
+			log.fatal("Something went wrong with the release Object! (IllegalArgumentException) ", e);
 			return;
 		} catch (ExtractException e) {
 			log.fatal("Error while extracting", e);
@@ -605,49 +606,69 @@ public class BioModelsDb implements ModelDatabase {
 	}
 
 	private void tranferChange( String modelId, BioModelRelease release, Date crawledDate ) {
+
+		boolean isChangeNew = false;
+
 		BioModelsChangeSet changeSet = null;
+		if( changeSetMap.containsKey(modelId) ) {
+			// if modelId is already known -> get it from changeSetMap
+			changeSet = (BioModelsChangeSet) changeSetMap.get(modelId);
+		}
 
 		// create the Change-Entry
 		BioModelsChange change = new BioModelsChange(modelId, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+		// set up the xml file and calc the hash
+		change.setXmlFile( release.getModelPath(modelId) );
 
-		// if GraphDb is available for this instance
-		if( graphDb != null ) {
-			
-			// try to get the latest version of this model
-			BioModelsChange latest = null;
-			try {
-				latest = (BioModelsChange) graphDb.getLatestModelVersion(modelId);
-			} catch (GraphDatabaseInterfaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (GraphDatabaseCommunicationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (GraphDatabaseError e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		// is a changeSet for this model available?
+		if( changeSet != null ) {
+			// yes -> compare hashes from current and latest
+
+			BioModelsChange latest = ((BioModelsChange) changeSet.getLatestChange());
+			// null check
+			if( latest != null ) {
+				// Hashs are not equal -> is an unknown change!
+				if( latest.getHash().equals( change.getHash() ) == false )
+					isChangeNew = true;
 			}
-
-			// TODO
 		}
-
-
-		if( changeSetMap.containsKey(modelId) ) {
-			// if modelId is already known -> get it from changeSetMap
-			changeSet = changeSetMap.get(modelId);
-		}
-
-		// otherwise or when changeSet is null
-		if( changeSet == null ) {
-			// create a new ChangeSet
+		else {
+			// no changeSet available -> create one
 			changeSet = new BioModelsChangeSet(modelId);
 			// ... and put it into the map (the pointer)
 			changeSetMap.put(modelId, changeSet);
+
+			// if GraphDb is available for this instance
+			if( graphDb != null  ) {
+
+				// TODO cache the result of the latest request!
+
+				// try to get the latest version of this model
+				BioModelsChange latest = null;
+				try {
+					latest = (BioModelsChange) graphDb.getLatestModelVersion(modelId);
+				} catch (GraphDatabaseCommunicationException e) {
+					log.error("Getting latest model version, to check, if processed model version is new, failed", e);
+				} catch (GraphDatabaseError e) {
+					// error occures, when modelId is unknown to the database -> so we can assume the change is new!
+					log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);
+					isChangeNew = true;
+				}
+				
+				if( latest != null ) {
+					// latest model available
+					// compare hashes
+					if( latest.getHash().equals( change.getHash() ) == false )
+						isChangeNew = true;
+				}
+			}
+
 		}
 
-
-		// pushs it into changeSet
-		changeSet.addChange(change);
+		if( isChangeNew )  {
+			// pushs it into changeSet
+			changeSet.addChange(change);
+		}
 
 	}
 

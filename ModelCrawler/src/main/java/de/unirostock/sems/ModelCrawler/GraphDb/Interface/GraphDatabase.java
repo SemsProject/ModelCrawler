@@ -12,62 +12,6 @@ import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseInterface
 public interface GraphDatabase {
 	
 	/**
-	 * Checks if database is available
-	 * 
-	 * @deprecated
-	 * @return
-	 * @throws GraphDatabaseCommunicationException 
-	 */
-	@Deprecated
-	public boolean isModelManagerAlive() throws GraphDatabaseCommunicationException;
-	
-	/**
-	 * Checks if database contains data
-	 * 
-	 * @deprecated
-	 * @return
-	 * @throws GraphDatabaseCommunicationException 
-	 */
-	@Deprecated
-	public boolean isDatabaseEmpty() throws GraphDatabaseCommunicationException;
-	
-	/**
-	 * Returns all features included by an cellMl query
-	 * 
-	 * @deprecated
-	 * @return
-	 * @throws GraphDatabaseCommunicationException 
-	 * @throws GraphDatabaseInterfaceException 
-	 */
-	@Deprecated
-	public String[] cellMlModelQueryFeatures() throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException;
-	
-	/**
-	 * Requests a single Model by its ModelId
-	 * 
-	 * @deprecated
-	 * @param modelId
-	 * @return QueryResult or NULL if no match found
-	 * @throws GraphDatabaseCommunicationException 
-	 * @throws GraphDatabaseInterfaceException 
-	 */
-	@Deprecated
-	public ModelRecord getCellMlModelFromId( String modelId ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException;
-	
-	/**
-	 * Generates and executes a Query to the GraphDB
-	 *  
-	 * @deprecated
-	 * @param feautures e.g. ID, NAME, COMPONENT, VARIABLE, CREATOR, AUTHOR
-	 * @return
-	 */
-	@Deprecated
-	public List<ModelRecord> cellMlModelQuery( Map<String, String> feautures );
-	
-	
-	// ------------------------------------------------------------------------
-	
-	/**
 	 * Get the IDs from all models stored in the GraphDB
 	 * 
 	 * @return String[]

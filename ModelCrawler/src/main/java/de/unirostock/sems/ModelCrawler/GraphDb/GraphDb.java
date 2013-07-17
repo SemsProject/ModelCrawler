@@ -43,20 +43,6 @@ public class GraphDb implements GraphDatabase {
 
 	private final Log log = LogFactory.getLog(GraphDb.class);
 
-	private final String QUERY_MODEL_MANAGER_ALIVE = "is_model_manager_alive";
-	private final String QUERY_DATABASE_EMPTY = "is_database_empty";
-	private final String QUERY_CELLML_MODEL = "cellml_model_query";
-	private final String QUERY_CELLML_MODEL_SIMPLE = "cellml_model_query";
-	private final String QUERY_PUBLICATION_MODEL = "publication_model_query";
-	private final String QUERY_PERSON = "person_query";
-	private final String QUERY_PUBLICATION = "publication_query";
-	private final String QUERY_ANNOTATION_MODEL = "annotation_model_query";
-	private final String QUERY_ANNOTATION = "annotation_query";
-	private final String QUERY_MODEL = "model_query";
-
-	private final String FEAUTURE_ID = "ID";
-	private final String FEAUTURE_NAME = "NAME";
-
 	private final String QUERY_GET_MODEL = "get";
 	private final String QUERY_GET_LATEST = "get/latest";
 	private final String QUERY_MODIFY_MODEL = "modify";
@@ -67,9 +53,6 @@ public class GraphDb implements GraphDatabase {
 	private final String FEAUTURE_PARENT_VERSION = "parent";
 	private final String FEAUTURE_XML_URI = "xmldoc";
 	private final String FEAUTURE_MODEL_META = "meta";
-	private final String FEAUTURE_META_CRAWLED_DATE = "crawledDate";
-	private final String FEAUTURE_META_VERSION_DATE = "versionDate";
-	private final String FEAUTURE_META_SOURCE = "source";
 
 	private final String FEAUTURE_RETURN = "return";
 	private final String FEAUTURE_ERROR = "error";
@@ -85,76 +68,6 @@ public class GraphDb implements GraphDatabase {
 		// generating a Json Parser
 		parser = new JSONParser();
 	}
-
-	@Override
-	public boolean isModelManagerAlive() throws GraphDatabaseCommunicationException {
-
-		HttpPost request = generateHttpRequest(QUERY_MODEL_MANAGER_ALIVE);
-		String result = performHttpRequestString(request).toLowerCase();
-
-		if( result.equals("true") )
-			return true;
-		else
-			return false;
-	}
-
-	@Override
-	public boolean isDatabaseEmpty() throws GraphDatabaseCommunicationException {
-		HttpPost request = generateHttpRequest(QUERY_DATABASE_EMPTY);
-		String result = performHttpRequestString(request).toLowerCase();
-
-		if( result.equals("true") )
-			return true;
-		else
-			return false;
-	}
-
-	@Override
-	public String[] cellMlModelQueryFeatures() throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException {
-		HttpPost request = generateHttpRequest(QUERY_CELLML_MODEL);
-		JSONArray array = (JSONArray) performHttpRequestJSON(request);
-
-		return (String[]) array.toArray();
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public ModelRecord getCellMlModelFromId(String modelId) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException {
-		// curl -X POST http://morre.sems.uni-rostock.de:7474/morre/query/cellml_model_query/ -H "Content-Type: application/json" -d '{"features":["ID"], "keywords":["novak_1993"]}'
-		ModelRecord record = null;
-
-		// Parameter
-		JSONObject parameter = new JSONObject();
-		JSONArray featureList = new JSONArray();
-		JSONArray keywordsList = new JSONArray();
-
-		featureList.add( FEAUTURE_ID );
-		keywordsList.add(modelId);
-
-		parameter.put( "feautures", featureList );
-		parameter.put( "keywords", keywordsList );
-
-		// performing query
-		HttpPost request = generateHttpRequest(QUERY_CELLML_MODEL, parameter);
-		JSONArray array = (JSONArray) performHttpRequestJSON(request);
-
-		// take the first result and parse it!
-		JSONObject first = (JSONObject) array.get(0);
-		if( first == null )
-			return null;
-
-		// TODO
-
-		return null;
-	}
-
-	@Override
-	public List<ModelRecord> cellMlModelQuery(Map<String, String> feautures) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	// ------------------------------------------------------------------------
 
 	private HttpPost generateHttpRequest( String query ) throws GraphDatabaseInterfaceException {
 		return generateHttpRequest(query, null);
@@ -264,16 +177,17 @@ public class GraphDb implements GraphDatabase {
 		String docURI		= (String) json.get(FEAUTURE_XML_URI);
 
 		// check if something is not set
-		if( modelId == null || modelId.isEmpty() || versionId == null || versionId.isEmpty() || docURI == null || docURI.isEmpty() )
+		if( modelId == null || modelId.isEmpty() || versionId == null || versionId.isEmpty() )
 			return null;
 
-		// parsing the URI
+		// parsing the URI, if setted!
 		URI model = null;
-		try {
-			model = new URI(docURI);
-		} catch (URISyntaxException e) {
-			log.error("model record from database contains a record with an invalid model uri!", e);
-			//			e.printStackTrace();
+		if( docURI != null && !docURI.isEmpty() ) {
+			try {
+				model = new URI(docURI);
+			} catch (URISyntaxException e) {
+				log.error("model record from database contains a record with an invalid model uri!", e);
+			}
 		}
 
 		// create a new model record object
@@ -437,7 +351,7 @@ public class GraphDb implements GraphDatabase {
 		metaJson.putAll(meta);
 
 		// generate request
-		HttpPost request = generateHttpRequest(QUERY_GET_MODEL, parameter);
+		HttpPost request = generateHttpRequest(QUERY_MODIFY_MODEL, parameter);
 		if( request == null )
 			return false;
 
@@ -459,7 +373,7 @@ public class GraphDb implements GraphDatabase {
 	public boolean insertModel(String modelId, String versionId, String parentVersion, URI model, Map<String, String> meta) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
 		if( modelId == null || modelId.isEmpty() || versionId == null || versionId.isEmpty() )
 			throw new IllegalArgumentException("modelId and/or can not be null or empty");
-		
+
 		// when parent not set -> warn
 		if( log.isWarnEnabled() ) {
 			if( parentVersion == null || parentVersion.isEmpty() )
@@ -471,7 +385,7 @@ public class GraphDb implements GraphDatabase {
 		parameter.put(FEAUTURE_MODEL_ID, modelId);
 		parameter.put(FEAUTURE_VERSION_ID, versionId);
 		parameter.put(FEAUTURE_XML_URI, model.toString());
-		
+
 		// when parentversion is setted -> add it to the request
 		if( parentVersion != null && !parentVersion.isEmpty() )
 			parameter.put(FEAUTURE_PARENT_VERSION, parentVersion);
@@ -491,7 +405,7 @@ public class GraphDb implements GraphDatabase {
 		JSONObject json = (JSONObject) performHttpRequestJSON(request);
 		if( json == null )
 			return false;
-		
+
 		if( json.get(FEAUTURE_RETURN).equals(RESULT_FAILED) ) {
 			String message = (String) json.get(FEAUTURE_ERROR);
 			log.error( MessageFormat.format("{0} while modifying model record", message) );
@@ -503,17 +417,17 @@ public class GraphDb implements GraphDatabase {
 			log.error( "Unknown error while inserting model!" );
 			throw new GraphDatabaseError("Unknown error while inserting model!");
 		}
-		
+
 	}
 
 	@Override
 	public boolean insertModel(String modelId, String versionId, String parentVersion, URI model) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
 		return insertModel(modelId, versionId, parentVersion, model, null);
 	}
-	
+
 	@Override
 	public boolean insertModel( ModelRecord record, String parentVersion ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
 		return insertModel( record.getModelId(), record.getVersionId(), parentVersion, record.getDocumentUri(), record.getMetaMap() );
 	}
-	
+
 }
