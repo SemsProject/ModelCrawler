@@ -157,7 +157,10 @@ public class BioModelsDb implements ModelDatabase {
 
 		// sorting, just in case...
 		Collections.sort(newReleases);
-
+		
+		// XXX Limiter
+		int limiter = 0;
+		
 		// going throw the new release list an downloads every
 		Iterator<BioModelRelease> iter = newReleases.iterator();
 		while( iter.hasNext() ) {
@@ -168,6 +171,9 @@ public class BioModelsDb implements ModelDatabase {
 			// if the download was succesfull, add the release to the known releases
 			if( release.isDownloaded() && release.isExtracted() )
 				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
+			
+			if( limiter++ > 3 )
+				break;
 		}
 
 
@@ -217,7 +223,10 @@ public class BioModelsDb implements ModelDatabase {
 			log.fatal("Error while extracting", e);
 			return;
 		}
-
+		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("start transfering changes from release {0} into change sets", release.getReleaseName()) );
+		
 		// transfer the index from release
 		Iterator<String> iter = release.getModelList().iterator();
 		while( iter.hasNext() ) {

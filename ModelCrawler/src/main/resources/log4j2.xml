@@ -5,6 +5,7 @@
 		<property name="mainLogFile">main.log</property>
 		<property name="bioModelsDbLogFile">BioModelsDb.log</property>
 		<property name="GraphDbLogFile">GraphDb.log</property>
+		<property name="xmlRepoLogFile">XmlFileServer.log</property>
 		
 		<property name="DefaultPatternLayout">%d{HH:mm:ss.SSS} [%-5level@%t] %logger{36} - %msg%n</property>
 	</properties>
@@ -24,8 +25,12 @@
 			<patternLayout pattern="${DefaultPatternLayout}" />
 		</File>
 		
-		<File name="bioModelsDbFile" fileName="${GraphDbLogFile}">
+		<File name="graphDbFile" fileName="${GraphDbLogFile}">
 			<patternLayout pattern="${DefaultPatternLayout}" />
+		</File>
+		
+		<File name="xmlRepoFile" fileName="${xmlRepoLogFile}">
+			<patternLayout patter="${DefaultPatternLayout}" />
 		</File>
 		
 	</appenders>
@@ -43,17 +48,22 @@
 		</logger>
 		
 		<logger name="de.unirostock.sems.ModelCrawler.databases.BioModelsDb"
-				level="trace" additivity="false">
-			<appender-ref ref="STDOUT" />
+				level="trace" additivity="true">
+<!-- 			<appender-ref ref="STDOUT" /> -->
 			<appender-ref ref="bioModelsDbFile" />
 		</logger>
 		
 		<logger name="de.unirostock.sems.ModelCrawler.GraphDb"
-				level="trace" additivity="false">
-			<appender-ref ref="STDOUT" />
-			<appender-ref ref="GraphDbFile" />
+				level="trace" additivity="true">
+<!-- 			<appender-ref ref="STDOUT" /> -->
+			<appender-ref ref="graphDbFile" />
 		</logger>
 		
+		<logger name="de.unirostock.sems.ModelCrawler.XmlFileRepository"
+				level="trace" additivity="true">
+<!-- 			<appender-ref ref="STDOUT" /> -->
+			<appender-ref ref="xmlRepoFile" />
+		</logger>
 	</loggers>
 
 </configuration>
