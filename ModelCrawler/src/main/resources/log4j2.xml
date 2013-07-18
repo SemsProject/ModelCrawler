@@ -2,8 +2,9 @@
 <configuration status="warn">
 		
 	<properties>
-		<property name="mainLogFile">target/main.log</property>
-		<property name="bioModelsDbLogFile">target/BioModelsDb.log</property>
+		<property name="mainLogFile">main.log</property>
+		<property name="bioModelsDbLogFile">BioModelsDb.log</property>
+		<property name="GraphDbLogFile">GraphDb.log</property>
 		
 		<property name="DefaultPatternLayout">%d{HH:mm:ss.SSS} [%-5level@%t] %logger{36} - %msg%n</property>
 	</properties>
@@ -20,6 +21,10 @@
 		</File>
 		
 		<File name="bioModelsDbFile" fileName="${bioModelsDbLogFile}">
+			<patternLayout pattern="${DefaultPatternLayout}" />
+		</File>
+		
+		<File name="bioModelsDbFile" fileName="${GraphDbLogFile}">
 			<patternLayout pattern="${DefaultPatternLayout}" />
 		</File>
 		
@@ -41,6 +46,12 @@
 				level="trace" additivity="false">
 			<appender-ref ref="STDOUT" />
 			<appender-ref ref="bioModelsDbFile" />
+		</logger>
+		
+		<logger name="de.unirostock.sems.ModelCrawler.GraphDb"
+				level="trace" additivity="false">
+			<appender-ref ref="STDOUT" />
+			<appender-ref ref="GraphDbFile" />
 		</logger>
 		
 	</loggers>

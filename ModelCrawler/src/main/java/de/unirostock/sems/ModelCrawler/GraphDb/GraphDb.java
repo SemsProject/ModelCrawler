@@ -428,5 +428,10 @@ public class GraphDb implements GraphDatabase {
 	public boolean insertModel( ModelRecord record, String parentVersion ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
 		return insertModel( record.getModelId(), record.getVersionId(), parentVersion, record.getDocumentUri(), record.getMetaMap() );
 	}
+	
+	@Override
+	public boolean insertModel( ModelRecord record ) throws GraphDatabaseInterfaceException, GraphDatabaseCommunicationException, GraphDatabaseError {
+		return insertModel( record, record.getParentVersionId() );
+	}
 
 }

@@ -63,8 +63,7 @@ public class BioModelsDb implements ModelDatabase {
 
 	protected GraphDatabase graphDb = null;
 
-	public BioModelsDb(String ftpUrl, GraphDatabase graphDb) throws MalformedURLException,
-	IllegalArgumentException {
+	public BioModelsDb(String ftpUrl, GraphDatabase graphDb) throws MalformedURLException, IllegalArgumentException {
 		this.ftpUrl = new URL(ftpUrl);
 		this.graphDb = graphDb;
 
@@ -197,9 +196,6 @@ public class BioModelsDb implements ModelDatabase {
 			log.info( MessageFormat.format("start processing release {0}", release.getReleaseName()) );
 		
 		// try to download
-		if( log.isInfoEnabled() )
-			log.info( "start download" );
-		
 		try {
 			if( downloadRelease(release) == false ) {
 				log.fatal( MessageFormat.format("Can not process release {0}", release.getReleaseName()) );
@@ -211,9 +207,6 @@ public class BioModelsDb implements ModelDatabase {
 		}
 
 		// try to extract
-		if( log.isInfoEnabled() )
-			log.info("start extraction");
-		
 		try {
 			extractRelease(release);
 		}
@@ -412,30 +405,30 @@ public class BioModelsDb implements ModelDatabase {
 
 		try {
 			// Changes the directory
-			if( log.isInfoEnabled() )
-				log.info("changes to release directory");
+			if( log.isDebugEnabled() )
+				log.debug("changes to release directory");
 			ftpClient.changeToParentDirectory();
 			ftpClient.changeWorkingDirectory( release.getFtpDirectory() );
 
 			// Finding the right file to download
-			if( log.isInfoEnabled() )
-				log.info("trying to find the smbl only file");
+			if( log.isDebugEnabled() )
+				log.debug("trying to find the smbl only file");
 
 			if( (archiv = findSbmlArchivFile()) == null ) {
 				log.error("No matching file found!");
 				return false;
 			}
 			
-			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("found sbml file: {0}", archiv) );
+			if( log.isDebugEnabled() )
+				log.debug( MessageFormat.format("found sbml file: {0}", archiv) );
 
 			// Creating a TempFile and open OutputStream
 			target = new File( tempDir, "BioModelsDb_" + release.getReleaseName() + ".tar" );
 			//target = File.createTempFile( "BioModelsDb_" + release.getReleaseName() + "_", ".tar" );
 			BufferedOutputStream targetStream = new BufferedOutputStream( new FileOutputStream(target) );
 
-			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("download and extract {0} to {1}", archiv, target.getAbsolutePath() ));
+			if( log.isDebugEnabled() )
+				log.debug( MessageFormat.format("download and uncompress {0} to {1}", archiv, target.getAbsolutePath() ));
 
 			// download it...
 			InputStream downStream = ftpClient.retrieveFileStream(archiv);
@@ -516,7 +509,7 @@ public class BioModelsDb implements ModelDatabase {
 			// simple it ends with sbml file declaration and an archiv file extension
 			//if( files[index].getName().endsWith("sbml_files.tar.bz2") == true ) {
 			if( files[index].getName().contains("sbml_file") == true ) {
-				System.out.println( files[index].getSize() );
+				//System.out.println( files[index].getSize() );
 				return files[index].getName();
 			}
 		}
@@ -547,8 +540,9 @@ public class BioModelsDb implements ModelDatabase {
 
 			// opens Archivfile for reading
 			InputStream tarFileStream = new FileInputStream( release.getArchivFile() );
-			// creates InputStream for uncompressing - Format will be automatically detected
-			ArchiveInputStream archivStream = (ArchiveInputStream) new ArchiveStreamFactory().createArchiveInputStream(tarFileStream);
+			// creates InputStream for uncompressing - Format is set to tar
+			// ArchiveInputStream archivStream = (ArchiveInputStream) new ArchiveStreamFactory().createArchiveInputStream(tarFileStream);
+			ArchiveInputStream archivStream = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.TAR, tarFileStream);
 
 			ArchiveEntry entry = null;
 
@@ -575,7 +569,7 @@ public class BioModelsDb implements ModelDatabase {
 					// file
 
 					if( log.isTraceEnabled() )
-						log.trace( MessageFormat.format("Extract directory {0}", entryFile.getAbsolutePath() ));
+						log.trace( MessageFormat.format("Extract file {0}", entryFile.getAbsolutePath() ));
 
 					OutputStream entryStream = new FileOutputStream(entryFile);
 					IOUtils.copy(archivStream, entryStream);
@@ -589,8 +583,8 @@ public class BioModelsDb implements ModelDatabase {
 						// filename as xml ending
 						String modelId = fileName.substring(0, extensionPos);
 
-						if( log.isInfoEnabled() )
-							log.info( MessageFormat.format("Found model {0} from file {1}", modelId, fileName) );
+						if( log.isDebugEnabled() )
+							log.debug( MessageFormat.format("Found model {0} from file {1}", modelId, fileName) );
 
 						// put it in the map
 						fileMap.put(modelId, entryFile);
@@ -628,8 +622,8 @@ public class BioModelsDb implements ModelDatabase {
 		if( changeSetMap.containsKey(modelId) ) {
 			// if modelId is already known -> get it from changeSetMap
 			changeSet = (BioModelsChangeSet) changeSetMap.get(modelId);
-			if( log.isInfoEnabled() )
-				log.info("ChangeSet exists, modelId is not unknown!");
+			if( log.isDebugEnabled() )
+				log.debug("ChangeSet exists, modelId is not unknown!");
 		}
 
 		// create the Change-Entry
@@ -652,17 +646,20 @@ public class BioModelsDb implements ModelDatabase {
 				// Hashs are not equal -> is an unknown change!
 				if( latest.getHash().equals( change.getHash() ) == false ) {
 					isChangeNew = true;
+					// set the parent
+					change.setParentVersionId( latest.getVersionId() );
 					if( log.isInfoEnabled() )
 						log.info("hashs are not equal -> new version");
 				}
 			}
 		}
 		else {
-			// no changeSet available -> create one
+			// no changeSet available...
 			
-			if( log.isInfoEnabled() )
-				log.info("ChangeSet does not exists, checking database");
+			if( log.isDebugEnabled() )
+				log.debug("ChangeSet does not exists, checking database");
 			
+			// ... creates one ...
 			changeSet = new BioModelsChangeSet(modelId);
 			// ... and put it into the map (the pointer)
 			changeSetMap.put(modelId, changeSet);
@@ -684,6 +681,8 @@ public class BioModelsDb implements ModelDatabase {
 				} catch (GraphDatabaseError e) {
 					// error occures, when modelId is unknown to the database -> so we can assume the change is new!
 					log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);
+					// set no parent
+					change.setParentVersionId("");
 					isChangeNew = true;
 				}
 				
@@ -696,6 +695,9 @@ public class BioModelsDb implements ModelDatabase {
 					// compare hashes
 					if( latest.getHash().equals( change.getHash() ) == false ) {
 						isChangeNew = true;
+						// set parent
+						change.setParentVersionId( latest.getParentVersionId() );
+						
 						if( log.isInfoEnabled() )
 							log.info("hashs are not equal -> new version");
 					}
@@ -707,8 +709,8 @@ public class BioModelsDb implements ModelDatabase {
 		if( isChangeNew )  {
 			// pushs it into changeSet
 			changeSet.addChange(change);
-			if( log.isInfoEnabled() )
-				log.info("put new version into change set");
+			if( log.isDebugEnabled() )
+				log.debug("put new version into change set");
 		}
 
 	}

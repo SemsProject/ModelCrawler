@@ -13,8 +13,8 @@ public interface ModelDatabase extends Runnable {
 	public List<String> listModels();
 	
 	/**
-	 * Returns a map with all changes made after the last crawl
-	 * the modelId is the map key
+	 * Returns a map with all changes made after the last crawl <br>
+	 * the modelId is the map key.
 	 * 
 	 * @return Map<ModelId, ChangeSet>
 	 */
