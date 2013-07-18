@@ -134,18 +134,19 @@ public class XmlFileRepository implements XmlFileServer {
 		try {
 			// creating new model URI
 			model = new URI( Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.scheme"),
-								Properties.getProperty("de.unirostock.sems.ModelCrawler.model.uri.host"),
-								modelId + File.separator + versionId, null);
+								Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.host"),
+								File.separator + modelId + File.separator + versionId, null);
 			
 		} catch (URISyntaxException e) {
 			log.error("modelId or versionId does not fit into URI format", e);
 			throw new UnsupportedUriException("modelId or versionId does not fit into URI format!");
 		}
 		
-		File modelPath = new File(location, modelId + File.separator + versionId + File.separator + modelId + ".xml" );
+		File modelDir  = new File(location, modelId + File.separator + versionId + File.separator ); 
+		File modelPath = new File(modelDir, modelId + ".xml" );
 		
 		try {
-			modelPath.mkdirs();
+			modelDir.mkdirs();
 			modelPath.createNewFile();
 			
 			OutputStream file = new FileOutputStream(modelPath);
