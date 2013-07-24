@@ -3,13 +3,22 @@ package de.unirostock.sems.ModelCrawler.databases.PMR2;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
+import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 
-public class Pmr2Db implements ModelDatabase {
-
-	public Pmr2Db() {
-		// TODO Auto-generated constructor stub
+public class PmrDb implements ModelDatabase {
+	
+	private final Log log = LogFactory.getLog( PmrDb.class );
+	
+	public PmrDb(String repoListUrl, GraphDatabase graphDb) {
+		
+		
+		
 	}
 
 	@Override
