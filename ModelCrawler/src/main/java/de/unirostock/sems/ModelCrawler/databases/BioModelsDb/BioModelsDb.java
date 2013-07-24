@@ -180,11 +180,6 @@ public class BioModelsDb implements ModelDatabase {
 		saveProperties();
 	}
 
-	public List<BioModelRelease> getBioModelReleases() {
-		return releaseList;
-	}
-
-
 	/**
 	 * Downloads, extracts and indexes the gives release
 	 * must called for each new release CHRONOLOGICAL

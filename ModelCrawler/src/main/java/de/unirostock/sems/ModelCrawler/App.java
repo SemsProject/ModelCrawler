@@ -154,41 +154,4 @@ public class App
 		}
     }
     
-    
-//    private static void deprecatedTest() {
-//    	BioModelsDb db = null;
-//    	try {
-//			GraphDatabase graphDb = new GraphDb( new URL( Properties.getProperty("de.unirostock.sems.ModelCrawler.graphDb.api") ) ); 
-//    		db = new BioModelsDb( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl"), graphDb );
-//			// do it...
-//    		db.run();
-//	        
-//	        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-//	        Iterator<BioModelRelease> iter = db.getBioModelReleases().iterator();
-//	        
-//	        while( iter.hasNext() ) {
-//	        	BioModelRelease release = iter.next();
-//	        	System.out.println( MessageFormat.format("{0} : {1} - {2}", 
-//	        			release.getReleaseName(), dateFormat.format(release.getReleaseDate()), 
-//	        			release.getFtpDirectory() ));
-//	        }
-//	        
-////	        System.out.println( "Download the latest release!" );
-////	        BioModelRelease latest = list.get( list.size()-1 );
-////	        if( db.downloadRelease(latest) == true ) {
-////	        	System.out.println( MessageFormat.format( "{0}: {1}", latest.getReleaseName(), latest.getArchivFile().getAbsolutePath() ));
-////	        }
-////	        else
-////	        	System.out.println( "Failed to download file!" );
-//	        
-//	        
-//		} catch (MalformedURLException e) {
-//			log.error(e);
-//		} catch (IllegalArgumentException e) {
-//			log.error(e);
-//		} catch (IOException e) {
-//			log.error(e);
-//		}
-//    }
-    
 }
