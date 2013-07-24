@@ -249,7 +249,7 @@ public class BioModelsDb implements ModelDatabase {
 		config = new java.util.Properties();
 		log.info("Loading working dir config");
 		try {
-			File configFile = new File( workingDir, Properties.getProperty("", "config.properties") );
+			File configFile = new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.workingDirConfig", "config.properties") );
 			if( configFile.exists() ) {
 				FileReader configFileReader = new FileReader( configFile );
 				if( configFileReader != null ) {
@@ -273,7 +273,7 @@ public class BioModelsDb implements ModelDatabase {
 		}
 
 		try {
-			FileWriter configFile = new FileWriter( new File( workingDir, Properties.getProperty("", "config.properties") ));
+			FileWriter configFile = new FileWriter( new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.workingDirConfig", "config.properties") ));
 			config.store(configFile, null);
 			log.info("working dir config saved!");
 		} catch (IOException e) {
