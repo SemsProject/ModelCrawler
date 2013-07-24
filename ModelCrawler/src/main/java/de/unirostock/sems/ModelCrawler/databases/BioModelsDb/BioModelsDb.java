@@ -645,8 +645,8 @@ public class BioModelsDb implements ModelDatabase {
 			BioModelsChange latest = ((BioModelsChange) changeSet.getLatestChange());
 			// null check
 			if( latest != null ) {
-				// Hashs are not equal -> is an unknown change!
-				if( latest.getHash().equals( change.getHash() ) == false ) {
+				// compare hashes and checks if the "latest" version is older than the processing change
+				if( latest.getHash().equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
 					isChangeNew = true;
 					// set the parent
 					change.setParentVersionId( latest.getVersionId() );
@@ -694,8 +694,8 @@ public class BioModelsDb implements ModelDatabase {
 					if( log.isTraceEnabled() )
 						log.trace("successfully received latest from database");
 					
-					// compare hashes
-					if( latest.getHash().equals( change.getHash() ) == false ) {
+					// compare hashes and checks if the "latest" version is older than the processing change
+					if( latest.getHash().equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
 						isChangeNew = true;
 						// set parent
 						change.setParentVersionId( latest.getParentVersionId() );
@@ -713,7 +713,10 @@ public class BioModelsDb implements ModelDatabase {
 			changeSet.addChange(change);
 			if( log.isDebugEnabled() )
 				log.debug("put new version into change set");
+		} else if( log.isDebugEnabled() ) {
+			log.debug("not a new version of model");
 		}
+			
 
 	}
 
