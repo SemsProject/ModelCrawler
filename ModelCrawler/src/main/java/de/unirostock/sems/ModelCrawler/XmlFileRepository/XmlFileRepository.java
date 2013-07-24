@@ -18,11 +18,8 @@ import org.apache.commons.net.io.Util;
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.Interface.XmlFileServer;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.UnsupportedUriException;
-import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 
 public class XmlFileRepository implements XmlFileServer {
-	
-	//TODO 2 -> more exceptions!?
 	
 	private static XmlFileRepository xmlFileRepository = null;
 	private final Log log = LogFactory.getLog( XmlFileRepository.class );
@@ -121,6 +118,9 @@ public class XmlFileRepository implements XmlFileServer {
 	public URI pushModel(String modelId, String versionId, InputStream modelSource) throws IOException, UnsupportedUriException {
 		URI model = null;
 		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("start pushing new model-version {0}:{1} into fileRepo.", modelId, versionId) );
+		
 		if( modelId == null || modelId.isEmpty()|| modelId.equals("..") || modelId.equals(".") )
 			throw new IllegalArgumentException("modelId can not be empty!");
 		
@@ -135,6 +135,9 @@ public class XmlFileRepository implements XmlFileServer {
 			model = new URI( Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.scheme"),
 								Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.host"),
 								File.separator + modelId + File.separator + versionId, null);
+			
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("New URI is {0}", model) );
 			
 		} catch (URISyntaxException e) {
 			log.error("modelId or versionId does not fit into URI format", e);
