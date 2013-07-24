@@ -25,6 +25,8 @@ public class XmlFileRepository implements XmlFileServer {
 	//TODO 2 -> more exceptions!?
 	
 	private static XmlFileRepository xmlFileRepository = null;
+	private final Log log = LogFactory.getLog( XmlFileRepository.class );
+	private File location = null;
 	
 	/**
 	 * Gets or creates the instance of the XmlFileRepository
@@ -36,9 +38,6 @@ public class XmlFileRepository implements XmlFileServer {
 		
 		return xmlFileRepository;
 	}
-	
-	private final Log log = LogFactory.getLog( BioModelsDb.class );
-	File location = null;
 	
 	/**
 	 * Creates a new XmlFileRepository on the configured location<br>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration status="warn">
+<configuration status="warn" name="ModelCrawler">
 		
 	<properties>
 		<property name="mainLogFile">main.log</property>
@@ -49,19 +49,16 @@
 		
 		<logger name="de.unirostock.sems.ModelCrawler.databases.BioModelsDb"
 				level="trace" additivity="true">
-<!-- 			<appender-ref ref="STDOUT" /> -->
 			<appender-ref ref="bioModelsDbFile" />
 		</logger>
 		
 		<logger name="de.unirostock.sems.ModelCrawler.GraphDb"
 				level="trace" additivity="true">
-<!-- 			<appender-ref ref="STDOUT" /> -->
 			<appender-ref ref="graphDbFile" />
 		</logger>
 		
 		<logger name="de.unirostock.sems.ModelCrawler.XmlFileRepository"
 				level="trace" additivity="true">
-<!-- 			<appender-ref ref="STDOUT" /> -->
 			<appender-ref ref="xmlRepoFile" />
 		</logger>
 	</loggers>
