@@ -18,10 +18,10 @@ public class BioModelsChange extends Change {
 
 	private final Log log = LogFactory.getLog( BioModelsChange.class );
 
-	public final String HASH_ALGORITHM = "SHA-256";
-	public final String HASH_ALGORITHM_FALLBACK = "SHA";
+	public final static String HASH_ALGORITHM = "SHA-256";
+	public final static String HASH_ALGORITHM_FALLBACK = "SHA";
 	
-	public final String META_HASH = "filehash";
+	public final static String META_HASH = "filehash";
 
 	public BioModelsChange( String modelId, String versionId, Date versionDate, Date crawledDate ) {
 		super(modelId, versionId, versionDate, crawledDate);

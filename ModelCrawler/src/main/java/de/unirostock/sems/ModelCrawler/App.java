@@ -70,6 +70,8 @@ public class App
     	
     	// After everthing is done: Hide the bodies...
     	cleanUp();
+    	
+    	log.info("finished crawling");
     }
     
     private static void prepare() {
@@ -113,6 +115,8 @@ public class App
     }
     
     private static void cleanUp() {
+    	log.info("Cleans everything up!");
+    	
     	// cleanes BioModelsDb connector workingDir
     	bioModelsDb.cleanUp();
     }

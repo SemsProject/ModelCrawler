@@ -43,16 +43,16 @@ public class GraphDb implements GraphDatabase {
 
 	private final Log log = LogFactory.getLog(GraphDb.class);
 
-	private final String QUERY_GET_MODEL = "get";
-	private final String QUERY_GET_LATEST = "get/latest";
-	private final String QUERY_MODIFY_MODEL = "modify";
-	private final String QUERY_INSERT_MODEL = "insert";
+	private static final String QUERY_GET_MODEL = "get";
+	private static final String QUERY_GET_LATEST = "get/latest";
+	private static final String QUERY_MODIFY_MODEL = "modify";
+	private static final String QUERY_INSERT_MODEL = "insert";
 
-	private final String FEAUTURE_MODEL_ID = "modelID";
-	private final String FEAUTURE_VERSION_ID = "versionID";
-	private final String FEAUTURE_PARENT_VERSION = "parent";
-	private final String FEAUTURE_XML_URI = "xmldoc";
-	private final String FEAUTURE_MODEL_META = "meta";
+	private static final String FEAUTURE_MODEL_ID = "modelID";
+	private static final String FEAUTURE_VERSION_ID = "versionID";
+	private static final String FEAUTURE_PARENT_VERSION = "parent";
+	private static final String FEAUTURE_XML_URI = "xmldoc";
+	private static final String FEAUTURE_MODEL_META = "meta";
 
 	private final String FEAUTURE_RETURN = "return";
 	private final String FEAUTURE_ERROR = "error";
@@ -80,7 +80,7 @@ public class GraphDb implements GraphDatabase {
 		if( parameter != null ) {
 			json = parameter.toJSONString();
 			if( log.isDebugEnabled() )
-				log.debug( MessageFormat.format("generating HTTP JSON Request - json: {0}", json) );
+				log.debug( MessageFormat.format("generating HTTP JSON Request to {1} - json: {0}", json, query) );
 		}
 		//TODO throwing exception, if json building fails!
 
@@ -394,6 +394,9 @@ public class GraphDb implements GraphDatabase {
 			// ... imports all meta key/value pairs which are going to be modified
 			JSONObject metaJson = new JSONObject();
 			metaJson.putAll(meta);
+			
+			// add it to the Request
+			parameter.put(FEAUTURE_MODEL_META, metaJson);
 		}
 
 		// generate request

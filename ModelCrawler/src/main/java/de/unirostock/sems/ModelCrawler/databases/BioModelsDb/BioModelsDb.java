@@ -40,6 +40,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
 import de.unirostock.sems.ModelCrawler.Properties;
+import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
 import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
 import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
@@ -676,9 +677,9 @@ public class BioModelsDb implements ModelDatabase {
 					log.trace("start checking database");
 				
 				// try to get the latest version of this model
-				BioModelsChange latest = null;
+				ModelRecord latest = null;
 				try {
-					latest = (BioModelsChange) graphDb.getLatestModelVersion(modelId);
+					latest = graphDb.getLatestModelVersion(modelId);
 				} catch (GraphDatabaseCommunicationException e) {
 					log.fatal("Getting latest model version, to check, if processed model version is new, failed", e);
 				} catch (GraphDatabaseError e) {
@@ -696,7 +697,11 @@ public class BioModelsDb implements ModelDatabase {
 						log.trace("successfully received latest from database");
 					
 					// compare hashes and checks if the "latest" version is older than the processing change
-					if( latest.getHash().equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
+					String latestHash = latest.getMeta(BioModelsChange.META_HASH);
+					if( latestHash == null )
+						log.fatal("There is no hash in the latest model. Maybe the database is inconsistent.");
+					
+					if( latestHash.equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
 						isChangeNew = true;
 						// set parent
 						change.setParentVersionId( latest.getParentVersionId() );

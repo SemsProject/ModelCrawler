@@ -19,11 +19,11 @@ public class ModelRecord {
 	
 	protected Map<String, String> meta = new HashMap<String, String>();
 	
-	public final String META_CRAWLED_DATE = "crawledDate";
-	public final String META_VERSION_DATE = "versionDate";
-	public final String META_SOURCE = "source";
+	public static final String META_CRAWLED_DATE = "crawledDate";
+	public static final String META_VERSION_DATE = "versionDate";
+	public static final String META_SOURCE = "source";
 	
-	public final String DATE_FORMAT = "dd.MM.yyyy-HH:mm:ss";
+	public static final String DATE_FORMAT = "dd.MM.yyyy-HH:mm:ss";
 	
 	public ModelRecord( String modelId, String versionId, URI documentUri ) {
 		this.modelId = modelId;
