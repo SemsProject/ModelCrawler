@@ -178,6 +178,7 @@ public class BioModelsDb implements ModelDatabase {
 
 		// saving the properties
 		saveProperties();
+		log.info("finished cloning BioModelsDatabase!");
 	}
 
 	/**
@@ -679,7 +680,7 @@ public class BioModelsDb implements ModelDatabase {
 				try {
 					latest = (BioModelsChange) graphDb.getLatestModelVersion(modelId);
 				} catch (GraphDatabaseCommunicationException e) {
-					log.error("Getting latest model version, to check, if processed model version is new, failed", e);
+					log.fatal("Getting latest model version, to check, if processed model version is new, failed", e);
 				} catch (GraphDatabaseError e) {
 					// error occures, when modelId is unknown to the database -> so we can assume the change is new!
 					log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);

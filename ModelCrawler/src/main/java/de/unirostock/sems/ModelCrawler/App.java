@@ -1,14 +1,11 @@
 package de.unirostock.sems.ModelCrawler;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,9 +14,7 @@ import de.unirostock.sems.ModelCrawler.GraphDb.GraphDb;
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
 import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
 import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseInterfaceException;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.UnsupportedUriException;
-import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelRelease;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
@@ -128,30 +123,29 @@ public class App
     		log.info( MessageFormat.format("Start processing ChangeSet for model {0} with {1} entrie(s)", changeSet.getModelId(), changeSet.getChanges().size() ) );
     	
     	Iterator<Change> changeIterator = changeSet.getChanges().iterator();
+    	Change change = null;
+    	try {
 		while( changeIterator.hasNext() ) {
-			Change change = changeIterator.next();
+			change = changeIterator.next();
 			
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format("pushes model {0}:{1}", change.getModelId(), change.getVersionId()) );
 			
 			// Push it into XmlFileRepository!
-			try {
-				change.pushToXmlFileServer();
-			} catch (XmlNotFoundException e) {
-				log.error( "Can not find xml file while pushing to the server! This version of the model will not be pushed to the XmlFileServer.", e);
-			} catch (UnsupportedUriException e) {
-				log.error( "Can not push the file to the XmlFileServer. Unsupported URL.", e);
-			}
-			
+			change.pushToXmlFileServer();
 			// insert it into GraphDb via MORRE
-			try {
-				graphDb.insertModel( change );
-			} catch (GraphDatabaseCommunicationException e) {
-				log.error( MessageFormat.format("CommunicationError while pushing model {0}:{1} into the database!", change.getModelId(), change.getVersionId()), e);
-			} catch (GraphDatabaseError e) {
-				log.error( MessageFormat.format("Error from database while pushing model {0}:{1} into the database!", change.getModelId(), change.getVersionId()), e);
-			}
+			graphDb.insertModel( change );
 		}
+    	} catch (XmlNotFoundException e) {
+    		log.fatal( MessageFormat.format("Can not find xml file while pushing model {0}:{1} to the server!", change.getModelId(), change.getVersionId()), e);
+		} catch (UnsupportedUriException e) {
+			log.fatal( MessageFormat.format("Can not push the file to the XmlFileServer. Unsupported URL: {0}", change.getDocumentUri()), e );
+		} catch (GraphDatabaseCommunicationException e) {
+			log.fatal( MessageFormat.format("CommunicationError while pushing model {0}:{1} into the database!", change.getModelId(), change.getVersionId()), e);
+		} catch (GraphDatabaseError e) {
+			log.fatal( MessageFormat.format("Error from database while pushing model {0}:{1} into the database!", change.getModelId(), change.getVersionId()), e);
+		}
+    	
     }
     
 }
