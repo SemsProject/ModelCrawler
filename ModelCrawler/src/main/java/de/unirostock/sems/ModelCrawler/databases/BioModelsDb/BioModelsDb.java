@@ -159,7 +159,7 @@ public class BioModelsDb implements ModelDatabase {
 		Collections.sort(newReleases);
 		
 		// XXX Limiter
-		int limiter = 0;
+		int limiter = 1;
 		
 		// going throw the new release list an downloads every
 		Iterator<BioModelRelease> iter = newReleases.iterator();
@@ -172,11 +172,9 @@ public class BioModelsDb implements ModelDatabase {
 			if( release.isDownloaded() && release.isExtracted() )
 				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
 			
-			if( limiter++ > 3 )
+			if( limiter++ >= 2 )
 				break;
 		}
-
-
 
 		// saving the properties
 		saveProperties();

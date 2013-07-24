@@ -60,7 +60,7 @@ public class App
     		log.info("crawling model changes finished. Now start pushing");
     	
     	// XXX Limiter!
-    	int n = 0; // limiter
+    	int n = 1; // limiter
     	
     	// going throw all changeSets ...
     	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
@@ -69,7 +69,7 @@ public class App
     		processChangeSet( changesSetIterator.next() );
     		
     		// limiter
-    		if( n++ > 10 )
+    		if( n++ >= 5 )
     			break;
     	}
     	

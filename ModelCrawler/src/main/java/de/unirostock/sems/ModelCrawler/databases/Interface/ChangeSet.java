@@ -31,4 +31,9 @@ public abstract class ChangeSet {
 		return modelId;
 	}
 	
+	@Override
+	public String toString() {
+		return "CS:" + modelId + "-" + changes.size();
+	}
+	
 }

@@ -97,11 +97,16 @@ public abstract class Change extends ModelRecord implements Comparable<Change> {
 		int comp = 0;
 		
 		comp = change.getVersionDate().compareTo( getVersionDate() );
-		if( comp == 0 ) {
-			comp = change.getCrawledDate().compareTo( getCrawledDate() );
-		}
+//		if( comp == 0 ) {
+//			comp = change.getCrawledDate().compareTo( getCrawledDate() );
+//		}
 		
 		return comp;
+	}
+	
+	@Override
+	public String toString() {
+		return "chg:" + modelId+"@"+versionId;
 	}
 	
 }
