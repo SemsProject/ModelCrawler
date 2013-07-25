@@ -4,6 +4,7 @@
 	<properties>
 		<property name="mainLogFile">main.log</property>
 		<property name="bioModelsDbLogFile">BioModelsDb.log</property>
+		<property name="pmr2DbLogFile">PMR2.log</property>
 		<property name="GraphDbLogFile">GraphDb.log</property>
 		<property name="xmlRepoLogFile">XmlFileServer.log</property>
 		
@@ -22,6 +23,10 @@
 		</File>
 		
 		<File name="bioModelsDbFile" fileName="${bioModelsDbLogFile}">
+			<patternLayout pattern="${DefaultPatternLayout}" />
+		</File>
+		
+		<File name="pmr2DbFile" fileName="${pmr2DbLogFile}">
 			<patternLayout pattern="${DefaultPatternLayout}" />
 		</File>
 		
@@ -50,6 +55,11 @@
 		<logger name="de.unirostock.sems.ModelCrawler.databases.BioModelsDb"
 				level="trace" additivity="true">
 			<appender-ref ref="bioModelsDbFile" />
+		</logger>
+		
+		<logger name="de.unirostock.sems.ModelCrawler.databases.PMR2"
+				level="trace" additivity="true">
+			<appender-ref ref="pmr2DbFile" />
 		</logger>
 		
 		<logger name="de.unirostock.sems.ModelCrawler.GraphDb"

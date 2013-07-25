@@ -4,29 +4,55 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
+import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
 
 public class PmrDb implements ModelDatabase {
-	
+
+	private static final String HASH_ALGO = "MD5";
+
 	private final Log log = LogFactory.getLog( PmrDb.class );
-	
+
 	protected File workingDir;
 	protected java.util.Properties config;
 	protected GraphDatabase graphDb;
+	protected URI repoListUri;
 	
-	public PmrDb(String repoListUrl, GraphDatabase graphDb) {
+	public PmrDb( GraphDatabase graphDb ) throws IllegalArgumentException, URISyntaxException {
+		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.RepoList"), graphDb );
+	}
+	
+	public PmrDb(String repoListUrl, GraphDatabase graphDb) throws URISyntaxException, IllegalArgumentException {
 		this.graphDb = graphDb; 
-		
-		
+
+		this.repoListUri = new URI(repoListUrl);
+		// Http only!
+		if( !repoListUri.getScheme().toLowerCase().equals("http") )
+			throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
+
+		// Prepare WorkingDir 
 		checkAndInitWorkingDir();
 	}
 
@@ -56,10 +82,10 @@ public class PmrDb implements ModelDatabase {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
+
 
 	}
-	
+
 	protected void checkAndInitWorkingDir() {
 
 		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.subWorkingDir") );
@@ -108,4 +134,123 @@ public class PmrDb implements ModelDatabase {
 
 	}
 	
+	
+	/**
+	 * Retrieves the txt Repository List and puts it in a list
+	 * 
+	 * @return
+	 * @throws HttpException
+	 */
+	protected List<String> getRepositoryList() throws HttpException {
+		List<String> repoList = new LinkedList<String>();
+
+		HttpClient httpClient = new DefaultHttpClient(); 
+		HttpGet request = new HttpGet(repoListUri);
+
+		try {
+			HttpResponse response = httpClient.execute(request);
+
+			InputStream entityStream = response.getEntity().getContent();
+			Scanner scanner = new Scanner(entityStream).useDelimiter("\n");
+			while( scanner.hasNext() ) {
+				String repo = scanner.next();
+				if( repo != null && !repo.isEmpty() )
+					repoList.add( scanner.next() );				
+			}
+
+		} catch (ClientProtocolException e) {
+			throw new HttpException("Can not download RepositoryList", e);
+		} catch (IOException e) {
+			throw new HttpException("IOException while downloading RepositoryList", e);
+		}
+
+		return repoList;
+	}
+	
+	
+	/**
+	 * Creates the directory for the given Repository
+	 *  
+	 * @param repository
+	 * @return
+	 */
+	protected File makeRepositoryDirectory( String repository ) {
+		
+		File directory = null;
+		String name = null;
+		
+		String repoHash = calculateRepositoryHash(repository);
+		
+		// trys to get the RepoDir from config file
+		if( (directory = getRepositoryDirectory(repository)) == null ) {
+			// when fails -> generates a name
+
+			//		name = repository.replace("http://", "");
+			//		name = repository.replace("/", "_");
+			name = repository.substring( repository.lastIndexOf('/') ) + "_" + repository.hashCode();
+			
+			// check if directory already exists
+			directory = new File( workingDir, name );
+			if( directory.exists() && directory.isDirectory() ) {
+				// exists -> extends with a number
+				String newName = name;
+				int i = 2;
+				do {
+					newName = name + "_" + i;
+					directory = new File( workingDir, newName );
+					i++;
+				} while( directory.exists() );
+				name = newName;
+			}
+			
+			// store the directory name into the config
+			config.setProperty("repo." + repoHash, name);
+			
+		}
+		
+		// when directory does not exists...
+		if( !directory.exists() ) {
+			// ...creates it!
+			directory.mkdirs();
+		}
+		
+		return directory;
+
+	}
+	
+	/**
+	 * Gets the Path to the Repository Directory out of Workspace config or null if it fails
+	 * 
+	 * @param repository
+	 * @return File
+	 */
+	protected File getRepositoryDirectory( String repository ) {
+		String repoHash = calculateRepositoryHash(repository);
+		String name = null;
+		
+		if( (name = config.getProperty("repo." + repoHash)) != null )
+			return new File( workingDir, name );
+		else
+			return null;
+	}
+	
+	/**
+	 * Calculates the hash from the Repository URL
+	 * 
+	 * @param repository
+	 * @return
+	 */
+	private String calculateRepositoryHash( String repository ) {
+		String repoHash = null;
+		
+		try {
+			MessageDigest digest = MessageDigest.getInstance(HASH_ALGO);
+			repoHash = new String( digest.digest( repository.getBytes() ) );
+		} catch (NoSuchAlgorithmException e) {
+			log.fatal( MessageFormat.format("Can not calc Repository Hash for {0}!", repository), e );
+		}
+		
+		return repoHash;
+	}
+
 }
