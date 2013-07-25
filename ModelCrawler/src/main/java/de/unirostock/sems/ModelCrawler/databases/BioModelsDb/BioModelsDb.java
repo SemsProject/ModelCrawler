@@ -105,6 +105,10 @@ public class BioModelsDb implements ModelDatabase {
 
 	@Override
 	public void cleanUp() {
+		
+		// saving the properties
+		saveProperties();
+		
 		// deletes the tempDir recursively
 		try {
 			FileUtils.deleteDirectory(tempDir);
@@ -177,8 +181,6 @@ public class BioModelsDb implements ModelDatabase {
 				break;
 		}
 
-		// saving the properties
-		saveProperties();
 		log.info("finished cloning BioModelsDatabase!");
 	}
 
