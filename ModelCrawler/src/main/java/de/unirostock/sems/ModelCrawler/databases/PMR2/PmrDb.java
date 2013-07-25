@@ -10,9 +10,12 @@ import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
+import java.util.AbstractMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import org.apache.commons.logging.Log;
@@ -22,6 +25,8 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+
+import com.aragost.javahg.Repository;
 
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
@@ -76,13 +81,52 @@ public class PmrDb implements ModelDatabase {
 
 	@Override
 	public void cleanUp() {
-		// TODO Auto-generated method stub
-
+		// save the config
+		saveProperties();
 	}
 
 	@Override
 	public void run() {
-
+		
+		List<String> repositories = null;		
+		
+		// list all available Repos
+		try {
+			repositories = getRepositoryList();
+		} catch (HttpException e) {
+			log.fatal("Can not download RepositoryList", e);
+		}
+		
+		// TODO get dirs, clone/pull, search for models, log files
+		
+		Iterator<String> iter = repositories.iterator();
+		while( iter.hasNext() ) {
+			Repository repo = null;
+			boolean hasChanges = false;
+			
+			String repoName = iter.next();
+			File location = getRepositoryDirectory(repoName);
+			
+			if( location == null ) {
+				// Repo is unknown -> make a directory
+				location = makeRepositoryDirectory(repoName);
+				repo = cloneRepository(location, repoName);
+				// of course there are changes
+				hasChanges = true;
+			}
+			else {
+				// Repo is already known -> make a pull
+				Entry<Repository, Boolean> pullResult = pullRepository(location);
+				repo = pullResult.getKey();
+				// are there changes in the Repo?
+				hasChanges = pullResult.getValue();
+			}
+			
+			// Scan for cellml files and transfer them
+			scanAndTransferRepository(location, repo);
+			
+		}
+		
 
 	}
 
@@ -252,5 +296,19 @@ public class PmrDb implements ModelDatabase {
 		
 		return repoHash;
 	}
-
+	
+	protected Repository cloneRepository(File local, String remote) {
+		
+		return null;
+	}
+	
+	protected Entry<Repository, Boolean> pullRepository(File location) {
+		
+		return new AbstractMap.SimpleEntry<Repository, Boolean>(null, false);
+	}
+	
+	protected void scanAndTransferRepository( File location, Repository repo ) {
+		
+		
+	}
 }

@@ -29,7 +29,7 @@ public interface XmlFileServer {
 	
 	/**
 	 * Pushes a new model (-Version) into the storage. <br>
-	 * Returns the URI the new model or {@code null} if failed.
+	 * Returns the URI to the new model or <code>null</code> if failed.
 	 * 
 	 * @param modelId
 	 * @param versionId
@@ -39,5 +39,21 @@ public interface XmlFileServer {
 	 * @throws UnsupportedUriException 
 	 */
 	public URI pushModel( String modelId, String versionId, InputStream modelSource ) throws IOException, UnsupportedUriException;
+	
+	/**
+	 * Pushes a new model (-Version) into the storage. <br>
+	 * Returns the URI to the new model or {@code null} if failed. <br><br>
+	 * The link corresponds to following pattern:<br> {schema}://{host}/{repositoryUrl}/{versionId}/{fileUrl} <br>
+	 * repositoryUrl and fileUrl together expresses the modelId
+	 * 
+	 * @param repositoryUrl
+	 * @param fileUrl
+	 * @param versionId
+	 * @param modelSource
+	 * @return
+	 * @throws IOException
+	 * @throws UnsupportedUriException
+	 */
+	public URI pushModel( String repositoryUrl, String fileUrl, String versionId, InputStream modelSource ) throws IOException, UnsupportedUriException;
 	
 }

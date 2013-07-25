@@ -163,6 +163,12 @@ public class XmlFileRepository implements XmlFileServer {
 		return model;
 	}
 	
+	@Override
+	public URI pushModel(String repositoryUrl, String fileUrl, String versionId, InputStream modelSource) throws IOException, UnsupportedUriException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	private File getModelPath( URI model ) {
 		
 		String path = model.getPath();
