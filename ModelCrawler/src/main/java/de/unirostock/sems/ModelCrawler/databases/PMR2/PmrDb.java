@@ -48,17 +48,22 @@ public class PmrDb implements ModelDatabase {
 	protected java.util.Properties config;
 	protected GraphDatabase graphDb;
 	protected URI repoListUri;
-	
+
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 
-	public PmrDb( GraphDatabase graphDb ) throws IllegalArgumentException, URISyntaxException {
+	public PmrDb( GraphDatabase graphDb ) throws IllegalArgumentException {
 		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.RepoList"), graphDb );
 	}
 
-	public PmrDb(String repoListUrl, GraphDatabase graphDb) throws URISyntaxException, IllegalArgumentException {
+	public PmrDb(String repoListUrl, GraphDatabase graphDb) throws IllegalArgumentException {
 		this.graphDb = graphDb; 
 
-		this.repoListUri = new URI(repoListUrl);
+		try {
+			this.repoListUri = new URI(repoListUrl);
+		} catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Uri Syntax Error in the RepositoryList URL. Maybe a config mistake?", e);
+		}
+		
 		// Http only!
 		if( !repoListUri.getScheme().toLowerCase().equals("http") )
 			throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
@@ -76,7 +81,7 @@ public class PmrDb implements ModelDatabase {
 	public Map<String, ChangeSet> listChanges() {
 		return changeSetMap;
 	}
-	
+
 	@Override
 	public ChangeSet getModelChanges(String modelId) {
 		return changeSetMap.get(modelId);
@@ -105,8 +110,11 @@ public class PmrDb implements ModelDatabase {
 		// TODO get dirs, clone/pull, search for models, log files
 
 		if( log.isInfoEnabled() )
-			log.info("Iterate throw repositories");
-
+			log.info( MessageFormat.format("Iterate throw {0} repositories", repositories.size()) );
+		
+		// XXX Limiter
+		int limiter = 1;
+		
 		Iterator<String> iter = repositories.iterator();
 		while( iter.hasNext() ) {
 			Repository repo = null;
@@ -155,9 +163,13 @@ public class PmrDb implements ModelDatabase {
 				// Scan for cellml files and transfer them
 				scanAndTransferRepository(location, repo);
 			}
-
+			
+			if( limiter++ >= 5 )
+				break;
+			
 		}
 
+		log.info("Finished crawling PMR2 Database.");
 
 	}
 
@@ -332,7 +344,7 @@ public class PmrDb implements ModelDatabase {
 		Repository repo = Repository.clone(local, remote);
 		if( repo == null )
 			log.fatal( MessageFormat.format("Can not clone Mercurial Repository {0} into {1}", remote, local.getAbsolutePath()) );
-			
+
 		return repo;
 	}
 
@@ -342,18 +354,18 @@ public class PmrDb implements ModelDatabase {
 
 		if( repo != null) {
 			PullCommand pull = new PullCommand(repo);
-			
+
 			try {
 				List<Changeset> changes = pull.execute();
 				// when pull was successful and there are some Changes
 				if( pull.isSuccessful() && changes.size() > 0)
 					hasChanges = true;
-				
+
 			} catch (IOException e) {
 				log.fatal( MessageFormat.format("Can not pull Mercurial Repository into {0}", location.getAbsolutePath()), e);
 			}
 		}
-		
+
 		return new AbstractMap.SimpleEntry<Repository, Boolean>(repo, hasChanges);
 	}
 

@@ -1,6 +1,7 @@
 package de.unirostock.sems.ModelCrawler;
 
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.Interface.exceptions.XmlNotFoundException;
+import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
 
 /**
  * Hello world!
@@ -31,6 +33,7 @@ public class App
 	
 	private static GraphDatabase graphDb;
 	private static ModelDatabase bioModelsDb;
+	private static ModelDatabase pmr2Db;
 	
     public static void main( String[] args ) {
     	
@@ -40,16 +43,26 @@ public class App
     	// Connectors
     	initConnectors();
     	
+    	// map for all changes!
+    	Map<String, ChangeSet> changes = new HashMap<String, ChangeSet>();
+    	
     	// run it!
     	
-    	if( log.isInfoEnabled() )
-    		log.info("running BioModelsDb Crawler");
+//    	if( log.isInfoEnabled() )
+//    		log.info("running BioModelsDb Crawler");
     	
-    	bioModelsDb.run();
+//    	bioModelsDb.run();
     	
-    	Map<String, ChangeSet> changes = new HashMap<String, ChangeSet>();
     	// add all changes from BioModelsDb to the change Map
-    	changes.putAll( bioModelsDb.listChanges() );
+//    	changes.putAll( bioModelsDb.listChanges() );
+    	
+    	
+    	if( log.isInfoEnabled() )
+    		log.info("running PMR2 Crawler");
+    	
+    	pmr2Db.run();
+    	// add all changes from PMR2 to the change Map
+    	changes.putAll( pmr2Db.listChanges() );
     	
     	if( log.isInfoEnabled() )
     		log.info("crawling model changes finished. Now start pushing");
@@ -102,7 +115,7 @@ public class App
 		}
     	
     	if( log.isInfoEnabled() )
-    		log.info("Start BioModelsDb connector");
+    		log.info("Starting BioModelsDb connector");
     	
     	try {
 			bioModelsDb = new BioModelsDb(graphDb);
@@ -112,13 +125,25 @@ public class App
 			log.fatal("Something went wrong with the config while starting BioModelsDb connector.", e);
 		}
     	
+    	if( log.isInfoEnabled() )
+    		log.info("Starting Pmr2Db connector");
+    	
+    	try {
+			pmr2Db = new PmrDb(graphDb);
+		} catch (IllegalArgumentException e) {
+			log.fatal("IllegalArgument Exception while init the PMR2 connector. Maybe a config error?", e);
+		}
+    	
     }
     
     private static void cleanUp() {
     	log.info("Cleans everything up!");
     	
-    	// cleanes BioModelsDb connector workingDir
+    	// cleans BioModelsDb connector workingDir
     	bioModelsDb.cleanUp();
+    	
+    	// cleans PMR2 connector workingDir
+    	pmr2Db.cleanUp();
     }
     
     private static void processChangeSet( ChangeSet changeSet ) {
