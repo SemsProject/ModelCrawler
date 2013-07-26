@@ -9,6 +9,8 @@ import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.UnsupportedU
 
 public interface XmlFileServer {
 	
+	public static final String URL_ENCODING = "UTF-8";
+	
 	/**
 	 * Resolves the model URI and returns the modelSource
 	 * 
@@ -54,6 +56,6 @@ public interface XmlFileServer {
 	 * @throws IOException
 	 * @throws UnsupportedUriException
 	 */
-	public URI pushModel( String repositoryUrl, String fileUrl, String versionId, InputStream modelSource ) throws IOException, UnsupportedUriException;
+	public URI pushModel(String modelId, String versionId, String repositoryUrl, String filePath, InputStream modelSource) throws IOException, UnsupportedUriException;
 	
 }

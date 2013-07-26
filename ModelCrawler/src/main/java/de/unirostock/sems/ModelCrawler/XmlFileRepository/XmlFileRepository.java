@@ -7,8 +7,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.text.MessageFormat;
 
 import org.apache.commons.logging.Log;
@@ -73,7 +76,7 @@ public class XmlFileRepository implements XmlFileServer {
 	
 	/**
 	 * Checks if the URI is resolvable by the FileServer. <br>
-	 * (Tests scheme and host)
+	 * (Tests only scheme and host)
 	 * 
 	 * @param model
 	 * @return
@@ -116,10 +119,34 @@ public class XmlFileRepository implements XmlFileServer {
 
 	@Override
 	public URI pushModel(String modelId, String versionId, InputStream modelSource) throws IOException, UnsupportedUriException {
+		return pushModel( modelId, versionId, null, null, modelSource);
+	}
+	
+	@Override
+	public URI pushModel( String modelId, String versionId, String repositoryUrl, String filePath, InputStream modelSource) throws IOException, UnsupportedUriException {
 		URI model = null;
 		
-		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("start pushing new model-version {0}:{1} into fileRepo.", modelId, versionId) );
+		// repositoryUrl respectively filePath can be null, but not empty
+		if( (repositoryUrl == null || filePath == null) && !(repositoryUrl == null && filePath == null) ) {
+			throw new IllegalArgumentException("repositoryUrl and filePath are both suposed to be null or to be setted!");
+		}
+		else if( repositoryUrl != null && filePath != null ) {
+			if( repositoryUrl.isEmpty()|| repositoryUrl.equals("..") || repositoryUrl.equals(".") )
+				throw new IllegalArgumentException("Illegal Value for repositoryUrl!");
+			
+			if( filePath.isEmpty() || filePath.equals("..") || filePath.equals(".") )
+				throw new IllegalArgumentException("Illegal Value for fileUrl!");
+			
+			// if modelId not set -> try to generate one
+			if( modelId == null )
+				modelId = generateModelId(repositoryUrl, filePath);
+			
+			// escape the String
+			repositoryUrl = URLEncoder.encode(repositoryUrl, URL_ENCODING);
+						
+			// escape the String
+//			filePath = URLEncoder.encode(filePath, URL_ENCODING);
+		}
 		
 		if( modelId == null || modelId.isEmpty()|| modelId.equals("..") || modelId.equals(".") )
 			throw new IllegalArgumentException("modelId can not be empty!");
@@ -130,11 +157,34 @@ public class XmlFileRepository implements XmlFileServer {
 		if( modelSource == null )
 			throw new IllegalArgumentException("no modelSource InputStream were given!");
 		
+		if( log.isInfoEnabled() ) {
+			if( filePath == null )
+				log.info( MessageFormat.format("start pushing new model-version {0}:{1} into fileRepo.", repositoryUrl, versionId) );
+			else
+				log.info( MessageFormat.format("start pushing new model-version {0}:{1}:{2} into file Repo.", repositoryUrl, filePath, versionId) );
+		}
+		
 		try {
+			// Builder for the URI Path
+			StringBuilder pathString = new StringBuilder( File.separator );
+			
+			if( repositoryUrl != null )
+				pathString.append( repositoryUrl );	// adds the first part of the modelId aka. repositoryUrl
+			else
+				pathString.append( modelId );		// adds the modelId
+			
+			pathString.append( File.separator );	// separator (slash)
+			pathString.append( versionId );			// adds the versionId
+			if( filePath != null ) {
+				// when fileUrl is set
+				pathString.append( File.separator );
+				pathString.append( filePath );		// adds the fileUrl (second part of the modelId)
+			}
+			
 			// creating new model URI
-			model = new URI( Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.scheme"),
-								Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.host"),
-								File.separator + modelId + File.separator + versionId, null);
+			model = new URI( Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.scheme"),		// sets the Uri Scheme e.g. http:// or model://
+								Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.host"),		// sets the Uri Host e.g. models.sems.uni-rostock.de
+								pathString.toString(), null);													// sets the Uri Path (modelId/versionId or repositoryUrl/versionId/fileUrl) 
 			
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format("New URI is {0}", model) );
@@ -163,28 +213,64 @@ public class XmlFileRepository implements XmlFileServer {
 		return model;
 	}
 	
-	@Override
-	public URI pushModel(String repositoryUrl, String fileUrl, String versionId, InputStream modelSource) throws IOException, UnsupportedUriException {
-		// TODO Auto-generated method stub
-		return null;
+	public static String generateModelId( String repositoryUrl, String fileName ) throws UnsupportedEncodingException {
+		StringBuilder result = new StringBuilder(repositoryUrl);
+		
+		// if repo Url does not end and the file name does not starts with a slash /
+		if( !repositoryUrl.endsWith("/") && !fileName.startsWith("/") )
+			// ... adds one
+			result.append('/');
+		
+		result.append(fileName);
+		return URLEncoder.encode( result.toString(), URL_ENCODING );
 	}
 	
 	private File getModelPath( URI model ) {
 		
+		String modelId = null, versionId = null;
 		String path = model.getPath();
-		// matches the path against modelId/versionId scheme
-		if( path.matches("[a-zA-Z0-9\\-\\.\\_]*\\/[a-ZA-Z0-9\\-\\.\\_]*") != true )
-			return null;
-		
 		String[] pathParts = path.split("/");
+		// path must have at least 2 parts (modelId and versionId)
 		if( pathParts.length < 2 )
 			return null;
+		else if( pathParts.length == 2 ) {
+			// exact 2 parts => this looks like a "normal" BMDB URI
+			modelId = pathParts[0];
+			versionId = pathParts[1];
+		}
+		else {
+			// more than 2 parts => eventually a PMR2 URI
+			
+			if( pathParts[2].startsWith(pathParts[0]) ) {
+				// 3rd part is only a repetition of the modelId => now it looks more like a BMDB URI
+				modelId = pathParts[0];
+				versionId = pathParts[1];
+			}
+			
+			
+			try {
+				// decodes the repositoryUrl 
+				String repositoryUrl = URLDecoder.decode( pathParts[0], URL_ENCODING );
+				
+				// builds the filePath from the rest of the UriPath
+				StringBuilder filePath = new StringBuilder( pathParts[2] );
+				for( int i = 3; i < pathParts.length; i++ ) {
+					filePath.append( File.separator );
+					filePath.append( pathParts[i] );
+				}
+				
+				// generates ModelId
+				modelId = generateModelId( repositoryUrl, filePath.toString() );
+				// versionId is always the second part, or better it should be
+				versionId = pathParts[1];
+			} catch (UnsupportedEncodingException e) {
+				log.fatal( MessageFormat.format("Unsupported Encoding while decoding modelUri respectively generate modelId from URI: {0} . Btw. what kind of sorcery is this?", model.toString()), e);
+			}
+			
+		}
 		
-		if( pathParts[0].equals("..") || pathParts[1].equals(".") )
-			return null;
-		
-		File modelDir = new File( location, pathParts[0] + File.separator + pathParts[1] );
-		File modelPath = new File( modelDir, pathParts[0] + ".xml" );
+		File modelDir = new File( location, modelId + File.separator + versionId );
+		File modelPath = new File( modelDir, modelId + ".xml" );
 		
 		return modelPath;
 	}
