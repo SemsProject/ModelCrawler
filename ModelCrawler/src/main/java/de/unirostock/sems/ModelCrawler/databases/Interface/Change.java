@@ -41,6 +41,8 @@ public abstract class Change extends ModelRecord implements Comparable<Change> {
 			URI uri = XmlFileRepository.getInstance().pushModel(modelId, versionId, stream);
 			// finally set the document Uri, generated from the XmlFileRepo
 			setDocumentUri(uri);
+			// closes the stream
+			stream.close();
 			
 		} catch (FileNotFoundException e) {
 			throw new XmlNotFoundException("Can not open InputStream", e);
