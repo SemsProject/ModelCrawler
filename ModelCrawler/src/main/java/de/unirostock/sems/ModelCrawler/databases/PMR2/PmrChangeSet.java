@@ -6,7 +6,10 @@ public class PmrChangeSet extends ChangeSet {
 
 	public PmrChangeSet(String modelId) {
 		super(modelId);
-		// TODO Auto-generated constructor stub
+	}
+	
+	public void addChange( PmrChange change ) {
+		super.addChange(change);
 	}
 
 }
