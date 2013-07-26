@@ -11,6 +11,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +28,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import com.aragost.javahg.Changeset;
 import com.aragost.javahg.Repository;
+import com.aragost.javahg.commands.PullCommand;
 
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
@@ -45,10 +49,12 @@ public class PmrDb implements ModelDatabase {
 	protected GraphDatabase graphDb;
 	protected URI repoListUri;
 	
+	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
+
 	public PmrDb( GraphDatabase graphDb ) throws IllegalArgumentException, URISyntaxException {
 		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.RepoList"), graphDb );
 	}
-	
+
 	public PmrDb(String repoListUrl, GraphDatabase graphDb) throws URISyntaxException, IllegalArgumentException {
 		this.graphDb = graphDb; 
 
@@ -63,20 +69,17 @@ public class PmrDb implements ModelDatabase {
 
 	@Override
 	public List<String> listModels() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<String>( changeSetMap.keySet() );
 	}
 
 	@Override
 	public Map<String, ChangeSet> listChanges() {
-		// TODO Auto-generated method stub
-		return null;
+		return changeSetMap;
 	}
-
+	
 	@Override
 	public ChangeSet getModelChanges(String modelId) {
-		// TODO Auto-generated method stub
-		return null;
+		return changeSetMap.get(modelId);
 	}
 
 	@Override
@@ -87,46 +90,74 @@ public class PmrDb implements ModelDatabase {
 
 	@Override
 	public void run() {
-		
+
 		List<String> repositories = null;		
-		
+
+		log.info("Start crawling the PMR2 Database by going throw the Mercurial Workspaces");
+
 		// list all available Repos
 		try {
 			repositories = getRepositoryList();
 		} catch (HttpException e) {
 			log.fatal("Can not download RepositoryList", e);
 		}
-		
+
 		// TODO get dirs, clone/pull, search for models, log files
-		
+
+		if( log.isInfoEnabled() )
+			log.info("Iterate throw repositories");
+
 		Iterator<String> iter = repositories.iterator();
 		while( iter.hasNext() ) {
 			Repository repo = null;
 			boolean hasChanges = false;
-			
 			String repoName = iter.next();
+
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("Check Repository {0}", repoName ) );
+
 			File location = getRepositoryDirectory(repoName);
-			
 			if( location == null ) {
+
+				if( log.isDebugEnabled() )
+					log.debug( MessageFormat.format("Repository {0} is unknown. Create new folder and clone it", repoName) );
+
 				// Repo is unknown -> make a directory
 				location = makeRepositoryDirectory(repoName);
 				repo = cloneRepository(location, repoName);
+
+				if( log.isInfoEnabled() )
+					log.info( MessageFormat.format("Repository {0} has been cloned into {1}", repoName, location.getAbsolutePath()) );
+
 				// of course there are changes
 				hasChanges = true;
 			}
 			else {
+
+				if( log.isDebugEnabled() )
+					log.debug( MessageFormat.format("Repository {0} is known. Perform a Pull-Request into local copy {1}", repoName, location.getAbsolutePath()) );
+
 				// Repo is already known -> make a pull
 				Entry<Repository, Boolean> pullResult = pullRepository(location);
 				repo = pullResult.getKey();
 				// are there changes in the Repo?
 				hasChanges = pullResult.getValue();
+
+				if( log.isInfoEnabled() ) {
+					if( hasChanges )
+						log.info( MessageFormat.format("Pulled changes from {0} into local copy {1}", repoName, location.getAbsolutePath()) );
+					else
+						log.info( "No changes to pull. Local copy is up to date." );
+				}
 			}
-			
-			// Scan for cellml files and transfer them
-			scanAndTransferRepository(location, repo);
-			
+
+			if( hasChanges ) {
+				// Scan for cellml files and transfer them
+				scanAndTransferRepository(location, repo);
+			}
+
 		}
-		
+
 
 	}
 
@@ -177,8 +208,8 @@ public class PmrDb implements ModelDatabase {
 		}
 
 	}
-	
-	
+
+
 	/**
 	 * Retrieves the txt Repository List and puts it in a list
 	 * 
@@ -210,8 +241,8 @@ public class PmrDb implements ModelDatabase {
 
 		return repoList;
 	}
-	
-	
+
+
 	/**
 	 * Creates the directory for the given Repository
 	 *  
@@ -219,12 +250,12 @@ public class PmrDb implements ModelDatabase {
 	 * @return
 	 */
 	protected File makeRepositoryDirectory( String repository ) {
-		
+
 		File directory = null;
 		String name = null;
-		
+
 		String repoHash = calculateRepositoryHash(repository);
-		
+
 		// trys to get the RepoDir from config file
 		if( (directory = getRepositoryDirectory(repository)) == null ) {
 			// when fails -> generates a name
@@ -232,7 +263,7 @@ public class PmrDb implements ModelDatabase {
 			//		name = repository.replace("http://", "");
 			//		name = repository.replace("/", "_");
 			name = repository.substring( repository.lastIndexOf('/') ) + "_" + repository.hashCode();
-			
+
 			// check if directory already exists
 			directory = new File( workingDir, name );
 			if( directory.exists() && directory.isDirectory() ) {
@@ -246,22 +277,22 @@ public class PmrDb implements ModelDatabase {
 				} while( directory.exists() );
 				name = newName;
 			}
-			
+
 			// store the directory name into the config
 			config.setProperty("repo." + repoHash, name);
-			
+
 		}
-		
+
 		// when directory does not exists...
 		if( !directory.exists() ) {
 			// ...creates it!
 			directory.mkdirs();
 		}
-		
+
 		return directory;
 
 	}
-	
+
 	/**
 	 * Gets the Path to the Repository Directory out of Workspace config or null if it fails
 	 * 
@@ -271,13 +302,13 @@ public class PmrDb implements ModelDatabase {
 	protected File getRepositoryDirectory( String repository ) {
 		String repoHash = calculateRepositoryHash(repository);
 		String name = null;
-		
+
 		if( (name = config.getProperty("repo." + repoHash)) != null )
 			return new File( workingDir, name );
 		else
 			return null;
 	}
-	
+
 	/**
 	 * Calculates the hash from the Repository URL
 	 * 
@@ -286,29 +317,48 @@ public class PmrDb implements ModelDatabase {
 	 */
 	private String calculateRepositoryHash( String repository ) {
 		String repoHash = null;
-		
+
 		try {
 			MessageDigest digest = MessageDigest.getInstance(HASH_ALGO);
 			repoHash = new String( digest.digest( repository.getBytes() ) );
 		} catch (NoSuchAlgorithmException e) {
 			log.fatal( MessageFormat.format("Can not calc Repository Hash for {0}!", repository), e );
 		}
-		
+
 		return repoHash;
 	}
-	
+
 	protected Repository cloneRepository(File local, String remote) {
-		
-		return null;
+		Repository repo = Repository.clone(local, remote);
+		if( repo == null )
+			log.fatal( MessageFormat.format("Can not clone Mercurial Repository {0} into {1}", remote, local.getAbsolutePath()) );
+			
+		return repo;
 	}
-	
+
 	protected Entry<Repository, Boolean> pullRepository(File location) {
+		boolean hasChanges = false;
+		Repository repo = Repository.open(location);
+
+		if( repo != null) {
+			PullCommand pull = new PullCommand(repo);
+			
+			try {
+				List<Changeset> changes = pull.execute();
+				// when pull was successful and there are some Changes
+				if( pull.isSuccessful() && changes.size() > 0)
+					hasChanges = true;
+				
+			} catch (IOException e) {
+				log.fatal( MessageFormat.format("Can not pull Mercurial Repository into {0}", location.getAbsolutePath()), e);
+			}
+		}
 		
-		return new AbstractMap.SimpleEntry<Repository, Boolean>(null, false);
+		return new AbstractMap.SimpleEntry<Repository, Boolean>(repo, hasChanges);
 	}
-	
+
 	protected void scanAndTransferRepository( File location, Repository repo ) {
-		
-		
+
+
 	}
 }
