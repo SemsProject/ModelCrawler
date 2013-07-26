@@ -30,6 +30,15 @@ public interface XmlFileServer {
 	public boolean exist( URI model );
 	
 	/**
+	 * Checks if the URI is resolvable by the FileServer. <br>
+	 * (Tests only scheme and host)
+	 * 
+	 * @param model
+	 * @return
+	 */
+	public boolean isResolvableUri(URI model);
+	
+	/**
 	 * Pushes a new model (-Version) into the storage. <br>
 	 * Returns the URI to the new model or <code>null</code> if failed.
 	 * 
