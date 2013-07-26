@@ -35,7 +35,7 @@
 		</File>
 		
 		<File name="xmlRepoFile" fileName="${xmlRepoLogFile}">
-			<patternLayout patter="${DefaultPatternLayout}" />
+			<patternLayout pattern="${DefaultPatternLayout}" />
 		</File>
 		
 	</appenders>

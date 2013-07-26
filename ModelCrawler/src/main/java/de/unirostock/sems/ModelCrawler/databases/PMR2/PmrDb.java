@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
@@ -332,7 +333,8 @@ public class PmrDb implements ModelDatabase {
 
 		try {
 			MessageDigest digest = MessageDigest.getInstance(HASH_ALGO);
-			repoHash = new String( digest.digest( repository.getBytes() ) );
+			digest.update( repository.getBytes() );
+			repoHash = (new BigInteger( digest.digest() )).toString(16);
 		} catch (NoSuchAlgorithmException e) {
 			log.fatal( MessageFormat.format("Can not calc Repository Hash for {0}!", repository), e );
 		}
