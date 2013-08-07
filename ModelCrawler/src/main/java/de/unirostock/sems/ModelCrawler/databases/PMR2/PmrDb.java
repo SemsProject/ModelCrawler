@@ -170,7 +170,7 @@ public class PmrDb implements ModelDatabase {
 			}
 
 			if( hasChanges ) {
-				// Scan for cellml files and transfer them
+				// Scan for cellml and other model files and transfer them
 				scanAndTransferRepository(location, repo);
 			}
 			
@@ -386,6 +386,7 @@ public class PmrDb implements ModelDatabase {
 		List<RelevantFile> relevantFiles;
 		List<Changeset> relevantVersions;
 		
+		// TODO Logging!
 		
 		// select all relevant files
 		relevantFiles = scanRepository(location, repo);
@@ -405,8 +406,7 @@ public class PmrDb implements ModelDatabase {
 			}
 		} );
 		
-		
-		
+		// TODO
 	}
 	
 	protected List<RelevantFile> scanRepository( File location, Repository repo ) {
@@ -471,6 +471,9 @@ public class PmrDb implements ModelDatabase {
 		Date oldestLatestVersionDate = null;
 		List<Changeset> relevantVersions;
 		
+		if( log.isInfoEnabled() )
+			log.info("start detection of relevant hg versions");
+		
 		// make a list of all relevant files
 		files = new String[relevantFiles.size()];
 		int index = 0;
@@ -494,9 +497,15 @@ public class PmrDb implements ModelDatabase {
 			
 		}
 		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("execute Log command for {0} file(s)", index) );
+		
 		// perform the log command to evaluate all interesting hg changesets
 		LogCommand logCmd = new LogCommand(repo);
 		relevantVersions = logCmd.execute(files);
+		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Found {0} Changesets, removes all Changeset older as {1} (oldestLatestVersion) from the list", relevantVersions.size(), oldestLatestVersionDate) );
 		
 		// remove every Changeset which is older as the oldestLatestVersion (because they are really uninteresting)
 		Iterator<Changeset> changesetIter = relevantVersions.iterator();
@@ -505,6 +514,8 @@ public class PmrDb implements ModelDatabase {
 				changesetIter.remove();
 		}
 		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("{0} Changsets left for examination", relevantVersions.size()) );
 		
 		return relevantVersions;
 	}
