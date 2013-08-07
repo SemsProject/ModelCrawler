@@ -698,11 +698,11 @@ public class BioModelsDb implements ModelDatabase {
 					if( log.isTraceEnabled() )
 						log.trace("successfully received latest from database");
 					
-					// compare hashes and checks if the "latest" version is older than the processing change
 					String latestHash = latest.getMeta(BioModelsChange.META_HASH);
 					if( latestHash == null )
 						log.fatal("There is no hash in the latest model. Maybe the database is inconsistent.");
 					
+					// compare hashes and checks if the "latest" version is older than the processing change
 					if( latestHash.equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
 						isChangeNew = true;
 						// set parent
