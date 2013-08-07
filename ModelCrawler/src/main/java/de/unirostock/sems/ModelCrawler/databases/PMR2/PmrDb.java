@@ -13,6 +13,8 @@ import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,6 +34,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import com.aragost.javahg.Changeset;
 import com.aragost.javahg.Repository;
+import com.aragost.javahg.commands.LogCommand;
 import com.aragost.javahg.commands.PullCommand;
 
 import de.unirostock.sems.ModelCrawler.Properties;
@@ -380,14 +383,27 @@ public class PmrDb implements ModelDatabase {
 	protected void scanAndTransferRepository( File location, Repository repo ) {
 		// select all relevant files
 		// than going throw the versions
+		List<RelevantFile> relevantFiles;
+		List<Changeset> relevantVersions;
+		
 		
 		// select all relevant files
-		List<RelevantFile> relevantFiles = scanRepository(location, repo);
+		relevantFiles = scanRepository(location, repo);
 		// looking for the latestVersion
 		Iterator<RelevantFile> iter = relevantFiles.iterator();
 		while( iter.hasNext() ) {
 			searchLatestKnownVersion( iter.next() );
 		}
+		
+		// detect all relevant versions
+		relevantVersions = detectRelevantVersions(repo, relevantFiles);
+		// sorting them (just in case...)
+		Collections.sort(relevantVersions, new Comparator<Changeset>() {
+			@Override
+			public int compare(Changeset cs1, Changeset cs2) {
+				return cs1.getTimestamp().getDate().compareTo( cs2.getTimestamp().getDate() );
+			}
+		} );
 		
 		
 		
@@ -448,6 +464,52 @@ public class PmrDb implements ModelDatabase {
 		
 		relevantFile.setLatestKnownVersion(versionId, versionDate, (PmrChangeSet) changeSet);
 		
+	}
+	
+	protected List<Changeset> detectRelevantVersions( Repository repo, List<RelevantFile> relevantFiles ) {
+		String[] files;
+		String oldestLatestVersionId = null;
+		Date oldestLatestVersionDate = null;
+		List<Changeset> relevantVersions;
+		
+		// make a list of all relevant files
+		files = new String[relevantFiles.size()];
+		int index = 0;
+		
+		// put the list into the array and gets the oldestLatestVersion :)
+		Iterator<RelevantFile> fileIter = relevantFiles.iterator();
+		while( fileIter.hasNext() ) {
+			RelevantFile file = fileIter.next();
+			
+			files[index] = file.getFilePath();
+			index++;
+			
+			// checks if the current processed relevantFile has an older latestVersion as the
+			// former olderLatestVersion
+			if( oldestLatestVersionDate == null ) {
+				oldestLatestVersionId = file.getLatestVersionId();
+				oldestLatestVersionDate = file.getLatestVersionDate();
+			}
+			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
+				oldestLatestVersionId = file.getLatestVersionId();
+				oldestLatestVersionDate = file.getLatestVersionDate();
+			}
+			
+		}
+		
+		// perform the log command to evaluate all interesting hg changesets
+		LogCommand logCmd = new LogCommand(repo);
+		relevantVersions = logCmd.execute(files);
+		
+		// remove every Changeset which is older as the oldestLatestVersion (because they are really uninteresting)
+		Iterator<Changeset> changesetIter = relevantVersions.iterator();
+		while( changesetIter.hasNext() ) {
+			if( changesetIter.next().getTimestamp().getDate().compareTo(oldestLatestVersionDate) < 0 )
+				changesetIter.remove();
+		}
+		
+		
+		return relevantVersions;
 	}
 	
 }
