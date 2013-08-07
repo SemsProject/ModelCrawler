@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -34,7 +35,12 @@ import com.aragost.javahg.Repository;
 import com.aragost.javahg.commands.PullCommand;
 
 import de.unirostock.sems.ModelCrawler.Properties;
+import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
+import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseInterfaceException;
+import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
@@ -370,9 +376,78 @@ public class PmrDb implements ModelDatabase {
 
 		return new AbstractMap.SimpleEntry<Repository, Boolean>(repo, hasChanges);
 	}
-
+	
 	protected void scanAndTransferRepository( File location, Repository repo ) {
-
+		// select all relevant files
+		// than going throw the versions
+		
+		// select all relevant files
+		List<RelevantFile> relevantFiles = scanRepository(location, repo);
+		// looking for the latestVersion
+		Iterator<RelevantFile> iter = relevantFiles.iterator();
+		while( iter.hasNext() ) {
+			searchLatestKnownVersion( iter.next() );
+		}
+		
+		
 		
 	}
+	
+	protected List<RelevantFile> scanRepository( File location, Repository repo ) {
+		List<RelevantFile> relevantFiles = new LinkedList<RelevantFile>();
+		
+		return relevantFiles;
+	}
+	
+	protected void searchLatestKnownVersion( RelevantFile relevantFile ) {
+		String versionId = null;
+		Date versionDate = null;
+		ChangeSet changeSet = null;
+		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Searches latest known version for model {0}", relevantFile.getModelId()) );
+		
+		if( (changeSet = changeSetMap.get(relevantFile.getModelId())) != null ) {
+			// there is a changeSet for this modelId, get the latestChange
+			
+			if( log.isInfoEnabled() )
+				log.info("ChangeSet available");
+			
+			Change latestChange = changeSet.getLatestChange();
+			if( latestChange != null ) {
+				versionId = latestChange.getVersionId();
+				versionDate = latestChange.getVersionDate();
+			}
+			else if( log.isDebugEnabled() ) {
+				log.debug("But no change setted");
+			}
+		}
+		
+		// versionId and versionDate are still not set
+		if( versionId == null && versionDate == null ) {
+			
+			if( log.isInfoEnabled() )
+				log.info("Start database request");
+			
+			// search in database
+			ModelRecord latest = null;
+			try {
+				latest = graphDb.getLatestModelVersion( relevantFile.getModelId() );
+			} catch (GraphDatabaseCommunicationException e) {
+				log.fatal( MessageFormat.format("Getting latest model version from {0}, to check, if processed model version is new, failed", relevantFile.getModelId()), e);
+			} catch (GraphDatabaseError e) {
+				// error occurs, when modelId is unknown to the database -> so we can assume the change is new!
+				log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);
+			}
+			
+			if( latest != null ) {
+				versionId = latest.getVersionId();
+				versionDate = latest.getVersionDate();
+			}
+		}
+		
+		relevantFile.setLatestKnownVersion(versionId, versionDate, (PmrChangeSet) changeSet);
+		
+	}
+	
 }
