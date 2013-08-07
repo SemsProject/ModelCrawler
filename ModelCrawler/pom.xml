@@ -88,6 +88,12 @@
 			<artifactId>javahg</artifactId>
 			<version>0.6</version>
 		</dependency>
+
+		<dependency>
+			<groupId>de.unirostock.sems</groupId>
+			<artifactId>BiVeS</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -104,5 +110,6 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
+
 </project>
