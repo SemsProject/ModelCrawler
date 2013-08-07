@@ -47,6 +47,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
+import de.unirostock.sems.ModelCrawler.helper.RelativPath;
 
 public class PmrDb implements ModelDatabase {
 
@@ -411,8 +412,40 @@ public class PmrDb implements ModelDatabase {
 	
 	protected List<RelevantFile> scanRepository( File location, Repository repo ) {
 		List<RelevantFile> relevantFiles = new LinkedList<RelevantFile>();
+		List<String> files = new LinkedList<String>();
+		
+		// scans the directory recursively
+		scanRepositoryDir( location, location, files );
 		
 		return relevantFiles;
+	}
+	
+	private void scanRepositoryDir( File base, File dir, List<String> files ) throws IOException {
+		
+		String[] entries = dir.list();
+		// nothing to scan in this dir
+		if( entries == null )
+			return;
+		
+		for( int index = 0; index < entries.length; index++ ) {
+			File entry = new File( dir, entries[index] );
+			if( entry.isDirectory() && entry.exists() )
+				scanRepositoryDir(base, entry, files);
+			else if( entry.isFile() && entry.exists() ) {
+				
+				if( checkIfModel(entry) == true ) {
+					files.add( RelativPath.getRelativeFile(entry, base).toString() );
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	private boolean checkIfModel( File model ) {
+		// TODO
+		return false;
 	}
 	
 	protected void searchLatestKnownVersion( RelevantFile relevantFile ) {
