@@ -22,6 +22,13 @@ public class ModelRecord {
 	public static final String META_CRAWLED_DATE = "crawledDate";
 	public static final String META_VERSION_DATE = "versionDate";
 	public static final String META_SOURCE = "source";
+	public static final String META_TYPE = "type";
+	
+	public static final String SOURCE_PMR2 = "pmr2";
+	public static final String SOURCE_BIOMODELS_DB = "biomodels-db";
+	
+	public static final String TYPE_CELLML = "cellml";
+	public static final String TYPE_SBML = "sbml";
 	
 	public static final String DATE_FORMAT = "dd.MM.yyyy-HH:mm:ss";
 	

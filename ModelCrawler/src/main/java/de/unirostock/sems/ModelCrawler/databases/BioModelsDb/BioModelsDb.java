@@ -634,6 +634,11 @@ public class BioModelsDb implements ModelDatabase {
 
 		// create the Change-Entry
 		BioModelsChange change = new BioModelsChange(modelId, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+		
+		// sets soure meta information
+		change.setMeta(ModelRecord.META_SOURCE, ModelRecord.SOURCE_BIOMODELS_DB);
+		change.setMeta(ModelRecord.META_TYPE, ModelRecord.TYPE_SBML);
+		
 		// set up the xml file and calc the hash
 		change.setXmlFile( release.getModelPath(modelId) );
 		if( log.isTraceEnabled() )
