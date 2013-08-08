@@ -1,7 +1,9 @@
 package de.unirostock.sems.ModelCrawler.databases.PMR2;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
+import de.unirostock.sems.ModelCrawler.XmlFileRepository.XmlFileRepository;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 
 public class RelevantFile {
@@ -10,12 +12,21 @@ public class RelevantFile {
 	private String modelId;
 	private String latestKnownVersionId = null;
 	private Date latestKnownVersionDate = null;
+	private int type = 0;
 	
 	private PmrChangeSet changeSet = null;
 	
 	public RelevantFile( String filePath, String modelId ) {
 		this.filePath = filePath;
 		this.modelId = modelId;
+	}
+	
+	public RelevantFile( String filePath ) {
+		this.filePath = filePath;
+	}
+	
+	public String generateModelId( String repoUrl ) throws UnsupportedEncodingException {
+		return this.modelId = XmlFileRepository.generateModelId(repoUrl, filePath);
 	}
 	
 	public String getFilePath() {
@@ -138,6 +149,14 @@ public class RelevantFile {
 		
 		// adds the change
 		changeSet.addChange(change);
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
 	}
 
 }
