@@ -469,7 +469,15 @@ public class PmrDb implements ModelDatabase {
 		}
 
 	}
-
+	
+	/**
+	 * Checks if the file is a model aka relevant <br>
+	 * Returns a RelevantFile object if it is or null
+	 * 
+	 * @param base
+	 * @param model
+	 * @return
+	 */
 	private RelevantFile isRelevant( File base, File model ) {
 		int type = 0;
 		RelevantFile relevantFile = null;
