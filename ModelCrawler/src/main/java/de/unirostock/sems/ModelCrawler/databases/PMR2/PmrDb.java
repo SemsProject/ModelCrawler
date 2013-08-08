@@ -387,7 +387,10 @@ public class PmrDb implements ModelDatabase {
 		List<RelevantFile> relevantFiles;
 		List<Changeset> relevantVersions;
 		
+<<<<<<< HEAD
 		// TODO Logging!
+=======
+>>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 		
 		// select all relevant files
 		relevantFiles = scanRepository(location, repo);
@@ -406,6 +409,10 @@ public class PmrDb implements ModelDatabase {
 				return cs1.getTimestamp().getDate().compareTo( cs2.getTimestamp().getDate() );
 			}
 		} );
+<<<<<<< HEAD
+=======
+		
+>>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 		
 		// TODO
 	}
@@ -501,12 +508,19 @@ public class PmrDb implements ModelDatabase {
 	
 	protected List<Changeset> detectRelevantVersions( Repository repo, List<RelevantFile> relevantFiles ) {
 		String[] files;
+<<<<<<< HEAD
 		Date oldestLatestVersionDate = null;
 		List<Changeset> relevantVersions;
 		
 		if( log.isInfoEnabled() )
 			log.info("start detection of relevant hg versions");
 		
+=======
+		String oldestLatestVersionId = null;
+		Date oldestLatestVersionDate = null;
+		List<Changeset> relevantVersions;
+		
+>>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 		// make a list of all relevant files
 		files = new String[relevantFiles.size()];
 		int index = 0;
@@ -522,24 +536,38 @@ public class PmrDb implements ModelDatabase {
 			// checks if the current processed relevantFile has an older latestVersion as the
 			// former olderLatestVersion
 			if( oldestLatestVersionDate == null ) {
+<<<<<<< HEAD
 				oldestLatestVersionDate = file.getLatestVersionDate();
 			}
 			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
+=======
+				oldestLatestVersionId = file.getLatestVersionId();
+				oldestLatestVersionDate = file.getLatestVersionDate();
+			}
+			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
+				oldestLatestVersionId = file.getLatestVersionId();
+>>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 				oldestLatestVersionDate = file.getLatestVersionDate();
 			}
 			
 		}
 		
+<<<<<<< HEAD
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("execute Log command for {0} file(s)", index) );
 		
+=======
+>>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 		// perform the log command to evaluate all interesting hg changesets
 		LogCommand logCmd = new LogCommand(repo);
 		relevantVersions = logCmd.execute(files);
 		
+<<<<<<< HEAD
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Found {0} Changesets, removes all Changeset older as {1} (oldestLatestVersion) from the list", relevantVersions.size(), oldestLatestVersionDate) );
 		
+=======
+>>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 		// remove every Changeset which is older as the oldestLatestVersion (because they are really uninteresting)
 		Iterator<Changeset> changesetIter = relevantVersions.iterator();
 		while( changesetIter.hasNext() ) {
@@ -547,8 +575,11 @@ public class PmrDb implements ModelDatabase {
 				changesetIter.remove();
 		}
 		
+<<<<<<< HEAD
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("{0} Changsets left for examination", relevantVersions.size()) );
+=======
+>>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 		
 		return relevantVersions;
 	}
