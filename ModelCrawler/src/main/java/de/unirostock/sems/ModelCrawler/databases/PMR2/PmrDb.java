@@ -9,6 +9,8 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
@@ -493,12 +495,22 @@ public class PmrDb implements ModelDatabase {
 		if( (type & DocumentClassifier.XML) > 0 && ((type & DocumentClassifier.SBML) > 0 || (type & DocumentClassifier.CELLML) > 0) ) {
 			// File is an xml document and consists of sbml or cellml model data
 			// create a relevant file object
-			try {
-				relevantFile = new RelevantFile( RelativPath.getRelativeFile(model, base).toString() );
-				relevantFile.setType(type);
-			} catch (IOException e) {
-				log.error( MessageFormat.format("IOException while generating relativ path to file {0} in repository {1}", model, base), e);
-			}
+			
+			// make path relative to Repo base dir
+			Path basePath = Paths.get( base.toString() );
+			Path modelPath = Paths.get( model.toString() );
+			Path relativPath = basePath.relativize(modelPath);
+			
+			// creating relevantFile object
+			relevantFile = new RelevantFile( relativPath.toString() );
+			relevantFile.setType(type);
+			
+//			try {
+//				relevantFile = new RelevantFile( RelativPath.getRelativeFile(model, base).toString() );
+//				relevantFile.setType(type);
+//			} catch (IOException e) {
+//				log.error( MessageFormat.format("IOException while generating relativ path to file {0} in repository {1}", model, base), e);
+//			}
 
 		}
 
