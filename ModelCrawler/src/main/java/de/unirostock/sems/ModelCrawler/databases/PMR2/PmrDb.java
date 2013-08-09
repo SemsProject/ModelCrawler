@@ -403,7 +403,6 @@ public class PmrDb implements ModelDatabase {
 		// than going throw the versions
 		List<RelevantFile> relevantFiles;
 		List<Changeset> relevantVersions;
-<<<<<<< HEAD
 
 		// TODO Logging!
 
@@ -422,8 +421,6 @@ public class PmrDb implements ModelDatabase {
 			log.fatal("Unsupported Encoding. Can not generate modelId", e);
 		}
 
-=======
-		
 		
 		// select all relevant files
 		relevantFiles = scanRepository(location, repo);
@@ -433,7 +430,6 @@ public class PmrDb implements ModelDatabase {
 			searchLatestKnownVersion( iter.next() );
 		}
 		
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 		// detect all relevant versions
 		relevantVersions = detectRelevantVersions(repo, relevantFiles);
 		// sorting them (just in case...)
@@ -443,14 +439,9 @@ public class PmrDb implements ModelDatabase {
 				return cs1.getTimestamp().getDate().compareTo( cs2.getTimestamp().getDate() );
 			}
 		} );
-<<<<<<< HEAD
 
 		// TODO
-=======
 		
-		
-		
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 	}
 
 	protected List<RelevantFile> scanRepository( File location, Repository repo ) {
@@ -568,7 +559,6 @@ public class PmrDb implements ModelDatabase {
 		relevantFile.setLatestKnownVersion(versionId, versionDate, (PmrChangeSet) changeSet);
 
 	}
-<<<<<<< HEAD
 
 	protected List<Changeset> detectRelevantVersions( Repository repo, List<RelevantFile> relevantFiles ) {
 		String[] files;
@@ -582,25 +572,10 @@ public class PmrDb implements ModelDatabase {
 		files = new String[relevantFiles.size()];
 		int index = 0;
 
-=======
-	
-	protected List<Changeset> detectRelevantVersions( Repository repo, List<RelevantFile> relevantFiles ) {
-		String[] files;
-		String oldestLatestVersionId = null;
-		Date oldestLatestVersionDate = null;
-		List<Changeset> relevantVersions;
-		
-		// make a list of all relevant files
-		files = new String[relevantFiles.size()];
-		int index = 0;
-		
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 		// put the list into the array and gets the oldestLatestVersion :)
 		Iterator<RelevantFile> fileIter = relevantFiles.iterator();
 		while( fileIter.hasNext() ) {
 			RelevantFile file = fileIter.next();
-<<<<<<< HEAD
-
 			files[index] = file.getFilePath();
 			index++;
 
@@ -625,48 +600,10 @@ public class PmrDb implements ModelDatabase {
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Found {0} Changesets, removes all Changeset older as {1} (oldestLatestVersion) from the list", relevantVersions.size(), oldestLatestVersionDate) );
 
-=======
-			
-			files[index] = file.getFilePath();
-			index++;
-			
-			// checks if the current processed relevantFile has an older latestVersion as the
-			// former olderLatestVersion
-			if( oldestLatestVersionDate == null ) {
-				oldestLatestVersionId = file.getLatestVersionId();
-				oldestLatestVersionDate = file.getLatestVersionDate();
-			}
-			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
-				oldestLatestVersionId = file.getLatestVersionId();
-				oldestLatestVersionDate = file.getLatestVersionDate();
-			}
-			
-		}
-		
-		// perform the log command to evaluate all interesting hg changesets
-		LogCommand logCmd = new LogCommand(repo);
-		relevantVersions = logCmd.execute(files);
-		
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
-		// remove every Changeset which is older as the oldestLatestVersion (because they are really uninteresting)
-		Iterator<Changeset> changesetIter = relevantVersions.iterator();
-		while( changesetIter.hasNext() ) {
-			if( changesetIter.next().getTimestamp().getDate().compareTo(oldestLatestVersionDate) < 0 )
-				changesetIter.remove();
-		}
-<<<<<<< HEAD
-
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("{0} Changsets left for examination", relevantVersions.size()) );
 
 		return relevantVersions;
 	}
-
-=======
 		
-		
-		return relevantVersions;
-	}
-	
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
 }
