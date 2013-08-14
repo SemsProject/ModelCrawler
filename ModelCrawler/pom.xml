@@ -4,12 +4,12 @@
 
 	<groupId>de.unirostock.sems</groupId>
 	<artifactId>ModelCrawler</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ModelCrawler</name>
 	<url>http://sems.uni-rostock.de</url>
-
+	
 	<scm>
 		<connection>GIT</connection>
 		<url>ssh://sems.uni-rostock.de/modelcrawler</url>

@@ -70,6 +70,10 @@ public class PmrDb implements ModelDatabase {
 	protected DocumentClassifier classifier = null;
 
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
+	
+	// REMIND there is difference between ChangeSet and Changeset
+	// ChangeSet is a ModelCrawler Dataholder class
+	// and Changeset a JavaHg Dataholder class
 
 	public PmrDb( GraphDatabase graphDb ) throws IllegalArgumentException {
 		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.RepoList"), graphDb );
@@ -479,8 +483,7 @@ public class PmrDb implements ModelDatabase {
 		try {
 			iterateRelevantVersions(repo, location, relevantFiles, relevantVersions);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.fatal( MessageFormat.format("IOException while iteration throw relevant Versions in {0}",  location), e );
 		}
 
 		for( RelevantFile file : relevantFiles ) {
