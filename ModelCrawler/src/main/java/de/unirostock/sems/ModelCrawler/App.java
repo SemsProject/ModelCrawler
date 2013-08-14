@@ -1,7 +1,6 @@
 package de.unirostock.sems.ModelCrawler;
 
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.HashMap;
@@ -48,13 +47,13 @@ public class App
     	
     	// run it!
     	
-//    	if( log.isInfoEnabled() )
-//    		log.info("running BioModelsDb Crawler");
+    	if( log.isInfoEnabled() )
+    		log.info("running BioModelsDb Crawler");
     	
-//    	bioModelsDb.run();
+    	bioModelsDb.run();
     	
     	// add all changes from BioModelsDb to the change Map
-//    	changes.putAll( bioModelsDb.listChanges() );
+    	changes.putAll( bioModelsDb.listChanges() );
     	
     	
     	if( log.isInfoEnabled() )

@@ -5,9 +5,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
@@ -23,7 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.UUID;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
@@ -36,18 +43,18 @@ import com.aragost.javahg.Changeset;
 import com.aragost.javahg.Repository;
 import com.aragost.javahg.commands.LogCommand;
 import com.aragost.javahg.commands.PullCommand;
+import com.aragost.javahg.commands.UpdateCommand;
 
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
 import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
 import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
 import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseInterfaceException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
-import de.unirostock.sems.ModelCrawler.helper.RelativPath;
+import de.unirostock.sems.bives.tools.DocumentClassifier;
 
 public class PmrDb implements ModelDatabase {
 
@@ -56,9 +63,11 @@ public class PmrDb implements ModelDatabase {
 	private final Log log = LogFactory.getLog( PmrDb.class );
 
 	protected File workingDir;
+	protected File tempDir;
 	protected java.util.Properties config;
 	protected GraphDatabase graphDb;
 	protected URI repoListUri;
+	protected DocumentClassifier classifier = null;
 
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 
@@ -74,10 +83,23 @@ public class PmrDb implements ModelDatabase {
 		} catch (URISyntaxException e) {
 			throw new IllegalArgumentException("Uri Syntax Error in the RepositoryList URL. Maybe a config mistake?", e);
 		}
-		
+
 		// Http only!
 		if( !repoListUri.getScheme().toLowerCase().equals("http") )
 			throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
+
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Init new PMR2 Connector based on Repolist: {0}", this.repoListUri) );
+
+		// Prepare BiVeS Model Classifier
+		try {
+			classifier = new DocumentClassifier ();
+		} catch (ParserConfigurationException e) {
+			log.fatal( "ParserConfigurationException while init BiVeS Document Classifier", e );
+		}
+
+		if( log.isInfoEnabled() )
+			log.info("Started BiVeS Classifier");
 
 		// Prepare WorkingDir 
 		checkAndInitWorkingDir();
@@ -102,6 +124,13 @@ public class PmrDb implements ModelDatabase {
 	public void cleanUp() {
 		// save the config
 		saveProperties();
+
+		// deletes the tempDir recursively
+		try {
+			FileUtils.deleteDirectory(tempDir);
+		} catch (IOException e) {
+			log.error("Error while cleaning up the temp dir!", e);
+		}
 	}
 
 	@Override
@@ -118,14 +147,12 @@ public class PmrDb implements ModelDatabase {
 			log.fatal("Can not download RepositoryList", e);
 		}
 
-		// TODO get dirs, clone/pull, search for models, log files
-
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Iterate throw {0} repositories", repositories.size()) );
-		
+
 		// XXX Limiter
 		int limiter = 1;
-		
+
 		Iterator<String> iter = repositories.iterator();
 		while( iter.hasNext() ) {
 			Repository repo = null;
@@ -172,12 +199,12 @@ public class PmrDb implements ModelDatabase {
 
 			if( hasChanges ) {
 				// Scan for cellml and other model files and transfer them
-				scanAndTransferRepository(location, repo);
+				scanAndTransferRepository(repoName, location, repo);
 			}
-			
+
 			if( limiter++ >= 5 )
 				break;
-			
+
 		}
 
 		log.info("Finished crawling PMR2 Database.");
@@ -187,12 +214,17 @@ public class PmrDb implements ModelDatabase {
 	protected void checkAndInitWorkingDir() {
 
 		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.subWorkingDir") );
+		tempDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.subTempDir") );
 
 		log.trace( "Preparing working dir " + workingDir.getAbsolutePath() );
 
 		if( workingDir.exists() == false ) {
 			// creates it!
 			workingDir.mkdirs();
+		}
+		if( tempDir.exists() == false ) {
+			// creates it!
+			tempDir.mkdirs();
 		}
 
 		// inits the config
@@ -214,6 +246,19 @@ public class PmrDb implements ModelDatabase {
 			log.fatal( "IOException while reading the workingdir config file", e );
 		}
 
+	}
+
+	/**
+	 * Returns a non existent temporary file
+	 * @return
+	 */
+	protected File getTempFile() {
+		File temp = new File( tempDir, UUID.randomUUID().toString() );
+		while( temp.exists() ) {
+			temp = new File( tempDir, UUID.randomUUID().toString() );
+		} 
+
+		return temp;
 	}
 
 	protected void saveProperties() {
@@ -380,28 +425,47 @@ public class PmrDb implements ModelDatabase {
 
 		return new AbstractMap.SimpleEntry<Repository, Boolean>(repo, hasChanges);
 	}
-	
-	protected void scanAndTransferRepository( File location, Repository repo ) {
+
+	protected void scanAndTransferRepository( String repoUrl, File location, Repository repo ) {
 		// select all relevant files
 		// than going throw the versions
 		List<RelevantFile> relevantFiles;
 		List<Changeset> relevantVersions;
-		
-<<<<<<< HEAD
+
 		// TODO Logging!
-=======
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
-		
+
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Start scanning {0} for changes", repoUrl) );
+
 		// select all relevant files
 		relevantFiles = scanRepository(location, repo);
-		// looking for the latestVersion
-		Iterator<RelevantFile> iter = relevantFiles.iterator();
-		while( iter.hasNext() ) {
-			searchLatestKnownVersion( iter.next() );
+
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Found {0} relevant files.", relevantFiles.size()) );
+
+		// generating the modelId and looking for the latestVersion
+		try {
+			Iterator<RelevantFile> iter = relevantFiles.iterator();
+			while( iter.hasNext() ) {
+				RelevantFile file = iter.next();
+				file.generateModelId(repoUrl);
+				if( log.isDebugEnabled() )
+					log.debug( MessageFormat.format("Generated ModelId {0} for file {1}", file.getModelId(), file.getFilePath()) );
+
+				searchLatestKnownVersion( file );
+			}
 		}
-		
+		catch (UnsupportedEncodingException e) {
+			log.fatal("Unsupported Encoding. Can not generate modelId", e);
+		}
+
 		// detect all relevant versions
 		relevantVersions = detectRelevantVersions(repo, relevantFiles);
+
+		if( relevantVersions == null )
+			// no version is relevant - exit
+			return;
+
 		// sorting them (just in case...)
 		Collections.sort(relevantVersions, new Comparator<Changeset>() {
 			@Override
@@ -409,66 +473,127 @@ public class PmrDb implements ModelDatabase {
 				return cs1.getTimestamp().getDate().compareTo( cs2.getTimestamp().getDate() );
 			}
 		} );
-<<<<<<< HEAD
-=======
-		
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
-		
-		// TODO
+
+		// make it!
+		// (going throw each relevant Version and saves all relevant Files in every relevant - and new - Version)
+		try {
+			iterateRelevantVersions(repo, location, relevantFiles, relevantVersions);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		for( RelevantFile file : relevantFiles ) {
+			if( file.getChangeSet() != null ) {
+				// when the RelevantFile class contains a ChangeSet Object
+				// than there are some changes to store, so we can it to the changeSetMap
+				changeSetMap.put( file.getModelId(), file.getChangeSet() );
+			}
+		}
+
 	}
-	
+
 	protected List<RelevantFile> scanRepository( File location, Repository repo ) {
 		List<RelevantFile> relevantFiles = new LinkedList<RelevantFile>();
-		List<String> files = new LinkedList<String>();
-		
+
 		// scans the directory recursively
-		scanRepositoryDir( location, location, files );
-		
+		scanRepositoryDir( location, location, relevantFiles );
+
 		return relevantFiles;
 	}
-	
-	private void scanRepositoryDir( File base, File dir, List<String> files ) throws IOException {
-		
+
+	private void scanRepositoryDir( File base, File dir, List<RelevantFile> relevantFiles ) {
+
+		if( log.isTraceEnabled() )
+			log.trace( MessageFormat.format("Scanning {0}", base) );
+
 		String[] entries = dir.list();
 		// nothing to scan in this dir
 		if( entries == null )
 			return;
-		
+
+		// looping throw all directory elements
 		for( int index = 0; index < entries.length; index++ ) {
 			File entry = new File( dir, entries[index] );
-			if( entry.isDirectory() && entry.exists() )
-				scanRepositoryDir(base, entry, files);
-			else if( entry.isFile() && entry.exists() ) {
-				
-				if( checkIfModel(entry) == true ) {
-					files.add( RelativPath.getRelativeFile(entry, base).toString() );
-				}
-				
+
+			if( entry.isDirectory() && entry.exists() && !entry.getName().startsWith(".") ) {
+				// Entry is a directory and not hidden (begins with a dot) -> recursive
+				scanRepositoryDir(base, entry, relevantFiles);
 			}
-			
+			else if( entry.isFile() && entry.exists() ) {
+				// Entry is a file -> check if it is relevant
+
+				if( log.isTraceEnabled() )
+					log.trace( MessageFormat.format("Found {0}. Check relevance...", entry) );
+
+				RelevantFile file;
+				if( (file = isRelevant(base, entry)) != null ) {
+					// adds it
+					relevantFiles.add(file);
+					if( log.isTraceEnabled() )
+						log.trace("Is relevant. Adds it.");
+				} else if( log.isTraceEnabled() )
+					log.trace("Is not relevant.");
+
+			}
+
 		}
-		
+
 	}
-	
-	private boolean checkIfModel( File model ) {
-		// TODO
-		return false;
+
+	/**
+	 * Checks if the file is a model aka relevant <br>
+	 * Returns a RelevantFile object if it is or null
+	 * 
+	 * @param base
+	 * @param model
+	 * @return
+	 */
+	private RelevantFile isRelevant( File base, File model ) {
+		int type = 0;
+		RelevantFile relevantFile = null;
+		// classify the file and check if it is relevant
+		type = classifier.classify(model);
+
+		if( (type & DocumentClassifier.XML) > 0 && ((type & DocumentClassifier.SBML) > 0 || (type & DocumentClassifier.CELLML) > 0) ) {
+			// File is an xml document and consists of sbml or cellml model data
+			// create a relevant file object
+
+			// make path relative to Repo base dir
+			Path basePath = Paths.get( base.toString() );
+			Path modelPath = Paths.get( model.toString() );
+			Path relativPath = basePath.relativize(modelPath);
+
+			// creating relevantFile object
+			relevantFile = new RelevantFile( relativPath.toString() );
+			relevantFile.setType(type);
+
+			//			try {
+			//				relevantFile = new RelevantFile( RelativPath.getRelativeFile(model, base).toString() );
+			//				relevantFile.setType(type);
+			//			} catch (IOException e) {
+			//				log.error( MessageFormat.format("IOException while generating relativ path to file {0} in repository {1}", model, base), e);
+			//			}
+
+		}
+
+		return relevantFile;
 	}
-	
+
 	protected void searchLatestKnownVersion( RelevantFile relevantFile ) {
 		String versionId = null;
 		Date versionDate = null;
 		ChangeSet changeSet = null;
-		
+
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Searches latest known version for model {0}", relevantFile.getModelId()) );
-		
+
 		if( (changeSet = changeSetMap.get(relevantFile.getModelId())) != null ) {
 			// there is a changeSet for this modelId, get the latestChange
-			
-			if( log.isInfoEnabled() )
-				log.info("ChangeSet available");
-			
+
+			if( log.isDebugEnabled() )
+				log.debug("ChangeSet available");
+
 			Change latestChange = changeSet.getLatestChange();
 			if( latestChange != null ) {
 				versionId = latestChange.getVersionId();
@@ -478,13 +603,13 @@ public class PmrDb implements ModelDatabase {
 				log.debug("But no change setted");
 			}
 		}
-		
+
 		// versionId and versionDate are still not set
 		if( versionId == null && versionDate == null ) {
-			
-			if( log.isInfoEnabled() )
-				log.info("Start database request");
-			
+
+			if( log.isDebugEnabled() )
+				log.debug("Start database request");
+
 			// search in database
 			ModelRecord latest = null;
 			try {
@@ -495,93 +620,194 @@ public class PmrDb implements ModelDatabase {
 				// error occurs, when modelId is unknown to the database -> so we can assume the change is new!
 				log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);
 			}
-			
+
 			if( latest != null ) {
 				versionId = latest.getVersionId();
 				versionDate = latest.getVersionDate();
 			}
 		}
-		
+
+		if( log.isInfoEnabled() ) {
+			if( versionId != null && versionDate != null )
+				log.info( MessageFormat.format("Found latest version for {0} : {1}@{2}", relevantFile.getModelId(), versionId, versionDate) );
+			else
+				log.info( MessageFormat.format("Found no latest version for {0}. Must be the first occure", relevantFile.getModelId()) );
+		}
+
 		relevantFile.setLatestKnownVersion(versionId, versionDate, (PmrChangeSet) changeSet);
-		
+
 	}
-	
+
 	protected List<Changeset> detectRelevantVersions( Repository repo, List<RelevantFile> relevantFiles ) {
 		String[] files;
-<<<<<<< HEAD
 		Date oldestLatestVersionDate = null;
-		List<Changeset> relevantVersions;
-		
+		boolean foundOldestLatestVersionDate = false;
+		List<Changeset> relevantVersions = null;
+
 		if( log.isInfoEnabled() )
 			log.info("start detection of relevant hg versions");
-		
-=======
-		String oldestLatestVersionId = null;
-		Date oldestLatestVersionDate = null;
-		List<Changeset> relevantVersions;
-		
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
+
+		if( relevantFiles.size() == 0 ) {
+			if( log.isInfoEnabled() )
+				log.info( "List of relevantFiles is empty. So no version is relevant." );
+
+			return null;
+		}
+
 		// make a list of all relevant files
 		files = new String[relevantFiles.size()];
 		int index = 0;
-		
+
 		// put the list into the array and gets the oldestLatestVersion :)
 		Iterator<RelevantFile> fileIter = relevantFiles.iterator();
 		while( fileIter.hasNext() ) {
 			RelevantFile file = fileIter.next();
-			
 			files[index] = file.getFilePath();
 			index++;
-			
+
 			// checks if the current processed relevantFile has an older latestVersion as the
-			// former olderLatestVersion
+			// former olderLatestVersion or some file hasn't a parent, so we can not delete any version from the list
 			if( oldestLatestVersionDate == null ) {
-<<<<<<< HEAD
-				oldestLatestVersionDate = file.getLatestVersionDate();
+				if( foundOldestLatestVersionDate == false ) {
+					oldestLatestVersionDate = file.getLatestVersionDate();
+					foundOldestLatestVersionDate = true;
+				}
 			}
 			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
-=======
-				oldestLatestVersionId = file.getLatestVersionId();
 				oldestLatestVersionDate = file.getLatestVersionDate();
 			}
-			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
-				oldestLatestVersionId = file.getLatestVersionId();
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
-				oldestLatestVersionDate = file.getLatestVersionDate();
-			}
-			
+
 		}
-		
-<<<<<<< HEAD
-		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("execute Log command for {0} file(s)", index) );
-		
-=======
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
+
+		if( log.isDebugEnabled() )
+			log.debug( MessageFormat.format("execute Log command for {0} file(s)", index) );
+
 		// perform the log command to evaluate all interesting hg changesets
 		LogCommand logCmd = new LogCommand(repo);
 		relevantVersions = logCmd.execute(files);
-		
-<<<<<<< HEAD
-		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("Found {0} Changesets, removes all Changeset older as {1} (oldestLatestVersion) from the list", relevantVersions.size(), oldestLatestVersionDate) );
-		
-=======
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
-		// remove every Changeset which is older as the oldestLatestVersion (because they are really uninteresting)
-		Iterator<Changeset> changesetIter = relevantVersions.iterator();
-		while( changesetIter.hasNext() ) {
-			if( changesetIter.next().getTimestamp().getDate().compareTo(oldestLatestVersionDate) < 0 )
-				changesetIter.remove();
+
+		if( oldestLatestVersionDate == null ) {
+			// oldestLatestVersionDate is null -> there is no latest version known for any of the relevantFiles/-Models
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("Found {0} Changesets. Can not skip any of them, because no one is indexed", relevantVersions.size()) );
 		}
-		
-<<<<<<< HEAD
-		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("{0} Changsets left for examination", relevantVersions.size()) );
-=======
->>>>>>> 389b2f1979d50c48f88538d0858b3f8eb229a837
-		
+		else {
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("Found {0} Changesets, removes all Changeset older as {1} (oldestLatestVersion) from the list", relevantVersions.size(), oldestLatestVersionDate) );
+
+			// remove every Changeset which is older as the oldestLatestVersion (because they are really uninteresting)
+			Iterator<Changeset> changesetIter = relevantVersions.iterator();
+			while( changesetIter.hasNext() ) {
+				if( changesetIter.next().getTimestamp().getDate().compareTo(oldestLatestVersionDate) < 0 )
+					changesetIter.remove();
+			}
+
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("{0} Changsets left for examination", relevantVersions.size()) );
+
+		}
+
+
 		return relevantVersions;
 	}
-	
+
+	protected void iterateRelevantVersions( Repository repo, File location, List<RelevantFile> relevantFiles, List<Changeset> relevantVersions ) throws IOException {
+		Date crawledDate = new Date();
+
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Going throw all relevant versions of {0}", location) );
+
+		for( Changeset currentChangeset : relevantVersions ) {
+			String currentNodeId = currentChangeset.getNode();
+			Date currentVersionDate = currentChangeset.getTimestamp().getDate();
+
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("Update to {0} Message: {1}", currentNodeId, currentChangeset.getMessage()) );
+
+			// update to currentChangeset
+			UpdateCommand updateCmd = new UpdateCommand(repo);
+			updateCmd.rev(currentChangeset);
+			try {
+				updateCmd.execute();
+			} catch (IOException e) {
+				log.fatal( MessageFormat.format("IOException while updating {0} to {1}", location, currentNodeId), e);
+			}
+
+			// get all added or modified files in this Changeset
+			List<String> changedFiles = new ArrayList<String>();
+			changedFiles.addAll( currentChangeset.getAddedFiles() );
+			changedFiles.addAll( currentChangeset.getModifiedFiles() );
+
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("{0} changed files in this version", changedFiles.size()) );
+
+			// going throw the relevant files
+			for( RelevantFile file : relevantFiles ) {
+				boolean hasChanges = false;
+
+				if( log.isInfoEnabled() )
+					log.info( MessageFormat.format("Check model {0}", file.getModelId()) );
+
+				// there is already a parent version
+				if( file.getLatestVersionId() != null && file.getLatestVersionDate() != null ) {
+					if( file.getLatestVersionId().equals(currentNodeId) || file.getLatestVersionDate().compareTo(currentVersionDate) >= 0 ) {
+						// if latest version of this file is newer or equal with the current processed Version
+						// skip this file
+						if( log.isInfoEnabled() )
+							log.info("Current version is to old -> no changes.");
+
+						continue;
+					}
+				}
+				else {
+					// there is no parent Version -> so there are changes
+					hasChanges = true;
+					if( log.isDebugEnabled() )
+						log.debug("Model has no parents -> this is a new version.");
+				}
+
+				// if there are no change detected so far, so have to go deeper
+				if( hasChanges == false ) {
+
+					if( log.isTraceEnabled() )
+						log.trace("Check if model is in the changed files list");
+
+					// file is in the list of changedFiles
+					if( changedFiles.contains(file.getFilePath()) == true ) {
+						hasChanges = true;
+						if( log.isDebugEnabled() )
+							log.debug("Model is in the changed files list.");
+					}
+				}
+
+				if( hasChanges ) {
+					// this file has change or is new -> archive it!
+					if( log.isInfoEnabled() )
+						log.info("Model has changes. Adds it to its ChangeSet");
+
+					PmrChange change = new PmrChange(file.getModelId(), currentNodeId, currentVersionDate, crawledDate);
+					// set some Meta information
+					change.setMeta( ModelRecord.META_SOURCE, ModelRecord.SOURCE_PMR2 );
+					if( (file.getType() & DocumentClassifier.SBML) > 0 )
+						change.setMeta( ModelRecord.META_TYPE, ModelRecord.TYPE_SBML );
+					else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
+						change.setMeta( ModelRecord.META_TYPE, ModelRecord.TYPE_CELLML );
+
+					// copy the file to a templocation
+					File tempFile = getTempFile();
+					FileUtils.copyFile( new File(location, file.getFilePath()), tempFile);
+					change.setXmlFile(tempFile);
+
+					// add the change to the ChangeSet (ChangeSet is administrated by RelevantFile
+					file.addChange(change);
+				}
+				else if( log.isInfoEnabled() )
+					log.info("Model has no changes.");
+
+			}
+
+		}
+
+	}
+
 }

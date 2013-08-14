@@ -74,7 +74,13 @@ public class XmlFileRepository implements XmlFileServer {
 //			XmlFileRepository.xmlFileRepository = this;
 	}
 	
-	@Override
+	/**
+	 * Checks if the URI is resolvable by the FileServer. <br>
+	 * (Tests scheme and host)
+	 * 
+	 * @param model
+	 * @return
+	 */
 	public boolean isResolvableUri(URI model) {
 		
 		if( !model.getScheme().equals( Properties.getProperty("de.unirostock.sems.ModelCrawler.models.uri.scheme") ))
@@ -153,7 +159,7 @@ public class XmlFileRepository implements XmlFileServer {
 		
 		if( log.isInfoEnabled() ) {
 			if( filePath == null )
-				log.info( MessageFormat.format("start pushing new model-version {0}:{1} into fileRepo.", repositoryUrl, versionId) );
+				log.info( MessageFormat.format("start pushing new model-version {0}:{1} into fileRepo.", modelId, versionId) );
 			else
 				log.info( MessageFormat.format("start pushing new model-version {0}:{1}:{2} into file Repo.", repositoryUrl, filePath, versionId) );
 		}

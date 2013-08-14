@@ -22,6 +22,4 @@ public class PmrChange extends Change {
 		this.modelId = XmlFileRepository.generateModelId(repositoryUrl, fileName);
 	}
 	
-	
-
 }
