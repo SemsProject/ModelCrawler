@@ -16,10 +16,12 @@ import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +33,7 @@ import java.util.UUID;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
@@ -68,6 +71,8 @@ public class PmrDb implements ModelDatabase {
 	protected GraphDatabase graphDb;
 	protected URI repoListUri;
 	protected DocumentClassifier classifier = null;
+	
+	protected HashSet<String> fileExtensionBlacklist = null;
 
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 	
@@ -107,6 +112,13 @@ public class PmrDb implements ModelDatabase {
 
 		// Prepare WorkingDir 
 		checkAndInitWorkingDir();
+		
+		// load fileExtensionBlacklist
+		fileExtensionBlacklist = new HashSet<String>();
+		String blacklist[] = Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.extensionBlacklist", "html").split(Properties.ELEMENT_SPLITTER) ;
+		for( int index = 0; index < blacklist.length; index++ )  {
+			fileExtensionBlacklist.add( blacklist[index] );
+		}
 	}
 
 	@Override
@@ -249,7 +261,7 @@ public class PmrDb implements ModelDatabase {
 		catch (IOException e) {
 			log.fatal( "IOException while reading the workingdir config file", e );
 		}
-
+		
 	}
 
 	/**
@@ -525,10 +537,17 @@ public class PmrDb implements ModelDatabase {
 			}
 			else if( entry.isFile() && entry.exists() ) {
 				// Entry is a file -> check if it is relevant
-
+				
 				if( log.isTraceEnabled() )
 					log.trace( MessageFormat.format("Found {0}. Check relevance...", entry) );
-
+				
+				if( fileExtensionBlacklist.contains( FilenameUtils.getExtension(entry.getName()) ) ) {
+					// file extension is blacklisted
+					if( log.isTraceEnabled() )
+						log.trace("file extension is blacklisted. Skip this file...");
+					continue;
+				}
+				
 				RelevantFile file;
 				if( (file = isRelevant(base, entry)) != null ) {
 					// adds it

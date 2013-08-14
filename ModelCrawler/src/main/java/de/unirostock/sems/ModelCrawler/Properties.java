@@ -12,6 +12,8 @@ public class Properties {
 	private static File workingDir = null;
 	
 	private static final Log log = LogFactory.getLog( Properties.class );
+	
+	public static final String ELEMENT_SPLITTER = ";";
 
 	/**
 	 * Init the Properties System
@@ -24,7 +26,7 @@ public class Properties {
 			prop.load( ClassLoader.getSystemResourceAsStream("main.properties") );
 
 			// Load all additional properties
-			String[] additional = prop.getProperty("de.unirostock.sems.ModelCrawler.additionProperties", "").split(";");
+			String[] additional = prop.getProperty("de.unirostock.sems.ModelCrawler.additionProperties", "").split(ELEMENT_SPLITTER);
 			for( int index = 0; index < additional.length; index++ ) {
 				prop.load( ClassLoader.getSystemResourceAsStream( additional[index].trim() ));
 			}
