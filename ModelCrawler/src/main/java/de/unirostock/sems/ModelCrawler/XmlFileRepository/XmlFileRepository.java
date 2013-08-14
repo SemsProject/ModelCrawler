@@ -159,7 +159,7 @@ public class XmlFileRepository implements XmlFileServer {
 		
 		if( log.isInfoEnabled() ) {
 			if( filePath == null )
-				log.info( MessageFormat.format("start pushing new model-version {0}:{1} into fileRepo.", repositoryUrl, versionId) );
+				log.info( MessageFormat.format("start pushing new model-version {0}:{1} into fileRepo.", modelId, versionId) );
 			else
 				log.info( MessageFormat.format("start pushing new model-version {0}:{1}:{2} into file Repo.", repositoryUrl, filePath, versionId) );
 		}

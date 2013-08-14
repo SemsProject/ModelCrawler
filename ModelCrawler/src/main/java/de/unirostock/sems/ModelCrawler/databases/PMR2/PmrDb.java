@@ -434,14 +434,24 @@ public class PmrDb implements ModelDatabase {
 
 		// TODO Logging!
 
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Start scanning {0} for changes", repoUrl) );
+
 		// select all relevant files
 		relevantFiles = scanRepository(location, repo);
+
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Found {0} relevant files.", relevantFiles.size()) );
+
 		// generating the modelId and looking for the latestVersion
 		try {
 			Iterator<RelevantFile> iter = relevantFiles.iterator();
 			while( iter.hasNext() ) {
 				RelevantFile file = iter.next();
 				file.generateModelId(repoUrl);
+				if( log.isDebugEnabled() )
+					log.debug( MessageFormat.format("Generated ModelId {0} for file {1}", file.getModelId(), file.getFilePath()) );
+
 				searchLatestKnownVersion( file );
 			}
 		}
@@ -494,6 +504,9 @@ public class PmrDb implements ModelDatabase {
 
 	private void scanRepositoryDir( File base, File dir, List<RelevantFile> relevantFiles ) {
 
+		if( log.isTraceEnabled() )
+			log.trace( MessageFormat.format("Scanning {0}", base) );
+
 		String[] entries = dir.list();
 		// nothing to scan in this dir
 		if( entries == null )
@@ -509,10 +522,19 @@ public class PmrDb implements ModelDatabase {
 			}
 			else if( entry.isFile() && entry.exists() ) {
 				// Entry is a file -> check if it is relevant
+
+				if( log.isTraceEnabled() )
+					log.trace( MessageFormat.format("Found {0}. Check relevance...", entry) );
+
 				RelevantFile file;
-				if( (file = isRelevant(base, entry)) != null )
+				if( (file = isRelevant(base, entry)) != null ) {
 					// adds it
 					relevantFiles.add(file);
+					if( log.isTraceEnabled() )
+						log.trace("Is relevant. Adds it.");
+				} else if( log.isTraceEnabled() )
+					log.trace("Is not relevant.");
+
 			}
 
 		}
@@ -569,8 +591,8 @@ public class PmrDb implements ModelDatabase {
 		if( (changeSet = changeSetMap.get(relevantFile.getModelId())) != null ) {
 			// there is a changeSet for this modelId, get the latestChange
 
-			if( log.isInfoEnabled() )
-				log.info("ChangeSet available");
+			if( log.isDebugEnabled() )
+				log.debug("ChangeSet available");
 
 			Change latestChange = changeSet.getLatestChange();
 			if( latestChange != null ) {
@@ -585,8 +607,8 @@ public class PmrDb implements ModelDatabase {
 		// versionId and versionDate are still not set
 		if( versionId == null && versionDate == null ) {
 
-			if( log.isInfoEnabled() )
-				log.info("Start database request");
+			if( log.isDebugEnabled() )
+				log.debug("Start database request");
 
 			// search in database
 			ModelRecord latest = null;
@@ -603,6 +625,13 @@ public class PmrDb implements ModelDatabase {
 				versionId = latest.getVersionId();
 				versionDate = latest.getVersionDate();
 			}
+		}
+
+		if( log.isInfoEnabled() ) {
+			if( versionId != null && versionDate != null )
+				log.info( MessageFormat.format("Found latest version for {0} : {1}@{2}", relevantFile.getModelId(), versionId, versionDate) );
+			else
+				log.info( MessageFormat.format("Found no latest version for {0}. Must be the first occure", relevantFile.getModelId()) );
 		}
 
 		relevantFile.setLatestKnownVersion(versionId, versionDate, (PmrChangeSet) changeSet);
@@ -638,9 +667,11 @@ public class PmrDb implements ModelDatabase {
 
 			// checks if the current processed relevantFile has an older latestVersion as the
 			// former olderLatestVersion or some file hasn't a parent, so we can not delete any version from the list
-			if( oldestLatestVersionDate == null && foundOldestLatestVersionDate == false ) {
-				oldestLatestVersionDate = file.getLatestVersionDate();
-				foundOldestLatestVersionDate = true;
+			if( oldestLatestVersionDate == null ) {
+				if( foundOldestLatestVersionDate == false ) {
+					oldestLatestVersionDate = file.getLatestVersionDate();
+					foundOldestLatestVersionDate = true;
+				}
 			}
 			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
 				oldestLatestVersionDate = file.getLatestVersionDate();
@@ -648,8 +679,8 @@ public class PmrDb implements ModelDatabase {
 
 		}
 
-		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("execute Log command for {0} file(s)", index) );
+		if( log.isDebugEnabled() )
+			log.debug( MessageFormat.format("execute Log command for {0} file(s)", index) );
 
 		// perform the log command to evaluate all interesting hg changesets
 		LogCommand logCmd = new LogCommand(repo);
@@ -683,7 +714,15 @@ public class PmrDb implements ModelDatabase {
 	protected void iterateRelevantVersions( Repository repo, File location, List<RelevantFile> relevantFiles, List<Changeset> relevantVersions ) throws IOException {
 		Date crawledDate = new Date();
 
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Going throw all relevant versions of {0}", location) );
+
 		for( Changeset currentChangeset : relevantVersions ) {
+			String currentNodeId = currentChangeset.getNode();
+			Date currentVersionDate = currentChangeset.getTimestamp().getDate();
+
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("Update to {0} Message: {1}", currentNodeId, currentChangeset.getMessage()) );
 
 			// update to currentChangeset
 			UpdateCommand updateCmd = new UpdateCommand(repo);
@@ -691,8 +730,7 @@ public class PmrDb implements ModelDatabase {
 			try {
 				updateCmd.execute();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.fatal( MessageFormat.format("IOException while updating {0} to {1}", location, currentNodeId), e);
 			}
 
 			// get all added or modified files in this Changeset
@@ -700,35 +738,53 @@ public class PmrDb implements ModelDatabase {
 			changedFiles.addAll( currentChangeset.getAddedFiles() );
 			changedFiles.addAll( currentChangeset.getModifiedFiles() );
 
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("{0} changed files in this version", changedFiles.size()) );
+
 			// going throw the relevant files
-			String currentNodeId = currentChangeset.getNode();
-			Date currentVersionDate = currentChangeset.getTimestamp().getDate();
 			for( RelevantFile file : relevantFiles ) {
 				boolean hasChanges = false;
+
+				if( log.isInfoEnabled() )
+					log.info( MessageFormat.format("Check model {0}", file.getModelId()) );
 
 				// there is already a parent version
 				if( file.getLatestVersionId() != null && file.getLatestVersionDate() != null ) {
 					if( file.getLatestVersionId().equals(currentNodeId) || file.getLatestVersionDate().compareTo(currentVersionDate) >= 0 ) {
 						// if latest version of this file is newer or equal with the current processed Version
 						// skip this file
+						if( log.isInfoEnabled() )
+							log.info("Current version is to old -> no changes.");
+
 						continue;
 					}
 				}
 				else {
 					// there is no parent Version -> so there are changes
 					hasChanges = true;
+					if( log.isDebugEnabled() )
+						log.debug("Model has no parents -> this is a new version.");
 				}
 
 				// if there are no change detected so far, so have to go deeper
 				if( hasChanges == false ) {
 
+					if( log.isTraceEnabled() )
+						log.trace("Check if model is in the changed files list");
+
 					// file is in the list of changedFiles
-					if( changedFiles.contains(file.getFilePath()) == true )
+					if( changedFiles.contains(file.getFilePath()) == true ) {
 						hasChanges = true;
+						if( log.isDebugEnabled() )
+							log.debug("Model is in the changed files list.");
+					}
 				}
 
 				if( hasChanges ) {
 					// this file has change or is new -> archive it!
+					if( log.isInfoEnabled() )
+						log.info("Model has changes. Adds it to its ChangeSet");
+
 					PmrChange change = new PmrChange(file.getModelId(), currentNodeId, currentVersionDate, crawledDate);
 					// set some Meta information
 					change.setMeta( ModelRecord.META_SOURCE, ModelRecord.SOURCE_PMR2 );
@@ -745,6 +801,8 @@ public class PmrDb implements ModelDatabase {
 					// add the change to the ChangeSet (ChangeSet is administrated by RelevantFile
 					file.addChange(change);
 				}
+				else if( log.isInfoEnabled() )
+					log.info("Model has no changes.");
 
 			}
 
