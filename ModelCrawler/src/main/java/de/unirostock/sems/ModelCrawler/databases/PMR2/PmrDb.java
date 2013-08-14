@@ -26,9 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.UUID;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
@@ -41,6 +43,7 @@ import com.aragost.javahg.Changeset;
 import com.aragost.javahg.Repository;
 import com.aragost.javahg.commands.LogCommand;
 import com.aragost.javahg.commands.PullCommand;
+import com.aragost.javahg.commands.UpdateCommand;
 
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
@@ -51,7 +54,6 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
-import de.unirostock.sems.ModelCrawler.helper.RelativPath;
 import de.unirostock.sems.bives.tools.DocumentClassifier;
 
 public class PmrDb implements ModelDatabase {
@@ -61,6 +63,7 @@ public class PmrDb implements ModelDatabase {
 	private final Log log = LogFactory.getLog( PmrDb.class );
 
 	protected File workingDir;
+	protected File tempDir;
 	protected java.util.Properties config;
 	protected GraphDatabase graphDb;
 	protected URI repoListUri;
@@ -121,6 +124,13 @@ public class PmrDb implements ModelDatabase {
 	public void cleanUp() {
 		// save the config
 		saveProperties();
+
+		// deletes the tempDir recursively
+		try {
+			FileUtils.deleteDirectory(tempDir);
+		} catch (IOException e) {
+			log.error("Error while cleaning up the temp dir!", e);
+		}
 	}
 
 	@Override
@@ -136,8 +146,6 @@ public class PmrDb implements ModelDatabase {
 		} catch (HttpException e) {
 			log.fatal("Can not download RepositoryList", e);
 		}
-
-		// TODO get dirs, clone/pull, search for models, log files
 
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Iterate throw {0} repositories", repositories.size()) );
@@ -206,12 +214,17 @@ public class PmrDb implements ModelDatabase {
 	protected void checkAndInitWorkingDir() {
 
 		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.subWorkingDir") );
+		tempDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.subTempDir") );
 
 		log.trace( "Preparing working dir " + workingDir.getAbsolutePath() );
 
 		if( workingDir.exists() == false ) {
 			// creates it!
 			workingDir.mkdirs();
+		}
+		if( tempDir.exists() == false ) {
+			// creates it!
+			tempDir.mkdirs();
 		}
 
 		// inits the config
@@ -233,6 +246,19 @@ public class PmrDb implements ModelDatabase {
 			log.fatal( "IOException while reading the workingdir config file", e );
 		}
 
+	}
+
+	/**
+	 * Returns a non existent temporary file
+	 * @return
+	 */
+	protected File getTempFile() {
+		File temp = new File( tempDir, UUID.randomUUID().toString() );
+		while( temp.exists() ) {
+			temp = new File( tempDir, UUID.randomUUID().toString() );
+		} 
+
+		return temp;
 	}
 
 	protected void saveProperties() {
@@ -438,7 +464,22 @@ public class PmrDb implements ModelDatabase {
 			}
 		} );
 
-		// TODO
+		// make it!
+		// (going throw each relevant Version and saves all relevant Files in every relevant - and new - Version)
+		try {
+			iterateRelevantVersions(repo, location, relevantFiles, relevantVersions);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		for( RelevantFile file : relevantFiles ) {
+			if( file.getChangeSet() != null ) {
+				// when the RelevantFile class contains a ChangeSet Object
+				// than there are some changes to store, so we can it to the changeSetMap
+				changeSetMap.put( file.getModelId(), file.getChangeSet() );
+			}
+		}
 
 	}
 
@@ -495,22 +536,22 @@ public class PmrDb implements ModelDatabase {
 		if( (type & DocumentClassifier.XML) > 0 && ((type & DocumentClassifier.SBML) > 0 || (type & DocumentClassifier.CELLML) > 0) ) {
 			// File is an xml document and consists of sbml or cellml model data
 			// create a relevant file object
-			
+
 			// make path relative to Repo base dir
 			Path basePath = Paths.get( base.toString() );
 			Path modelPath = Paths.get( model.toString() );
 			Path relativPath = basePath.relativize(modelPath);
-			
+
 			// creating relevantFile object
 			relevantFile = new RelevantFile( relativPath.toString() );
 			relevantFile.setType(type);
-			
-//			try {
-//				relevantFile = new RelevantFile( RelativPath.getRelativeFile(model, base).toString() );
-//				relevantFile.setType(type);
-//			} catch (IOException e) {
-//				log.error( MessageFormat.format("IOException while generating relativ path to file {0} in repository {1}", model, base), e);
-//			}
+
+			//			try {
+			//				relevantFile = new RelevantFile( RelativPath.getRelativeFile(model, base).toString() );
+			//				relevantFile.setType(type);
+			//			} catch (IOException e) {
+			//				log.error( MessageFormat.format("IOException while generating relativ path to file {0} in repository {1}", model, base), e);
+			//			}
 
 		}
 
@@ -571,6 +612,7 @@ public class PmrDb implements ModelDatabase {
 	protected List<Changeset> detectRelevantVersions( Repository repo, List<RelevantFile> relevantFiles ) {
 		String[] files;
 		Date oldestLatestVersionDate = null;
+		boolean foundOldestLatestVersionDate = false;
 		List<Changeset> relevantVersions = null;
 
 		if( log.isInfoEnabled() )
@@ -595,9 +637,10 @@ public class PmrDb implements ModelDatabase {
 			index++;
 
 			// checks if the current processed relevantFile has an older latestVersion as the
-			// former olderLatestVersion
-			if( oldestLatestVersionDate == null ) {
+			// former olderLatestVersion or some file hasn't a parent, so we can not delete any version from the list
+			if( oldestLatestVersionDate == null && foundOldestLatestVersionDate == false ) {
 				oldestLatestVersionDate = file.getLatestVersionDate();
+				foundOldestLatestVersionDate = true;
 			}
 			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
 				oldestLatestVersionDate = file.getLatestVersionDate();
@@ -632,9 +675,81 @@ public class PmrDb implements ModelDatabase {
 				log.info( MessageFormat.format("{0} Changsets left for examination", relevantVersions.size()) );
 
 		}
-		
-		
+
+
 		return relevantVersions;
+	}
+
+	protected void iterateRelevantVersions( Repository repo, File location, List<RelevantFile> relevantFiles, List<Changeset> relevantVersions ) throws IOException {
+		Date crawledDate = new Date();
+
+		for( Changeset currentChangeset : relevantVersions ) {
+
+			// update to currentChangeset
+			UpdateCommand updateCmd = new UpdateCommand(repo);
+			updateCmd.rev(currentChangeset);
+			try {
+				updateCmd.execute();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			// get all added or modified files in this Changeset
+			List<String> changedFiles = new ArrayList<String>();
+			changedFiles.addAll( currentChangeset.getAddedFiles() );
+			changedFiles.addAll( currentChangeset.getModifiedFiles() );
+
+			// going throw the relevant files
+			String currentNodeId = currentChangeset.getNode();
+			Date currentVersionDate = currentChangeset.getTimestamp().getDate();
+			for( RelevantFile file : relevantFiles ) {
+				boolean hasChanges = false;
+
+				// there is already a parent version
+				if( file.getLatestVersionId() != null && file.getLatestVersionDate() != null ) {
+					if( file.getLatestVersionId().equals(currentNodeId) || file.getLatestVersionDate().compareTo(currentVersionDate) >= 0 ) {
+						// if latest version of this file is newer or equal with the current processed Version
+						// skip this file
+						continue;
+					}
+				}
+				else {
+					// there is no parent Version -> so there are changes
+					hasChanges = true;
+				}
+
+				// if there are no change detected so far, so have to go deeper
+				if( hasChanges == false ) {
+
+					// file is in the list of changedFiles
+					if( changedFiles.contains(file.getFilePath()) == true )
+						hasChanges = true;
+				}
+
+				if( hasChanges ) {
+					// this file has change or is new -> archive it!
+					PmrChange change = new PmrChange(file.getModelId(), currentNodeId, currentVersionDate, crawledDate);
+					// set some Meta information
+					change.setMeta( ModelRecord.META_SOURCE, ModelRecord.SOURCE_PMR2 );
+					if( (file.getType() & DocumentClassifier.SBML) > 0 )
+						change.setMeta( ModelRecord.META_TYPE, ModelRecord.TYPE_SBML );
+					else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
+						change.setMeta( ModelRecord.META_TYPE, ModelRecord.TYPE_CELLML );
+
+					// copy the file to a templocation
+					File tempFile = getTempFile();
+					FileUtils.copyFile( new File(location, file.getFilePath()), tempFile);
+					change.setXmlFile(tempFile);
+
+					// add the change to the ChangeSet (ChangeSet is administrated by RelevantFile
+					file.addChange(change);
+				}
+
+			}
+
+		}
+
 	}
 
 }
