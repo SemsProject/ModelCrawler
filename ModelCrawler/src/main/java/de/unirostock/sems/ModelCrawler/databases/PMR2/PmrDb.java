@@ -218,8 +218,8 @@ public class PmrDb implements ModelDatabase {
 				scanAndTransferRepository(repoName, location, repo);
 			}
 
-			if( limiter++ >= 5 )
-				break;
+//			if( limiter++ >= 5 )
+//				break;
 
 		}
 

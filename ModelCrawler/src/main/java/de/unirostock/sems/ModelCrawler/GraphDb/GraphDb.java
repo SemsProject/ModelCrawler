@@ -9,7 +9,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 

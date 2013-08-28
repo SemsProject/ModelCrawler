@@ -70,15 +70,15 @@ public class App
     	int n = 1; // limiter
     	
     	// going throw all changeSets ...
-    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
-    	while( changesSetIterator.hasNext() ) {
-    		// ... and process them
-    		processChangeSet( changesSetIterator.next() );
-    		
-    		// limiter
-    		if( n++ >= 5 )
-    			break;
-    	}
+//    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
+//    	while( changesSetIterator.hasNext() ) {
+//    		// ... and process them
+//    		processChangeSet( changesSetIterator.next() );
+//    		
+//    		// limiter
+//    		if( n++ >= 5 )
+//    			break;
+//    	}
     	
     	// After everthing is done: Hide the bodies...
     	cleanUp();

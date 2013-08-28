@@ -14,7 +14,10 @@ public abstract class ChangeSet {
 	}
 	
 	public Change getLatestChange() {
-		return changes.last();
+		if( changes.size() > 0 )
+			return changes.last();
+		else
+			return null;
 	}
 	
 	public void addChange(Change change) {
