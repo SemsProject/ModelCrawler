@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.ModelNotFoundException;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.UnsupportedUriException;
 
 public interface XmlFileServer {
@@ -19,7 +20,7 @@ public interface XmlFileServer {
 	 * @throws FileNotFoundException 
 	 * @throws UnsupportedUriException 
 	 */
-	public InputStream resolveModelUri( URI model ) throws FileNotFoundException, UnsupportedUriException;
+	public InputStream resolveModelUri( URI model ) throws ModelNotFoundException, UnsupportedUriException;
 	
 	/**
 	 * Checks if the model referenced by the URI exits and is available

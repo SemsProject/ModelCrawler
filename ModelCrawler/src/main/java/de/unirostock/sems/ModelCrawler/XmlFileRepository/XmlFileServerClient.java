@@ -1,6 +1,5 @@
 package de.unirostock.sems.ModelCrawler.XmlFileRepository;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -14,10 +13,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.Interface.XmlFileServer;
+import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.ModelNotFoundException;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.UnsupportedUriException;
 
 public class XmlFileServerClient implements XmlFileServer {
 	
+	private static final int STATUSCODE_OK = 200;
 	private static XmlFileServerClient instance = null;
 	
 	public static XmlFileServerClient getInstance() throws URISyntaxException {
@@ -45,9 +46,9 @@ public class XmlFileServerClient implements XmlFileServer {
 	}
 
 	@Override
-	public InputStream resolveModelUri(URI model) throws FileNotFoundException,	UnsupportedUriException {
+	public InputStream resolveModelUri(URI model) throws UnsupportedUriException, ModelNotFoundException {
 		HttpGet request;
-		HttpResponse response;
+		HttpResponse response = null;
 		URI requestUri = null;
 		String requestPath;
 		
@@ -85,7 +86,19 @@ public class XmlFileServerClient implements XmlFileServer {
 			e.printStackTrace();
 		}
 		
-		
+		if( response.getStatusLine().getStatusCode() == STATUSCODE_OK ) {
+			try {
+				return response.getEntity().getContent();
+			} catch (IllegalStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			throw new ModelNotFoundException( response.getStatusLine().getReasonPhrase() );
+		}
 		return null;
 	}
 

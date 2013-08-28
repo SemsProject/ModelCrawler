@@ -10,6 +10,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.XmlFileRepository;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.Interface.XmlFileServer;
+import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.ModelNotFoundException;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.UnsupportedUriException;
 
 public class TestXmlFileRepo extends TestCase {
@@ -33,7 +34,7 @@ public class TestXmlFileRepo extends TestCase {
 		return new TestSuite(TestXmlFileRepo.class);
 	}
 
-	public void testInsertCellMlModel() throws IOException, UnsupportedUriException {
+	public void testInsertCellMlModel() throws IOException, UnsupportedUriException, ModelNotFoundException {
 
 		// creates a Stream for testing
 		byte[] testSource = new byte[1024];
@@ -54,7 +55,7 @@ public class TestXmlFileRepo extends TestCase {
 
 	}
 
-	public void testInsertBioModel() throws IOException, UnsupportedUriException {
+	public void testInsertBioModel() throws IOException, UnsupportedUriException, ModelNotFoundException {
 
 		// creates a Stream for testing
 		byte[] testSource = new byte[1024];

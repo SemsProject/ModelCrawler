@@ -1,7 +1,6 @@
 package de.unirostock.sems.ModelCrawler.GraphDb.Interface;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;

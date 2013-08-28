@@ -20,6 +20,7 @@ import org.apache.commons.net.io.Util;
 
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.Interface.XmlFileServer;
+import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.ModelNotFoundException;
 import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.UnsupportedUriException;
 
 public class XmlFileRepository implements XmlFileServer {
@@ -93,7 +94,7 @@ public class XmlFileRepository implements XmlFileServer {
 	}
 	
 	@Override
-	public InputStream resolveModelUri(URI model) throws FileNotFoundException, UnsupportedUriException {
+	public InputStream resolveModelUri(URI model) throws UnsupportedUriException, ModelNotFoundException {
 		
 		if( model.isAbsolute() != true )
 			throw new UnsupportedUriException( MessageFormat.format("URI is not absolute. {0}", model.toString()) );
@@ -103,7 +104,11 @@ public class XmlFileRepository implements XmlFileServer {
 
 		File modelPath = getModelPath(model);
 		
-		return new FileInputStream(modelPath);
+		try {
+			return new FileInputStream(modelPath);
+		} catch (FileNotFoundException e) {
+			throw new ModelNotFoundException(e);
+		}
 	}
 
 	@Override
