@@ -94,6 +94,11 @@
 			<artifactId>BiVeS</artifactId>
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>de.unirostock.sems</groupId>
+			<artifactId>XmlFileServerClient</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>

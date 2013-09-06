@@ -2,16 +2,18 @@ package de.unirostock.sems.ModelCrawler.databases.Interface;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Date;
 
 import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
-import de.unirostock.sems.ModelCrawler.XmlFileRepository.XmlFileRepository;
-import de.unirostock.sems.ModelCrawler.XmlFileRepository.exceptions.UnsupportedUriException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.exceptions.XmlNotFoundException;
+import de.unirostock.sems.XmlFileServerClient.XmlFileServer;
+import de.unirostock.sems.XmlFileServerClient.exceptions.ModelAlreadyExistsException;
+import de.unirostock.sems.XmlFileServerClient.exceptions.UnsupportedUriException;
+import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerBadRequestException;
+import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollException;
 
 public abstract class Change extends ModelRecord implements Comparable<Change> {
 	
@@ -26,7 +28,7 @@ public abstract class Change extends ModelRecord implements Comparable<Change> {
 		this.crawledDate = crawledDate;
 	}
 	
-	public void pushToXmlFileServer() throws XmlNotFoundException, UnsupportedUriException {
+	public void pushToXmlFileServer( XmlFileServer server ) throws XmlNotFoundException, ModelAlreadyExistsException, XmlFileServerBadRequestException, UnsupportedUriException, XmlFileServerProtocollException, IOException {
 		
 		if( xmlFile == null )
 			throw new XmlNotFoundException("XmlFile is not set!");
@@ -34,21 +36,20 @@ public abstract class Change extends ModelRecord implements Comparable<Change> {
 		if( !xmlFile.exists() || !xmlFile.isFile() )
 			throw new XmlNotFoundException("xmlFile does not exists or is no file!");
 		
+		if( server == null )
+			throw new IllegalArgumentException("XmlFileServer can not be null!");
+		
 		InputStream stream = null;
 		
-		try {
-			stream = new FileInputStream(xmlFile);
-			URI uri = XmlFileRepository.getInstance().pushModel(modelId, versionId, stream);
-			// finally set the document Uri, generated from the XmlFileRepo
-			setDocumentUri(uri);
-			// closes the stream
-			stream.close();
+		stream = new FileInputStream(xmlFile);
 			
-		} catch (FileNotFoundException e) {
-			throw new XmlNotFoundException("Can not open InputStream", e);
-		} catch (IOException e) {
-			throw new XmlNotFoundException("Can not read XmlFile", e);
-		}
+		// do it!
+		URI uri = server.pushModel(modelId, versionId, stream);
+		// finally set the document Uri, generated from the XmlFileRepo
+		setDocumentUri(uri);
+		
+		// closes the stream
+		stream.close();
 		
 	}
 	
