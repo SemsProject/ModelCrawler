@@ -217,8 +217,8 @@ public class PmrDb implements ModelDatabase {
 				scanAndTransferRepository(repoName, location, repo);
 			}
 
-//			if( limiter++ >= 5 )
-//				break;
+			if( limiter++ >= 5 )
+				break;
 
 		}
 
@@ -806,7 +806,7 @@ public class PmrDb implements ModelDatabase {
 					if( log.isInfoEnabled() )
 						log.info("Model has changes. Adds it to its ChangeSet");
 
-					PmrChange change = new PmrChange(file.getModelId(), currentNodeId, currentVersionDate, crawledDate);
+					PmrChange change = new PmrChange(file.getModelId(), file.getRepositoryUrl(), file.getFilePath(), currentNodeId, currentVersionDate, crawledDate);
 					// set some Meta information
 					change.setMeta( ModelRecord.META_SOURCE, ModelRecord.SOURCE_PMR2 );
 					if( (file.getType() & DocumentClassifier.SBML) > 0 )

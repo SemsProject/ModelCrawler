@@ -177,8 +177,8 @@ public class BioModelsDb implements ModelDatabase {
 			if( release.isDownloaded() && release.isExtracted() )
 				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
 			
-//			if( limiter++ >= 4 )
-//				break;
+			if( limiter++ >= 2 )
+				break;
 		}
 
 		log.info("finished cloning BioModelsDatabase!");

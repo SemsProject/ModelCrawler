@@ -45,7 +45,7 @@ public class App
 	private static XmlFileServer xmlFileServer = null;
 
 	public static void main( String[] args ) {
-
+		
 		log.info("ModelCrawler startet");
 		// Properties and WorkingDir
 		prepare();
@@ -86,8 +86,8 @@ public class App
 		    		processChangeSet( changesSetIterator.next() );
 		    		
 		    		// limiter
-		    		if( n++ >= 5 )
-		    			break;
+//		    		if( n++ >= 5 )
+//		    			break;
 		    	}
 
 		// After everthing is done: Hide the bodies...
@@ -147,7 +147,7 @@ public class App
 			log.info("Starting Http XmlFileServer connector");
 
 		try {
-			XmlFileServerClientFactory.getClient( new URI(Properties.getProperty("de.unirostock.sems.ModelCrawler.xmlFileServer")) );
+			xmlFileServer = XmlFileServerClientFactory.getClient( new URI(Properties.getProperty("de.unirostock.sems.ModelCrawler.xmlFileServer")) );
 		} catch (URISyntaxException e) {
 			log.fatal("Can not start XmlFileServer connector! URI is invalid! Maybe a config erro?", e);
 		}
@@ -181,14 +181,14 @@ public class App
 				// Push it into XmlFileRepository!
 				change.pushToXmlFileServer( xmlFileServer );
 				// insert it into GraphDb via MORRE
-//				graphDb.insertModel( change );
+				graphDb.insertModel( change );
 			}
 		} catch (XmlNotFoundException e) {
 			log.fatal( MessageFormat.format("Can not find xml file while pushing model {0} to the server!", change), e);
 		} catch (GraphDatabaseCommunicationException e) {
 			log.fatal( MessageFormat.format("CommunicationError while pushing model {0} into the database!", change), e);
-//		} catch (GraphDatabaseError e) {
-//			log.fatal( MessageFormat.format("Error from database while pushing model {0} into the database!", change), e);
+		} catch (GraphDatabaseError e) {
+			log.fatal( MessageFormat.format("Error from database while pushing model {0} into the database!", change), e);
 		} catch (ModelAlreadyExistsException e) {
 			log.fatal( MessageFormat.format("The model {0} already exists on the XmlFileServer!", change), e);
 		} catch (XmlFileServerBadRequestException e) {

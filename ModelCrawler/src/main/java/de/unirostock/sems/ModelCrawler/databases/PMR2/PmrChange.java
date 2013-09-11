@@ -32,6 +32,12 @@ public class PmrChange extends Change {
 		this.modelId = XmlFileRepository.generateModelId(repositoryUrl, fileName);
 	}
 	
+	public PmrChange( String modelId, String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws UnsupportedEncodingException {
+		super( modelId, versionId, versionDate, crawledDate );
+		this.repositoryUrl = repositoryUrl;
+		this.fileName = fileName;
+	}
+	
 	@Override
 	public void pushToXmlFileServer( XmlFileServer server ) throws XmlNotFoundException, ModelAlreadyExistsException, XmlFileServerBadRequestException, UnsupportedUriException, XmlFileServerProtocollException, IOException {
 		if( xmlFile == null )

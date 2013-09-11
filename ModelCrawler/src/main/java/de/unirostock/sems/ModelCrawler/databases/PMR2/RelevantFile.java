@@ -9,6 +9,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 public class RelevantFile {
 
 	private String filePath;
+	private String repoUrl = null;
 	private String modelId;
 	private String latestKnownVersionId = null;
 	private Date latestKnownVersionDate = null;
@@ -26,11 +27,16 @@ public class RelevantFile {
 	}
 	
 	public String generateModelId( String repoUrl ) throws UnsupportedEncodingException {
+		this.repoUrl = repoUrl;
 		return this.modelId = XmlFileRepository.generateModelId(repoUrl, filePath);
 	}
 	
 	public String getFilePath() {
 		return filePath;
+	}
+	
+	public String getRepositoryUrl() {
+		return repoUrl;
 	}
 	
 	public String getModelId() {
