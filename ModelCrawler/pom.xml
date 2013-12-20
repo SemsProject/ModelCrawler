@@ -4,7 +4,7 @@
 
 	<groupId>de.unirostock.sems</groupId>
 	<artifactId>ModelCrawler</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ModelCrawler</name>
@@ -98,6 +98,11 @@
 			<groupId>de.unirostock.sems</groupId>
 			<artifactId>XmlFileServerClient</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>de.unirostock.sems</groupId>
+			<artifactId>morre.client</artifactId>
+			<version>0.0.4-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 

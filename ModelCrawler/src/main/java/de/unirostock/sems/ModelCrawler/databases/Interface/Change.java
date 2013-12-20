@@ -7,15 +7,15 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Date;
 
-import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
 import de.unirostock.sems.ModelCrawler.databases.Interface.exceptions.XmlNotFoundException;
+import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 import de.unirostock.sems.XmlFileServerClient.XmlFileServer;
 import de.unirostock.sems.XmlFileServerClient.exceptions.ModelAlreadyExistsException;
 import de.unirostock.sems.XmlFileServerClient.exceptions.UnsupportedUriException;
 import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerBadRequestException;
 import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollException;
 
-public abstract class Change extends ModelRecord implements Comparable<Change> {
+public abstract class Change extends CrawledModelRecord implements Comparable<Change> {
 	
 	private Date versionDate = null;
 	private Date crawledDate = null;
@@ -44,9 +44,9 @@ public abstract class Change extends ModelRecord implements Comparable<Change> {
 		stream = new FileInputStream(xmlFile);
 			
 		// do it!
-		URI uri = server.pushModel(modelId, versionId, stream);
+		URI uri = server.pushModel(getFileId(), getVersionId(), stream);
 		// finally set the document Uri, generated from the XmlFileRepo
-		setDocumentUri(uri);
+		setXmldoc( uri.toString() );
 		
 		// closes the stream
 		stream.close();
@@ -102,7 +102,7 @@ public abstract class Change extends ModelRecord implements Comparable<Change> {
 	
 	@Override
 	public String toString() {
-		return "Chg:" + modelId+"@"+versionId;
+		return "Chg:" + getFileId()+"@"+getVersionId();
 	}
 	
 }

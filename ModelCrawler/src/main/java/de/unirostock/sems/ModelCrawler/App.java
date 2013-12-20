@@ -29,6 +29,9 @@ import de.unirostock.sems.XmlFileServerClient.exceptions.ModelAlreadyExistsExcep
 import de.unirostock.sems.XmlFileServerClient.exceptions.UnsupportedUriException;
 import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerBadRequestException;
 import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollException;
+import de.unirostock.sems.morre.client.MorreCrawlerInterface;
+import de.unirostock.sems.morre.client.MorreHttpTest;
+import de.unirostock.sems.morre.client.impl.HttpMorreClient;
 
 /**
  * Hello world!
@@ -39,6 +42,7 @@ public class App
 	private static final Log log = LogFactory.getLog( App.class );
 
 	private static GraphDatabase graphDb;
+	private static MorreCrawlerInterface morreClient;
 	private static ModelDatabase bioModelsDb;
 	private static ModelDatabase pmr2Db;
 
@@ -117,8 +121,15 @@ public class App
 			log.info("Start GraphDb/MORRE connector");
 
 		// GraphDb connector
+//		try {
+//			graphDb = new GraphDb( new URL( Properties.getProperty("de.unirostock.sems.ModelCrawler.graphDb.api") ) );
+//		} catch (MalformedURLException e) {
+//			log.fatal("Malformed Url for MORRE in config file", e);
+//		}
+		
+		// morre.client connector
 		try {
-			graphDb = new GraphDb( new URL( Properties.getProperty("de.unirostock.sems.ModelCrawler.graphDb.api") ) );
+			morreClient = new HttpMorreClient(Properties.getProperty("de.unirostock.sems.ModelCrawler.graphDb.api"));
 		} catch (MalformedURLException e) {
 			log.fatal("Malformed Url for MORRE in config file", e);
 		}
@@ -127,7 +138,7 @@ public class App
 			log.info("Starting BioModelsDb connector");
 		// BioModelsDatabase
 		try {
-			bioModelsDb = new BioModelsDb(graphDb);
+			bioModelsDb = new BioModelsDb(morreClient);
 		} catch (MalformedURLException e) {
 			log.fatal("Malformed Url for the BioModelsDb in config file", e);
 		} catch (IllegalArgumentException e) {

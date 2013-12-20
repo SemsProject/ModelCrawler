@@ -26,12 +26,12 @@ public class BioModelsChange extends Change {
 	public BioModelsChange( String modelId, String versionId, Date versionDate, Date crawledDate ) {
 		super(modelId, versionId, versionDate, crawledDate);
 	}
-
+	
 	public boolean setXmlFile(File xmlFile, String hash) {
 		//REMIND the xml file can only be setted once in a Change
 		if( this.xmlFile == null && hash != null ) {
 			this.xmlFile = xmlFile;
-			meta.put(META_HASH, hash);
+			setMeta(META_HASH, hash);
 
 			return true;
 		}
@@ -49,7 +49,7 @@ public class BioModelsChange extends Change {
 	}
 	
 	public String getHash() {
-		return meta.get(META_HASH);
+		return getMeta(META_HASH);
 	}
 
 	protected String calcXmlHash( File xmlFile ) {

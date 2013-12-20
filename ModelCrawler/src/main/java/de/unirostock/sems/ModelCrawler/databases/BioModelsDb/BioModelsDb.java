@@ -48,6 +48,9 @@ import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractE
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
+import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
+import de.unirostock.sems.morre.client.MorreCrawlerInterface;
+import de.unirostock.sems.morre.client.dataholder.CrawledModel;
 
 public class BioModelsDb implements ModelDatabase {
 
@@ -61,12 +64,14 @@ public class BioModelsDb implements ModelDatabase {
 	protected java.util.Properties config;
 
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
+	
+	protected MorreCrawlerInterface morreClient = null;
+//	protected GraphDatabase graphDb = null;
 
-	protected GraphDatabase graphDb = null;
-
-	public BioModelsDb(String ftpUrl, GraphDatabase graphDb) throws MalformedURLException, IllegalArgumentException {
+	public BioModelsDb(String ftpUrl, MorreCrawlerInterface morreClient) throws MalformedURLException, IllegalArgumentException {
 		this.ftpUrl = new URL(ftpUrl);
-		this.graphDb = graphDb;
+//		this.graphDb = graphDb;
+		this.morreClient = morreClient;
 
 		if (!this.ftpUrl.getProtocol().toLowerCase().equals("ftp")) {
 			// Protocoll is not ftp -> not (yet) supported
@@ -84,8 +89,8 @@ public class BioModelsDb implements ModelDatabase {
 
 	}
 
-	public BioModelsDb( GraphDatabase graphDb ) throws MalformedURLException, IllegalArgumentException {
-		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl"), graphDb );
+	public BioModelsDb( MorreCrawlerInterface morreClient ) throws MalformedURLException, IllegalArgumentException {
+		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl"), morreClient );
 	}
 
 	@Override
@@ -676,7 +681,7 @@ public class BioModelsDb implements ModelDatabase {
 			changeSetMap.put(modelId, changeSet);
 
 			// if GraphDb is available for this instance
-			if( graphDb != null  ) {
+			if( morreClient != null  ) {
 
 				// TODO cache the result of the latest request!
 				
@@ -684,9 +689,9 @@ public class BioModelsDb implements ModelDatabase {
 					log.trace("start checking database");
 				
 				// try to get the latest version of this model
-				ModelRecord latest = null;
+				CrawledModelRecord latest = null;
 				try {
-					latest = graphDb.getLatestModelVersion(modelId);
+					latest = CrawledModelRecord.extendDataholder( morreClient.getLatestModelVersion(modelId) );
 				} catch (GraphDatabaseCommunicationException e) {
 					log.fatal("Getting latest model version, to check, if processed model version is new, failed", e);
 				} catch (GraphDatabaseError e) {
