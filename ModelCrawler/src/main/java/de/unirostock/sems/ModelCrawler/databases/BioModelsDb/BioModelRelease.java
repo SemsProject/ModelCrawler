@@ -53,8 +53,8 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 		return modelMap.keySet();
 	}
 	
-	public File getModelPath( String modelId ) {
-		return modelMap.get(modelId);
+	public File getModelPath( String fileId ) {
+		return modelMap.get(fileId);
 	}
 	
 	public String getFtpDirectory() {

@@ -14,19 +14,19 @@ public interface ModelDatabase extends Runnable {
 	
 	/**
 	 * Returns a map with all changes made after the last crawl <br>
-	 * the modelId is the map key.
+	 * the fileId is the map key.
 	 * 
-	 * @return Map<ModelId, ChangeSet>
+	 * @return Map<fileId, ChangeSet>
 	 */
 	public Map<String, ChangeSet> listChanges();
 	
 	/** 
 	 * Returns the ChangeSet only for one specific model
 	 * 
-	 * @param modelId
+	 * @param fileId
 	 * @return ChangeSet
 	 */
-	public ChangeSet getModelChanges( String modelId );
+	public ChangeSet getModelChanges( String fileId );
 	
 	/**
 	 * Cleans up the working directory

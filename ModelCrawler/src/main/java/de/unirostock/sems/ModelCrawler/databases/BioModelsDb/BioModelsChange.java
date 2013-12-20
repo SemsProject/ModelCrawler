@@ -23,8 +23,8 @@ public class BioModelsChange extends Change {
 	
 	public final static String META_HASH = "filehash";
 
-	public BioModelsChange( String modelId, String versionId, Date versionDate, Date crawledDate ) {
-		super(modelId, versionId, versionDate, crawledDate);
+	public BioModelsChange( String fileId, String versionId, Date versionDate, Date crawledDate ) {
+		super(fileId, versionId, versionDate, crawledDate);
 	}
 	
 	public boolean setXmlFile(File xmlFile, String hash) {

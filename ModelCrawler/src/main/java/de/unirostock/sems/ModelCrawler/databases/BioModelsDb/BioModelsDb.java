@@ -40,18 +40,12 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
 import de.unirostock.sems.ModelCrawler.Properties;
-import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
-import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
-import de.unirostock.sems.morre.client.dataholder.CrawledModel;
-import de.unirostock.sems.morre.client.exception.MorreClientException;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
 
@@ -107,8 +101,8 @@ public class BioModelsDb implements ModelDatabase {
 	}
 	
 	@Override
-	public ChangeSet getModelChanges(String modelId) {
-		return changeSetMap.get(modelId);
+	public ChangeSet getModelChanges(String fileId) {
+		return changeSetMap.get(fileId);
 	}
 
 	@Override
@@ -541,7 +535,7 @@ public class BioModelsDb implements ModelDatabase {
 			log.info( MessageFormat.format("Start extracting release {0}", release.getReleaseName()) );
 
 		// Map for Biomodel-Files
-		// Key = modelId, Value = Path in ContentDirectory
+		// Key = fileId, Value = Path in ContentDirectory
 		Map<String, File> fileMap = new HashMap<String, File>();
 
 		// extract dir
@@ -590,18 +584,18 @@ public class BioModelsDb implements ModelDatabase {
 					entryStream.close();
 
 					// add file to fileMap 
-					// in BioModelsDB the filename is the modelId + .xml
+					// in BioModelsDB the filename is the fileId + .xml
 					String fileName = entryFile.getName();
 					int extensionPos = fileName.lastIndexOf('.');
 					if( fileName.substring(extensionPos+1).toLowerCase().equals("xml") ) {
 						// filename as xml ending
-						String modelId = fileName.substring(0, extensionPos);
+						String fileId = fileName.substring(0, extensionPos);
 
 						if( log.isDebugEnabled() )
-							log.debug( MessageFormat.format("Found model {0} from file {1}", modelId, fileName) );
+							log.debug( MessageFormat.format("Found model {0} from file {1}", fileId, fileName) );
 
 						// put it in the map
-						fileMap.put(modelId, entryFile);
+						fileMap.put(fileId, entryFile);
 					}
 				}
 
@@ -634,18 +628,18 @@ public class BioModelsDb implements ModelDatabase {
 		
 		BioModelsChangeSet changeSet = null;
 		if( changeSetMap.containsKey(fileId) ) {
-			// if modelId is already known -> get it from changeSetMap
+			// if fileId is already known -> get it from changeSetMap
 			changeSet = (BioModelsChangeSet) changeSetMap.get(fileId);
 			if( log.isDebugEnabled() )
-				log.debug("ChangeSet exists, modelId is not unknown!");
+				log.debug("ChangeSet exists, fileId is not unknown!");
 		}
 
 		// create the Change-Entry
 		BioModelsChange change = new BioModelsChange(fileId, release.getReleaseName(), release.getReleaseDate(), crawledDate);
 		
 		// sets soure meta information
-		change.setMeta(ModelRecord.META_SOURCE, ModelRecord.SOURCE_BIOMODELS_DB);
-		change.setMeta(ModelRecord.META_TYPE, ModelRecord.TYPE_SBML);
+		change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB);
+		change.setMeta(CrawledModelRecord.META_TYPE, CrawledModelRecord.TYPE_SBML);
 		
 		// set up the xml file and calc the hash
 		change.setXmlFile( release.getModelPath(fileId) );
@@ -700,7 +694,7 @@ public class BioModelsDb implements ModelDatabase {
 				} catch (MorreCommunicationException e) {
 					log.fatal("Getting latest model version, to check, if processed model version is new, failed", e);
 				} catch (MorreException e) {
-					// error occures, when modelId is unknown to the database -> so we can assume the change is new!
+					// error occures, when fileId is unknown to the database -> so we can assume the change is new!
 					log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);
 					// set no parent
 					isChangeNew = true;

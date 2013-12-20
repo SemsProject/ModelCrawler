@@ -13,7 +13,7 @@ public class XmlFileRepository {
 //	private final Log log = LogFactory.getLog( XmlFileRepository.class );
 	
 	
-	public static String generateModelId( String repositoryUrl, String fileName ) throws UnsupportedEncodingException {
+	public static String generateFileId( String repositoryUrl, String fileName ) throws UnsupportedEncodingException {
 		StringBuilder result = new StringBuilder(repositoryUrl);
 		
 		// if repo Url does not end and the file name does not starts with a slash /

@@ -22,8 +22,8 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 	
 	protected File xmlFile = null;
 			
-	public Change( String modelId, String versionId, Date versionDate, Date crawledDate ) {
-		super(modelId, versionId, versionDate, crawledDate);
+	public Change( String fileId, String versionId, Date versionDate, Date crawledDate ) {
+		super(fileId, versionId, versionDate, crawledDate);
 		this.versionDate = versionDate;
 		this.crawledDate = crawledDate;
 	}

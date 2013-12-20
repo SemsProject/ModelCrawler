@@ -4,8 +4,8 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 
 public class BioModelsChangeSet extends ChangeSet {
 	
-	public BioModelsChangeSet(String modelId) {
-		super(modelId);
+	public BioModelsChangeSet(String fileId) {
+		super(fileId);
 	}
 	
 	public void addChange( BioModelsChange change ) {

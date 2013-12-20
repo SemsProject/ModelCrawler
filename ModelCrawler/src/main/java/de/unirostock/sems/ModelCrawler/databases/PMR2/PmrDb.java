@@ -48,15 +48,15 @@ import com.aragost.javahg.commands.PullCommand;
 import com.aragost.javahg.commands.UpdateCommand;
 
 import de.unirostock.sems.ModelCrawler.Properties;
-import de.unirostock.sems.ModelCrawler.GraphDb.ModelRecord;
-import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
+import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 import de.unirostock.sems.bives.tools.DocumentClassifier;
+import de.unirostock.sems.morre.client.MorreCrawlerInterface;
+import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
+import de.unirostock.sems.morre.client.exception.MorreException;
 
 public class PmrDb implements ModelDatabase {
 
@@ -67,7 +67,8 @@ public class PmrDb implements ModelDatabase {
 	protected File workingDir;
 	protected File tempDir;
 	protected java.util.Properties config;
-	protected GraphDatabase graphDb;
+//	protected GraphDatabase graphDb;
+	MorreCrawlerInterface morreClient;
 	protected URI repoListUri;
 	protected DocumentClassifier classifier = null;
 	
@@ -79,12 +80,12 @@ public class PmrDb implements ModelDatabase {
 	// ChangeSet is a ModelCrawler Dataholder class
 	// and Changeset a JavaHg Dataholder class
 
-	public PmrDb( GraphDatabase graphDb ) throws IllegalArgumentException {
-		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.RepoList"), graphDb );
+	public PmrDb( MorreCrawlerInterface morreClient ) throws IllegalArgumentException {
+		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.RepoList"), morreClient );
 	}
 
-	public PmrDb(String repoListUrl, GraphDatabase graphDb) throws IllegalArgumentException {
-		this.graphDb = graphDb; 
+	public PmrDb(String repoListUrl, MorreCrawlerInterface morreClient) throws IllegalArgumentException {
+		this.morreClient = morreClient;
 
 		try {
 			this.repoListUri = new URI(repoListUrl);
@@ -131,8 +132,8 @@ public class PmrDb implements ModelDatabase {
 	}
 
 	@Override
-	public ChangeSet getModelChanges(String modelId) {
-		return changeSetMap.get(modelId);
+	public ChangeSet getModelChanges(String fileId) {
+		return changeSetMap.get(fileId);
 	}
 
 	@Override
@@ -458,20 +459,20 @@ public class PmrDb implements ModelDatabase {
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Found {0} relevant files.", relevantFiles.size()) );
 
-		// generating the modelId and looking for the latestVersion
+		// generating the fileId and looking for the latestVersion
 		try {
 			Iterator<RelevantFile> iter = relevantFiles.iterator();
 			while( iter.hasNext() ) {
 				RelevantFile file = iter.next();
-				file.generateModelId(repoUrl);
+				file.generateFileId(repoUrl);
 				if( log.isDebugEnabled() )
-					log.debug( MessageFormat.format("Generated ModelId {0} for file {1}", file.getModelId(), file.getFilePath()) );
+					log.debug( MessageFormat.format("Generated fileId {0} for file {1}", file.getFileId(), file.getFilePath()) );
 
 				searchLatestKnownVersion( file );
 			}
 		}
 		catch (UnsupportedEncodingException e) {
-			log.fatal("Unsupported Encoding. Can not generate modelId", e);
+			log.fatal("Unsupported Encoding. Can not generate fileId", e);
 		}
 
 		// detect all relevant versions
@@ -501,7 +502,7 @@ public class PmrDb implements ModelDatabase {
 			if( file.getChangeSet() != null ) {
 				// when the RelevantFile class contains a ChangeSet Object
 				// than there are some changes to store, so we can it to the changeSetMap
-				changeSetMap.put( file.getModelId(), file.getChangeSet() );
+				changeSetMap.put( file.getFileId(), file.getChangeSet() );
 			}
 		}
 
@@ -607,10 +608,10 @@ public class PmrDb implements ModelDatabase {
 		ChangeSet changeSet = null;
 
 		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("Searches latest known version for model {0}", relevantFile.getModelId()) );
+			log.info( MessageFormat.format("Searches latest known version for model {0}", relevantFile.getFileId()) );
 
-		if( (changeSet = changeSetMap.get(relevantFile.getModelId())) != null ) {
-			// there is a changeSet for this modelId, get the latestChange
+		if( (changeSet = changeSetMap.get(relevantFile.getFileId())) != null ) {
+			// there is a changeSet for this fileId, get the latestChange
 
 			if( log.isDebugEnabled() )
 				log.debug("ChangeSet available");
@@ -632,13 +633,13 @@ public class PmrDb implements ModelDatabase {
 				log.debug("Start database request");
 
 			// search in database
-			ModelRecord latest = null;
+			CrawledModelRecord latest = null;
 			try {
-				latest = graphDb.getLatestModelVersion( relevantFile.getModelId() );
-			} catch (GraphDatabaseCommunicationException e) {
-				log.fatal( MessageFormat.format("Getting latest model version from {0}, to check, if processed model version is new, failed", relevantFile.getModelId()), e);
-			} catch (GraphDatabaseError e) {
-				// error occurs, when modelId is unknown to the database -> so we can assume the change is new!
+				latest = CrawledModelRecord.extendDataholder( morreClient.getLatestModelVersion( relevantFile.getFileId() ) );
+			} catch (MorreCommunicationException e) {
+				log.fatal( MessageFormat.format("Getting latest model version from {0}, to check, if processed model version is new, failed", relevantFile.getFileId()), e);
+			} catch (MorreException e) {
+				// error occurs, when fileId is unknown to the database -> so we can assume the change is new!
 				log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);
 			}
 
@@ -650,9 +651,9 @@ public class PmrDb implements ModelDatabase {
 
 		if( log.isInfoEnabled() ) {
 			if( versionId != null && versionDate != null )
-				log.info( MessageFormat.format("Found latest version for {0} : {1}@{2}", relevantFile.getModelId(), versionId, versionDate) );
+				log.info( MessageFormat.format("Found latest version for {0} : {1}@{2}", relevantFile.getFileId(), versionId, versionDate) );
 			else
-				log.info( MessageFormat.format("Found no latest version for {0}. Must be the first occure", relevantFile.getModelId()) );
+				log.info( MessageFormat.format("Found no latest version for {0}. Must be the first occure", relevantFile.getFileId()) );
 		}
 
 		relevantFile.setLatestKnownVersion(versionId, versionDate, (PmrChangeSet) changeSet);
@@ -767,7 +768,7 @@ public class PmrDb implements ModelDatabase {
 				boolean hasChanges = false;
 
 				if( log.isInfoEnabled() )
-					log.info( MessageFormat.format("Check model {0}", file.getModelId()) );
+					log.info( MessageFormat.format("Check model {0}", file.getFileId()) );
 
 				// there is already a parent version
 				if( file.getLatestVersionId() != null && file.getLatestVersionDate() != null ) {
@@ -806,13 +807,13 @@ public class PmrDb implements ModelDatabase {
 					if( log.isInfoEnabled() )
 						log.info("Model has changes. Adds it to its ChangeSet");
 
-					PmrChange change = new PmrChange(file.getModelId(), file.getRepositoryUrl(), file.getFilePath(), currentNodeId, currentVersionDate, crawledDate);
+					PmrChange change = new PmrChange(file.getFileId(), file.getRepositoryUrl(), file.getFilePath(), currentNodeId, currentVersionDate, crawledDate);
 					// set some Meta information
-					change.setMeta( ModelRecord.META_SOURCE, ModelRecord.SOURCE_PMR2 );
+					change.setMeta( CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_PMR2 );
 					if( (file.getType() & DocumentClassifier.SBML) > 0 )
-						change.setMeta( ModelRecord.META_TYPE, ModelRecord.TYPE_SBML );
+						change.setMeta( CrawledModelRecord.META_TYPE, CrawledModelRecord.TYPE_SBML );
 					else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
-						change.setMeta( ModelRecord.META_TYPE, ModelRecord.TYPE_CELLML );
+						change.setMeta( CrawledModelRecord.META_TYPE, CrawledModelRecord.TYPE_CELLML );
 
 					// copy the file to a templocation
 					File tempFile = getTempFile();

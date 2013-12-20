@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,10 +12,6 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import de.unirostock.sems.ModelCrawler.GraphDb.GraphDb;
-import de.unirostock.sems.ModelCrawler.GraphDb.Interface.GraphDatabase;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseCommunicationException;
-import de.unirostock.sems.ModelCrawler.GraphDb.exceptions.GraphDatabaseError;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
@@ -30,7 +25,6 @@ import de.unirostock.sems.XmlFileServerClient.exceptions.UnsupportedUriException
 import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerBadRequestException;
 import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollException;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
-import de.unirostock.sems.morre.client.MorreHttpTest;
 import de.unirostock.sems.morre.client.exception.MorreException;
 import de.unirostock.sems.morre.client.impl.HttpMorreClient;
 
@@ -42,7 +36,6 @@ public class App
 {
 	private static final Log log = LogFactory.getLog( App.class );
 
-	private static GraphDatabase graphDb;
 	private static MorreCrawlerInterface morreClient;
 	private static ModelDatabase bioModelsDb;
 	private static ModelDatabase pmr2Db;
@@ -121,13 +114,6 @@ public class App
 		if( log.isInfoEnabled() )
 			log.info("Start GraphDb/MORRE connector");
 
-		// GraphDb connector
-//		try {
-//			graphDb = new GraphDb( new URL( Properties.getProperty("de.unirostock.sems.ModelCrawler.graphDb.api") ) );
-//		} catch (MalformedURLException e) {
-//			log.fatal("Malformed Url for MORRE in config file", e);
-//		}
-		
 		// morre.client connector
 		try {
 			morreClient = new HttpMorreClient(Properties.getProperty("de.unirostock.sems.ModelCrawler.graphDb.api"));
@@ -150,7 +136,7 @@ public class App
 			log.info("Starting Pmr2Db connector");
 		// PMR2 aka CellML
 		try {
-			pmr2Db = new PmrDb(graphDb);
+			pmr2Db = new PmrDb(morreClient);
 		} catch (IllegalArgumentException e) {
 			log.fatal("IllegalArgument Exception while init the PMR2 connector. Maybe a config error?", e);
 		}

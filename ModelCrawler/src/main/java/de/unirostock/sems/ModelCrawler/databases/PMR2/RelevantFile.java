@@ -10,25 +10,25 @@ public class RelevantFile {
 
 	private String filePath;
 	private String repoUrl = null;
-	private String modelId;
+	private String fileId;
 	private String latestKnownVersionId = null;
 	private Date latestKnownVersionDate = null;
 	private int type = 0;
 	
 	private PmrChangeSet changeSet = null;
 	
-	public RelevantFile( String filePath, String modelId ) {
+	public RelevantFile( String filePath, String fileId ) {
 		this.filePath = filePath;
-		this.modelId = modelId;
+		this.fileId = fileId;
 	}
 	
 	public RelevantFile( String filePath ) {
 		this.filePath = filePath;
 	}
 	
-	public String generateModelId( String repoUrl ) throws UnsupportedEncodingException {
+	public String generateFileId( String repoUrl ) throws UnsupportedEncodingException {
 		this.repoUrl = repoUrl;
-		return this.modelId = XmlFileRepository.generateModelId(repoUrl, filePath);
+		return this.fileId = XmlFileRepository.generateFileId(repoUrl, filePath);
 	}
 	
 	public String getFilePath() {
@@ -39,8 +39,8 @@ public class RelevantFile {
 		return repoUrl;
 	}
 	
-	public String getModelId() {
-		return modelId;
+	public String getFileId() {
+		return fileId;
 	}
 	
 	/**
@@ -150,7 +150,7 @@ public class RelevantFile {
 		
 		// creates ChangeSet, if necessary
 		if( changeSet == null ) {
-			changeSet = new PmrChangeSet(modelId);
+			changeSet = new PmrChangeSet(fileId);
 		}
 		
 		// adds the change

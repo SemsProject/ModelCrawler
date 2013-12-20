@@ -21,19 +21,19 @@ public class PmrChange extends Change {
 	protected String repositoryUrl = null;
 	protected String fileName = null;
 	
-	public PmrChange(String modelId, String versionId, Date versionDate, Date crawledDate) {
-		super(modelId, versionId, versionDate, crawledDate);
+	public PmrChange(String fileId, String versionId, Date versionDate, Date crawledDate) {
+		super(fileId, versionId, versionDate, crawledDate);
 	}
 	
 	public PmrChange( String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws UnsupportedEncodingException {
 		super( null, versionId, versionDate, crawledDate );
 		this.repositoryUrl = repositoryUrl;
 		this.fileName = fileName;
-		this.modelId = XmlFileRepository.generateModelId(repositoryUrl, fileName);
+		setFileId( XmlFileRepository.generateFileId(repositoryUrl, fileName) );
 	}
 	
-	public PmrChange( String modelId, String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws UnsupportedEncodingException {
-		super( modelId, versionId, versionDate, crawledDate );
+	public PmrChange( String fileId, String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws UnsupportedEncodingException {
+		super( fileId, versionId, versionDate, crawledDate );
 		this.repositoryUrl = repositoryUrl;
 		this.fileName = fileName;
 	}
@@ -54,9 +54,9 @@ public class PmrChange extends Change {
 		stream = new FileInputStream(xmlFile);
 			
 		// do it!
-		URI uri = server.pushModel(repositoryUrl, fileName, versionId, stream);
+		URI uri = server.pushModel(repositoryUrl, fileName, getVersionId(), stream);
 		// finally set the document Uri, generated from the XmlFileRepo
-		setDocumentUri(uri);
+		setXmldoc( uri.toString() );
 		
 		// closes the stream
 		stream.close();
@@ -65,7 +65,7 @@ public class PmrChange extends Change {
 	
 	@Override
 	public String toString() {
-		return "PmrChg:" + repositoryUrl+":"+fileName+"@"+versionId;
+		return "PmrChg:" + repositoryUrl+":"+fileName+"@"+getVersionId();
 	}
 	
 }
