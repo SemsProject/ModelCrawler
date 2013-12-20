@@ -31,6 +31,7 @@ import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerBadRequest
 import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollException;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.MorreHttpTest;
+import de.unirostock.sems.morre.client.exception.MorreException;
 import de.unirostock.sems.morre.client.impl.HttpMorreClient;
 
 /**
@@ -191,15 +192,11 @@ public class App
 
 				// Push it into XmlFileRepository!
 				change.pushToXmlFileServer( xmlFileServer );
-				// insert it into GraphDb via MORRE
-				graphDb.insertModel( change );
+				// insert the model into MaSyMos via Morre
+				morreClient.addModel(change);
 			}
 		} catch (XmlNotFoundException e) {
 			log.fatal( MessageFormat.format("Can not find xml file while pushing model {0} to the server!", change), e);
-		} catch (GraphDatabaseCommunicationException e) {
-			log.fatal( MessageFormat.format("CommunicationError while pushing model {0} into the database!", change), e);
-		} catch (GraphDatabaseError e) {
-			log.fatal( MessageFormat.format("Error from database while pushing model {0} into the database!", change), e);
 		} catch (ModelAlreadyExistsException e) {
 			log.fatal( MessageFormat.format("The model {0} already exists on the XmlFileServer!", change), e);
 		} catch (XmlFileServerBadRequestException e) {
@@ -210,6 +207,9 @@ public class App
 			log.fatal( MessageFormat.format("ProtocollError while pushing model {0} into the XmlFileServer!", change), e);
 		} catch (IOException e) {
 			log.fatal( MessageFormat.format("Some IO shit went wrong while pushing model {0} !", change), e);
+		} catch (MorreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}
