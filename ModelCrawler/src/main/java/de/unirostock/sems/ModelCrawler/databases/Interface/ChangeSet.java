@@ -6,7 +6,7 @@ import java.util.TreeSet;
 
 public abstract class ChangeSet {
 	
-	protected String modelId;
+	protected String fileId;
 	protected NavigableSet<Change> changes;
 	
 	public Set<Change> getChanges() {
@@ -21,22 +21,22 @@ public abstract class ChangeSet {
 	}
 	
 	public void addChange(Change change) {
-		if( change.getModelId().equals(modelId) )
+		if( change.getFileId().equals(fileId) )
 			changes.add(change);
 	}
 	
-	public ChangeSet( String modelId ) {
+	public ChangeSet( String fileId ) {
 		changes = new TreeSet<Change>();
-		this.modelId = modelId;
+		this.fileId = fileId;
 	}
 	
-	public String getModelId() {
-		return modelId;
+	public String getFileId() {
+		return fileId;
 	}
 	
 	@Override
 	public String toString() {
-		return "CS:" + modelId + "-" + changes.size();
+		return "CS:" + fileId + "-" + changes.size();
 	}
 	
 }

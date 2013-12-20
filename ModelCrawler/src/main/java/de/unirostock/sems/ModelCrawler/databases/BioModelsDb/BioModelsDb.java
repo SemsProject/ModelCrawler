@@ -51,6 +51,9 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.dataholder.CrawledModel;
+import de.unirostock.sems.morre.client.exception.MorreClientException;
+import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
+import de.unirostock.sems.morre.client.exception.MorreException;
 
 public class BioModelsDb implements ModelDatabase {
 
@@ -622,33 +625,35 @@ public class BioModelsDb implements ModelDatabase {
 		} 
 	}
 
-	private void tranferChange( String modelId, BioModelRelease release, Date crawledDate ) {
+	private void tranferChange( String fileId, BioModelRelease release, Date crawledDate ) {
 
 		boolean isChangeNew = false;
 		
 		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("Check if model {0} from release {1} is a new change", modelId, release.getReleaseName()) );
+			log.info( MessageFormat.format("Check if model {0} from release {1} is a new change", fileId, release.getReleaseName()) );
 		
 		BioModelsChangeSet changeSet = null;
-		if( changeSetMap.containsKey(modelId) ) {
+		if( changeSetMap.containsKey(fileId) ) {
 			// if modelId is already known -> get it from changeSetMap
-			changeSet = (BioModelsChangeSet) changeSetMap.get(modelId);
+			changeSet = (BioModelsChangeSet) changeSetMap.get(fileId);
 			if( log.isDebugEnabled() )
 				log.debug("ChangeSet exists, modelId is not unknown!");
 		}
 
 		// create the Change-Entry
-		BioModelsChange change = new BioModelsChange(modelId, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+		BioModelsChange change = new BioModelsChange(fileId, release.getReleaseName(), release.getReleaseDate(), crawledDate);
 		
 		// sets soure meta information
 		change.setMeta(ModelRecord.META_SOURCE, ModelRecord.SOURCE_BIOMODELS_DB);
 		change.setMeta(ModelRecord.META_TYPE, ModelRecord.TYPE_SBML);
 		
 		// set up the xml file and calc the hash
-		change.setXmlFile( release.getModelPath(modelId) );
+		change.setXmlFile( release.getModelPath(fileId) );
 		if( log.isTraceEnabled() )
 			log.trace( MessageFormat.format("calced file hash: {0}", change.getHash()) );
-
+		
+		// --------
+		// try to find some parents for this model.
 		// is a changeSet for this model available?
 		if( changeSet != null ) {
 			// yes -> compare hashes from current and latest
@@ -662,8 +667,8 @@ public class BioModelsDb implements ModelDatabase {
 				// compare hashes and checks if the "latest" version is older than the processing change
 				if( latest.getHash().equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
 					isChangeNew = true;
-					// set the parent
-					change.setParentVersionId( latest.getVersionId() );
+					// add the parent
+					change.addParent( latest.getFileId(), latest.getVersionId() );
 					if( log.isInfoEnabled() )
 						log.info("hashs are not equal -> new version");
 				}
@@ -676,9 +681,9 @@ public class BioModelsDb implements ModelDatabase {
 				log.debug("ChangeSet does not exists, checking database");
 			
 			// ... creates one ...
-			changeSet = new BioModelsChangeSet(modelId);
+			changeSet = new BioModelsChangeSet(fileId);
 			// ... and put it into the map (the pointer)
-			changeSetMap.put(modelId, changeSet);
+			changeSetMap.put(fileId, changeSet);
 
 			// if GraphDb is available for this instance
 			if( morreClient != null  ) {
@@ -691,14 +696,13 @@ public class BioModelsDb implements ModelDatabase {
 				// try to get the latest version of this model
 				CrawledModelRecord latest = null;
 				try {
-					latest = CrawledModelRecord.extendDataholder( morreClient.getLatestModelVersion(modelId) );
-				} catch (GraphDatabaseCommunicationException e) {
+					latest = CrawledModelRecord.extendDataholder( morreClient.getLatestModelVersion(fileId) );
+				} catch (MorreCommunicationException e) {
 					log.fatal("Getting latest model version, to check, if processed model version is new, failed", e);
-				} catch (GraphDatabaseError e) {
+				} catch (MorreException e) {
 					// error occures, when modelId is unknown to the database -> so we can assume the change is new!
 					log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);
 					// set no parent
-					change.setParentVersionId("");
 					isChangeNew = true;
 				}
 				
@@ -716,7 +720,14 @@ public class BioModelsDb implements ModelDatabase {
 					if( latestHash.equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
 						isChangeNew = true;
 						// set parent
-						change.setParentVersionId( latest.getParentVersionId() );
+						change.addParent( latest.getFileId(), latest.getVersionId() );
+						/*
+						 * This was the previous line. I don't know, why I was setting the parent of the current crawled version to the parent of latest version.
+						 * Actually this would make no sense, because the version tree would so skipped one version, every time...
+						 * But I keep this as reminder, if something goes wrong with the new version from above...
+						 * // change.setParentVersionId( latest.getParentVersionId() );
+						 * 
+						 */
 						
 						if( log.isInfoEnabled() )
 							log.info("hashs are not equal -> new version");

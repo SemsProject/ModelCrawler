@@ -178,7 +178,7 @@ public class App
 	private static void processChangeSet( ChangeSet changeSet ) {
 
 		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("Start processing ChangeSet for model {0} with {1} entrie(s)", changeSet.getModelId(), changeSet.getChanges().size() ) );
+			log.info( MessageFormat.format("Start processing ChangeSet for model {0} with {1} entrie(s)", changeSet.getFileId(), changeSet.getChanges().size() ) );
 
 		Iterator<Change> changeIterator = changeSet.getChanges().iterator();
 		Change change = null;
@@ -187,7 +187,7 @@ public class App
 				change = changeIterator.next();
 
 				if( log.isInfoEnabled() )
-					log.info( MessageFormat.format("pushes model {0}:{1}", change.getModelId(), change.getVersionId()) );
+					log.info( MessageFormat.format("pushes model {0}:{1}", change.getFileId(), change.getVersionId()) );
 
 				// Push it into XmlFileRepository!
 				change.pushToXmlFileServer( xmlFileServer );
