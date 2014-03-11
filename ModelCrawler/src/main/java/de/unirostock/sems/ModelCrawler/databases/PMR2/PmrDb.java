@@ -39,7 +39,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.aragost.javahg.Changeset;
 import com.aragost.javahg.Repository;
@@ -67,8 +67,7 @@ public class PmrDb implements ModelDatabase {
 	protected File workingDir;
 	protected File tempDir;
 	protected java.util.Properties config;
-//	protected GraphDatabase graphDb;
-	MorreCrawlerInterface morreClient;
+	protected MorreCrawlerInterface morreClient;
 	protected URI repoListUri;
 	protected DocumentClassifier classifier = null;
 	
@@ -218,7 +217,7 @@ public class PmrDb implements ModelDatabase {
 				scanAndTransferRepository(repoName, location, repo);
 			}
 
-			if( limiter++ >= 5 )
+			if( limiter++ >= 2 )
 				break;
 
 		}
@@ -303,7 +302,7 @@ public class PmrDb implements ModelDatabase {
 	protected List<String> getRepositoryList() throws HttpException {
 		List<String> repoList = new LinkedList<String>();
 
-		HttpClient httpClient = new DefaultHttpClient(); 
+		HttpClient httpClient = HttpClientBuilder.create().build(); 
 		HttpGet request = new HttpGet(repoListUri);
 
 		try {
@@ -314,8 +313,9 @@ public class PmrDb implements ModelDatabase {
 			while( scanner.hasNext() ) {
 				String repo = scanner.next();
 				if( repo != null && !repo.isEmpty() )
-					repoList.add( scanner.next() );				
+					repoList.add( repo );				
 			}
+			scanner.close();
 
 		} catch (ClientProtocolException e) {
 			throw new HttpException("Can not download RepositoryList", e);

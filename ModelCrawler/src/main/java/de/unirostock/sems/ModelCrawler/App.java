@@ -55,13 +55,13 @@ public class App
 
 		// run it!
 
-		if( log.isInfoEnabled() )
-			log.info("running BioModelsDb Crawler");
-
-		bioModelsDb.run();
-
-		// add all changes from BioModelsDb to the change Map
-		changes.putAll( bioModelsDb.listChanges() );
+//		if( log.isInfoEnabled() )
+//			log.info("running BioModelsDb Crawler");
+//
+//		bioModelsDb.run();
+//
+//		// add all changes from BioModelsDb to the change Map
+//		changes.putAll( bioModelsDb.listChanges() );
 
 
 		if( log.isInfoEnabled() )
@@ -84,8 +84,8 @@ public class App
 		    		processChangeSet( changesSetIterator.next() );
 		    		
 		    		// limiter
-//		    		if( n++ >= 5 )
-//		    			break;
+		    		if( n++ >= 5 )
+		    			break;
 		    	}
 
 		// After everthing is done: Hide the bodies...
@@ -171,7 +171,7 @@ public class App
 		Change change = null;
 		try {
 			while( changeIterator.hasNext() ) {
-				change = changeIterator.next();
+				change = (Change) changeIterator.next();
 
 				if( log.isInfoEnabled() )
 					log.info( MessageFormat.format("pushes model {0}:{1}", change.getFileId(), change.getVersionId()) );

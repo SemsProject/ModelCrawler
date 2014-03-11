@@ -17,10 +17,10 @@ import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollE
 
 public abstract class Change extends CrawledModelRecord implements Comparable<Change> {
 	
-	private Date versionDate = null;
-	private Date crawledDate = null;
+	private transient Date versionDate = null;
+	private transient Date crawledDate = null;
 	
-	protected File xmlFile = null;
+	protected transient File xmlFile = null;
 			
 	public Change( String fileId, String versionId, Date versionDate, Date crawledDate ) {
 		super(fileId, versionId, versionDate, crawledDate);

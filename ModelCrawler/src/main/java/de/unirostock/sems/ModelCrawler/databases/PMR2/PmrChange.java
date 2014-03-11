@@ -18,8 +18,8 @@ import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollE
 
 public class PmrChange extends Change {
 
-	protected String repositoryUrl = null;
-	protected String fileName = null;
+	protected transient String repositoryUrl = null;
+	protected transient String fileName = null;
 	
 	public PmrChange(String fileId, String versionId, Date versionDate, Date crawledDate) {
 		super(fileId, versionId, versionDate, crawledDate);
