@@ -639,7 +639,7 @@ public class BioModelsDb implements ModelDatabase {
 		
 		// sets soure meta information
 		change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB);
-		change.setMeta(CrawledModelRecord.META_TYPE, CrawledModelRecord.TYPE_SBML);
+		change.setModelType( CrawledModelRecord.TYPE_SBML );
 		
 		// set up the xml file and calc the hash
 		change.setXmlFile( release.getModelPath(fileId) );

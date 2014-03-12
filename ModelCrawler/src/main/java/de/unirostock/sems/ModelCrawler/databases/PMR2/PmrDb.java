@@ -769,7 +769,15 @@ public class PmrDb implements ModelDatabase {
 
 				if( log.isInfoEnabled() )
 					log.info( MessageFormat.format("Check model {0}", file.getFileId()) );
-
+				
+				File fileLocation = new File( location, file.getFilePath() );
+				if( !fileLocation.exists() ) {
+					// file does not exists -> skip
+					if( log.isInfoEnabled() )
+						log.info("Model does not exists in this version -> skip it.");
+					continue;
+				}
+				
 				// there is already a parent version
 				if( file.getLatestVersionId() != null && file.getLatestVersionDate() != null ) {
 					if( file.getLatestVersionId().equals(currentNodeId) || file.getLatestVersionDate().compareTo(currentVersionDate) >= 0 ) {
@@ -811,13 +819,13 @@ public class PmrDb implements ModelDatabase {
 					// set some Meta information
 					change.setMeta( CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_PMR2 );
 					if( (file.getType() & DocumentClassifier.SBML) > 0 )
-						change.setMeta( CrawledModelRecord.META_TYPE, CrawledModelRecord.TYPE_SBML );
+						change.setModelType( CrawledModelRecord.TYPE_SBML );
 					else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
-						change.setMeta( CrawledModelRecord.META_TYPE, CrawledModelRecord.TYPE_CELLML );
+						change.setModelType( CrawledModelRecord.TYPE_CELLML );
 
 					// copy the file to a templocation
 					File tempFile = getTempFile();
-					FileUtils.copyFile( new File(location, file.getFilePath()), tempFile);
+					FileUtils.copyFile( fileLocation, tempFile);
 					change.setXmlFile(tempFile);
 
 					// add the change to the ChangeSet (ChangeSet is administrated by RelevantFile
