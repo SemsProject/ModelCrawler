@@ -12,6 +12,7 @@ import de.unirostock.sems.morre.client.dataholder.CrawledModel;
 
 public class CrawledModelRecord extends CrawledModel {
 	
+	private static final long serialVersionUID = 6382870895044981027L;
 	public static final String DATE_FORMAT = "dd.MM.yyyy-HH:mm:ss";
 	
 	public static CrawledModelRecord extendDataholder( CrawledModel model ) {
@@ -44,6 +45,25 @@ public class CrawledModelRecord extends CrawledModel {
 		super(fileId, versionId, null, null, null, null);
 		setVersionDate(versionDate);
 		setCrawledDate(crawledDate);
+	}
+	
+	/**
+	 * Checks if the model dataholder is valid.
+	 * 
+	 * @return
+	 */
+	public boolean isAvailable() {
+		
+		if( getFileId() == null || getFileId().isEmpty() )
+			return false;
+		
+		if( getVersionId() == null || getVersionId().isEmpty() )
+			return false;
+		
+		if( getXmldoc() == null || getXmldoc().isEmpty() )
+			return false;
+		
+		return true;
 	}
 	
 	/**

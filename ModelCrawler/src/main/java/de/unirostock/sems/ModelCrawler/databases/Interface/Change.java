@@ -17,6 +17,7 @@ import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollE
 
 public abstract class Change extends CrawledModelRecord implements Comparable<Change> {
 	
+	private static final long serialVersionUID = 3880353134783045794L;
 	private transient Date versionDate = null;
 	private transient Date crawledDate = null;
 	

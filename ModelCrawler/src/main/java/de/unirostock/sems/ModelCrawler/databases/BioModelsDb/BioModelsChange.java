@@ -16,6 +16,8 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 
 public class BioModelsChange extends Change {
 
+	private static final long serialVersionUID = -8763419545605089673L;
+
 	private final Log log = LogFactory.getLog( BioModelsChange.class );
 
 	public final static String HASH_ALGORITHM = "SHA-256";
@@ -39,7 +41,7 @@ public class BioModelsChange extends Change {
 			log.error("file hash is null!");
 		else 
 			log.error("xmlFile is already setted!");
-
+		
 		return false;
 	}
 

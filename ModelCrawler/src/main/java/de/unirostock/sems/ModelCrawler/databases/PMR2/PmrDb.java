@@ -217,7 +217,7 @@ public class PmrDb implements ModelDatabase {
 				scanAndTransferRepository(repoName, location, repo);
 			}
 
-			if( limiter++ >= 2 )
+			if( limiter++ >= 5 )
 				break;
 
 		}
@@ -643,7 +643,7 @@ public class PmrDb implements ModelDatabase {
 				log.warn("GraphDatabaseError while checking, if processed model version is new. It will be assumed, that this is unknown to the database!", e);
 			}
 
-			if( latest != null ) {
+			if( latest != null && latest.isAvailable() ) {
 				versionId = latest.getVersionId();
 				versionDate = latest.getVersionDate();
 			}

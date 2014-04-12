@@ -55,13 +55,13 @@ public class App
 
 		// run it!
 
-//		if( log.isInfoEnabled() )
-//			log.info("running BioModelsDb Crawler");
-//
-//		bioModelsDb.run();
-//
-//		// add all changes from BioModelsDb to the change Map
-//		changes.putAll( bioModelsDb.listChanges() );
+		if( log.isInfoEnabled() )
+			log.info("running BioModelsDb Crawler");
+
+		bioModelsDb.run();
+
+		// add all changes from BioModelsDb to the change Map
+		changes.putAll( bioModelsDb.listChanges() );
 
 
 		if( log.isInfoEnabled() )
@@ -75,7 +75,7 @@ public class App
 			log.info("crawling model changes finished. Now start pushing");
 
 		// XXX Limiter!
-		int n = 1; // limiter
+//		int n = 1; // limiter
 
 		// going throw all changeSets ...
 		    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
@@ -84,8 +84,8 @@ public class App
 		    		processChangeSet( changesSetIterator.next() );
 		    		
 		    		// limiter
-		    		if( n++ >= 5 )
-		    			break;
+//		    		if( n++ >= 5 )
+//		    			break;
 		    	}
 
 		// After everthing is done: Hide the bodies...
@@ -163,7 +163,11 @@ public class App
 	}
 
 	private static void processChangeSet( ChangeSet changeSet ) {
-
+		
+		//XXX some sort of filter
+//		if( !changeSet.getFileId().equals("http%3A%2F%2Fmodels.cellml.org%2Fworkspace%2F186%2Fdecker_2009.cellml") )
+//			return;
+		
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Start processing ChangeSet for model {0} with {1} entrie(s)", changeSet.getFileId(), changeSet.getChanges().size() ) );
 
@@ -192,7 +196,7 @@ public class App
 		} catch (XmlFileServerProtocollException e) {
 			log.fatal( MessageFormat.format("ProtocollError while pushing model {0} into the XmlFileServer!", change), e);
 		} catch (IOException e) {
-			log.fatal( MessageFormat.format("Some IO shit went wrong while pushing model {0} !", change), e);
+			log.fatal( MessageFormat.format("Some IO stuff went wrong while pushing model {0} !", change), e);
 		} catch (MorreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

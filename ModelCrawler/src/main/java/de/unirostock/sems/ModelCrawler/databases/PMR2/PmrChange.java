@@ -18,6 +18,7 @@ import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollE
 
 public class PmrChange extends Change {
 
+	private static final long serialVersionUID = 4740459688628719898L;
 	protected transient String repositoryUrl = null;
 	protected transient String fileName = null;
 	

@@ -152,6 +152,10 @@ public class RelevantFile {
 		if( changeSet == null ) {
 			changeSet = new PmrChangeSet(fileId);
 		}
+		// sets the parent
+		String parentVersionId = getLatestVersionId();
+		if( parentVersionId != null && !parentVersionId.isEmpty() )
+			change.addParent( getLatestVersionId() );
 		
 		// adds the change
 		changeSet.addChange(change);

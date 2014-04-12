@@ -659,7 +659,7 @@ public class BioModelsDb implements ModelDatabase {
 			// null check
 			if( latest != null ) {
 				// compare hashes and checks if the "latest" version is older than the processing change
-				if( latest.getHash().equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
+				if( change.getHash().equals(latest.getHash()) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
 					isChangeNew = true;
 					// add the parent
 					change.addParent( latest.getFileId(), latest.getVersionId() );
@@ -700,18 +700,25 @@ public class BioModelsDb implements ModelDatabase {
 					isChangeNew = true;
 				}
 				
-				if( latest != null ) {
+				if( latest == null || !latest.isAvailable() ) {
+					// there is no latest version, neither in the database than in the local changeset
+					isChangeNew = true;
+				}
+				else {
 					// latest model available
 					
 					if( log.isTraceEnabled() )
 						log.trace("successfully received latest from database");
 					
 					String latestHash = latest.getMeta(BioModelsChange.META_HASH);
-					if( latestHash == null )
-						log.fatal("There is no hash in the latest model. Maybe the database is inconsistent.");
-					
+					if( latestHash == null ) {
+						// TODO
+						log.error("There is no hash in the latest model. Maybe the database is inconsistent.");
+						isChangeNew = true;
+					}
+					// if hash exists
 					// compare hashes and checks if the "latest" version is older than the processing change
-					if( latestHash.equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
+					else if( latestHash.equals( change.getHash() ) == false && latest.getVersionDate().compareTo( change.getVersionDate() ) < 0 ) {
 						isChangeNew = true;
 						// set parent
 						change.addParent( latest.getFileId(), latest.getVersionId() );
