@@ -179,7 +179,7 @@ public class BioModelsDb implements ModelDatabase {
 			if( release.isDownloaded() && release.isExtracted() )
 				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
 			
-			if( limiter++ >= 2 )
+			if( limiter++ >= 5 )
 				break;
 		}
 
