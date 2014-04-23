@@ -64,12 +64,12 @@ public class App
 		changes.putAll( bioModelsDb.listChanges() );
 
 
-		if( log.isInfoEnabled() )
-			log.info("running PMR2 Crawler");
-
-		pmr2Db.run();
-		// add all changes from PMR2 to the change Map
-		changes.putAll( pmr2Db.listChanges() );
+//		if( log.isInfoEnabled() )
+//			log.info("running PMR2 Crawler");
+//
+//		pmr2Db.run();
+//		// add all changes from PMR2 to the change Map
+//		changes.putAll( pmr2Db.listChanges() );
 
 		if( log.isInfoEnabled() )
 			log.info("crawling model changes finished. Now start pushing");

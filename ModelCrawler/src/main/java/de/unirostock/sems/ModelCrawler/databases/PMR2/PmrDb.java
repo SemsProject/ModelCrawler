@@ -43,6 +43,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.aragost.javahg.Changeset;
 import com.aragost.javahg.Repository;
+import com.aragost.javahg.commands.ExecutionException;
 import com.aragost.javahg.commands.LogCommand;
 import com.aragost.javahg.commands.PullCommand;
 import com.aragost.javahg.commands.UpdateCommand;
@@ -216,9 +217,13 @@ public class PmrDb implements ModelDatabase {
 				// Scan for cellml and other model files and transfer them
 				scanAndTransferRepository(repoName, location, repo);
 			}
-
-			if( limiter++ >= 5 )
-				break;
+			
+			// closes the repo
+			if( repo != null )
+				repo.close();
+			
+//			if( limiter++ >= 5 )
+//				break;
 
 		}
 
@@ -752,7 +757,11 @@ public class PmrDb implements ModelDatabase {
 			try {
 				updateCmd.execute();
 			} catch (IOException e) {
-				log.fatal( MessageFormat.format("IOException while updating {0} to {1}", location, currentNodeId), e);
+				log.error( MessageFormat.format("IOException while updating {0} to {1}. skip this repo after now.", location, currentNodeId), e);
+				return;
+			} catch (ExecutionException e) {
+				log.error( MessageFormat.format("IOException while updating {0} to {1}. skip this repo after now.", location, currentNodeId), e);
+				return;
 			}
 
 			// get all added or modified files in this Changeset

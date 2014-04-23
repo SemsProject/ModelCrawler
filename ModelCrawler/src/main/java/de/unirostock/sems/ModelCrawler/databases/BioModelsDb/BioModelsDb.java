@@ -179,8 +179,8 @@ public class BioModelsDb implements ModelDatabase {
 			if( release.isDownloaded() && release.isExtracted() )
 				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
 			
-			if( limiter++ >= 5 )
-				break;
+//			if( limiter++ >= 5 )
+//				break;
 		}
 
 		log.info("finished cloning BioModelsDatabase!");
@@ -676,8 +676,7 @@ public class BioModelsDb implements ModelDatabase {
 			
 			// ... creates one ...
 			changeSet = new BioModelsChangeSet(fileId);
-			// ... and put it into the map (the pointer)
-			changeSetMap.put(fileId, changeSet);
+			// only put this in the map, if there is a latest version anywhere
 
 			// if GraphDb is available for this instance
 			if( morreClient != null  ) {
@@ -722,13 +721,6 @@ public class BioModelsDb implements ModelDatabase {
 						isChangeNew = true;
 						// set parent
 						change.addParent( latest.getFileId(), latest.getVersionId() );
-						/*
-						 * This was the previous line. I don't know, why I was setting the parent of the current crawled version to the parent of latest version.
-						 * Actually this would make no sense, because the version tree would so skipped one version, every time...
-						 * But I keep this as reminder, if something goes wrong with the new version from above...
-						 * // change.setParentVersionId( latest.getParentVersionId() );
-						 * 
-						 */
 						
 						if( log.isInfoEnabled() )
 							log.info("hashs are not equal -> new version");
@@ -741,6 +733,11 @@ public class BioModelsDb implements ModelDatabase {
 		if( isChangeNew )  {
 			// pushs it into changeSet
 			changeSet.addChange(change);
+			if( !changeSetMap.containsKey(fileId) ) {
+				// make this changeset public!
+				changeSetMap.put(fileId, changeSet);
+			}
+			
 			if( log.isDebugEnabled() )
 				log.debug("put new version into change set");
 		} else if( log.isDebugEnabled() ) {
