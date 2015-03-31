@@ -106,7 +106,7 @@ public class BioModelsDb implements ModelDatabase {
 	}
 
 	@Override
-	public void cleanUp() {
+	public void close() {
 		
 		// saving the properties
 		saveProperties();

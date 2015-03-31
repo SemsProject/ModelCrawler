@@ -6,8 +6,6 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import de.unirostock.sems.XmlFileServerClient.XmlFileServer;
-
 public class Properties {
 
 	private static java.util.Properties prop = null;

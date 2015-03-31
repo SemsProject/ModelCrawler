@@ -1,9 +1,10 @@
 package de.unirostock.sems.ModelCrawler.databases.Interface;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
 
-public interface ModelDatabase extends Runnable {
+public interface ModelDatabase extends Runnable, Closeable {
 	
 	/**
 	 * lists all Models in the latest revision
@@ -31,7 +32,7 @@ public interface ModelDatabase extends Runnable {
 	/**
 	 * Cleans up the working directory
 	 */
-	public void cleanUp();
+	public void close();
 	
 	/**
 	 * Starts the prozess of crawling for this specific Database

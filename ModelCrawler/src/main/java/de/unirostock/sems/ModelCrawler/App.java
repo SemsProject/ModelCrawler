@@ -156,10 +156,10 @@ public class App
 		log.info("Cleans everything up!");
 
 		// cleans BioModelsDb connector workingDir
-		bioModelsDb.cleanUp();
+		bioModelsDb.close();
 
 		// cleans PMR2 connector workingDir
-		pmr2Db.cleanUp();
+		pmr2Db.close();
 	}
 
 	private static void processChangeSet( ChangeSet changeSet ) {

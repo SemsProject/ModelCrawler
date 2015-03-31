@@ -137,7 +137,7 @@ public class PmrDb implements ModelDatabase {
 	}
 
 	@Override
-	public void cleanUp() {
+	public void close() {
 		// save the config
 		saveProperties();
 
