@@ -88,5 +88,38 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 	public int compareTo( BioModelRelease model ) {
 		return releaseDate.compareTo( model.getReleaseDate() );
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((releaseDate == null) ? 0 : releaseDate.hashCode());
+		result = prime * result
+				+ ((releaseName == null) ? 0 : releaseName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		BioModelRelease other = (BioModelRelease) obj;
+		if (releaseDate == null) {
+			if (other.releaseDate != null)
+				return false;
+		} else if (!releaseDate.equals(other.releaseDate))
+			return false;
+		if (releaseName == null) {
+			if (other.releaseName != null)
+				return false;
+		} else if (!releaseName.equals(other.releaseName))
+			return false;
+		return true;
+	}
 	
 }

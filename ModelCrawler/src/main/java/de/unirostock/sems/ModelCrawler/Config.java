@@ -81,8 +81,10 @@ public class Config implements Serializable {
 	
 	private File workingDir = null;
 	private String encoding = "UTF-8";
-	private char pathSeparator = '/';
+	private char pathSeparator = File.separatorChar;
 	private String[] extensionBlacklist = { "png", "bmp", "jpg", "jpeg", "html", "xhtml", "svg", "pdf", "json", "pl", "rdf", "rar", "msh", "zip" };
+	private String tempDirPrefix = "ModelCrawler";
+	private String workingDirConfig = "config.json";
 	
 	private List<ModelDatabase> databases = new ArrayList<ModelDatabase>();
 	
@@ -150,5 +152,22 @@ public class Config implements Serializable {
 	public void setDatabases(List<ModelDatabase> databases) {
 		this.databases = databases;
 	}
+
+	public String getTempDirPrefix() {
+		return tempDirPrefix;
+	}
+
+	public void setTempDirPrefix(String tempDirPrefix) {
+		this.tempDirPrefix = tempDirPrefix;
+	}
+
+	public String getWorkingDirConfig() {
+		return workingDirConfig;
+	}
+
+	public void setWorkingDirConfig(String workingDirConfig) {
+		this.workingDirConfig = workingDirConfig;
+	}
+	
 	
 }

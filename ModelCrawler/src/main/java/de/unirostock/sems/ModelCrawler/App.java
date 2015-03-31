@@ -106,7 +106,7 @@ public class App
 			log.info("prepare working directory");
 
 		// working dir
-		Properties.checkAndInitWorkingDir();
+		Properties.init();
 	}
 
 	private static void initConnectors() {

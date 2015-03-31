@@ -20,9 +20,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -39,7 +43,9 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
-import de.unirostock.sems.ModelCrawler.Properties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
@@ -50,24 +56,46 @@ import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
 
 public class BioModelsDb extends ModelDatabase {
-
-	private final Log log = LogFactory.getLog( BioModelsDb.class );
-
-	private URL ftpUrl;
-	private FTPClient ftpClient;
-	private List<BioModelRelease> releaseList = new ArrayList<BioModelRelease>();
-
-	protected File workingDir, tempDir;
-	protected java.util.Properties config;
-
-	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 	
-	protected MorreCrawlerInterface morreClient = null;
-//	protected GraphDatabase graphDb = null;
+	private static final long serialVersionUID = -1180005276710581809L;
 
+	@JsonIgnore
+	private final Log log = LogFactory.getLog( BioModelsDb.class );
+	
+	/**
+	 * class for settings stored in the working dir
+	 * @author martin
+	 *
+	 */
+	private class WorkingDirConfig {
+		
+		private Set<String> knownReleases = new HashSet<String>();
+
+		public Set<String> getKnownReleases() {
+			return knownReleases;
+		}
+
+	}
+	
+	private URL ftpUrl;
+	
+//	@JsonIgnore
+//	private List<BioModelRelease> releaseList = new ArrayList<BioModelRelease>();
+	@JsonIgnore
+	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
+	@JsonIgnore
+	private FTPClient ftpClient;
+	@JsonIgnore
+	protected MorreCrawlerInterface morreClient = null;
+	@JsonIgnore
+	protected WorkingDirConfig config = null;
+	
+	public BioModelsDb() {
+		
+	}
+	
 	public BioModelsDb(String ftpUrl, MorreCrawlerInterface morreClient) throws MalformedURLException, IllegalArgumentException {
 		this.ftpUrl = new URL(ftpUrl);
-//		this.graphDb = graphDb;
 		this.morreClient = morreClient;
 
 		if (!this.ftpUrl.getProtocol().toLowerCase().equals("ftp")) {
@@ -82,13 +110,10 @@ public class BioModelsDb extends ModelDatabase {
 		ftpClient = new FTPClient();
 
 		// prepares the working directory
-		checkAndInitWorkingDir();
+		init();
 
 	}
 
-	public BioModelsDb( MorreCrawlerInterface morreClient ) throws MalformedURLException, IllegalArgumentException {
-		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl"), morreClient );
-	}
 
 	@Override
 	public List<String> listModels() {
@@ -122,14 +147,16 @@ public class BioModelsDb extends ModelDatabase {
 	@Override
 	public Map<String, ChangeSet> call() {
 		List<BioModelRelease> newReleases = new ArrayList<BioModelRelease>();
-
+		
+		init();
+		
 		log.info("Start cloning the BioModels DataBase by fetching the releases!");
 
 		// Establish connection
 		try {
 
 			connect();
-			retrieveReleaseList();
+			newReleases = retrieveReleaseList();
 
 		} catch (IOException e) {
 			log.fatal( "IOException while connecting and getting the releases!", e );
@@ -137,50 +164,45 @@ public class BioModelsDb extends ModelDatabase {
 			log.fatal( e );
 		}
 
-		if( config.getProperty("knownReleases", null) != null ) {
+		if( config.getKnownReleases().size() > 0 ) {
 			// there are some releases we already indexed!
-			List<String> knownReleases = Arrays.asList( config.getProperty("knownReleases", "").split(",") );
 
-			// getting only the new releases
-			Iterator<BioModelRelease> iter = releaseList.iterator();
+			// removing the known releases
+			Iterator<BioModelRelease> iter = newReleases.iterator();
 			while( iter.hasNext() ) {
 				BioModelRelease release = iter.next();
-				if( knownReleases.contains( release.getReleaseName() ) == false ) {
-					// the release is new and must be downloaded
-					newReleases.add(release);
-				}
+				if( config.getKnownReleases().contains(release) )
+					iter.remove();
 			}
 
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format( "{0} new release(s)", newReleases.size() ) );
 		}
-		else {
+		else if( log.isInfoEnabled() ) {
 			// no releases were indexed before. Sadly now we have process them all
 			// on the other hand, we could simply copy the list with all releases now :)
-			newReleases.addAll(releaseList);
-			if( log.isInfoEnabled() )
-				log.info("every release is a new release...");
+			log.info("every release is a new release...");
 		}
-
+		
 		// sorting, just in case...
 		Collections.sort(newReleases);
 		
-		// XXX Limiter
-		int limiter = 1;
-		
+		// limiting releases
+		if( limit > 0 ) {
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("Limit processed Releases to {0}", limit) );
+			
+			newReleases = newReleases.subList(0, limit);
+		}
+
 		// going throw the new release list an downloads every
-		Iterator<BioModelRelease> iter = newReleases.iterator();
-		while( iter.hasNext() ) {
-			BioModelRelease release = iter.next();
+		for( BioModelRelease release : newReleases ) {
 			// do it (download, extract, compare to previous versions)
 			processRelease( release );
 
 			// if the download was succesfull, add the release to the known releases
 			if( release.isDownloaded() && release.isExtracted() )
-				config.setProperty( "knownReleases", config.getProperty("knownReleases", "") + "," + release.getReleaseName() );
-			
-			if( limiter++ >= 10 )
-				break;
+				config.getKnownReleases().add( release.getReleaseName() );
 		}
 
 		log.info("finished cloning BioModelsDatabase!");
@@ -234,10 +256,7 @@ public class BioModelsDb extends ModelDatabase {
 		}
 	}
 
-	protected void checkAndInitWorkingDir() {
-
-		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subWorkingDir") );
-		tempDir = new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subTempDir") );
+	protected void init() {
 
 		log.trace( "Preparing working dir " + workingDir.getAbsolutePath() );
 
@@ -245,25 +264,14 @@ public class BioModelsDb extends ModelDatabase {
 			// creates it!
 			workingDir.mkdirs();
 		}
-		if( tempDir.exists() == false ) {
-			// creates it!
-			tempDir.mkdirs();
-		}
+		// create temp dir
+		createTempDir();
 
-		// inits the config
-		config = new java.util.Properties();
-		log.info("Loading working dir config");
 		try {
-			File configFile = new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.workingDirConfig", "config.properties") );
-			if( configFile.exists() ) {
-				FileReader configFileReader = new FileReader( configFile );
-				if( configFileReader != null ) {
-					config.load(configFileReader);
-					configFileReader.close();
-				}
-
-			}
-
+			// inits the config
+			log.info("Loading working dir config");
+			File configFile = new File( workingDir, Config.getConfig().getWorkingDirConfig() );
+			config = Config.getObjectMapper().readValue( configFile, WorkingDirConfig.class );
 		}
 		catch (IOException e) {
 			log.fatal( "IOException while reading the workingdir config file", e );
@@ -274,19 +282,22 @@ public class BioModelsDb extends ModelDatabase {
 	protected void saveProperties() {
 
 		if( config == null ) {
-			config = new java.util.Properties();
+			config = new WorkingDirConfig();
 		}
 
 		try {
-			FileWriter configFile = new FileWriter( new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.workingDirConfig", "config.properties") ));
-			config.store(configFile, null);
+			// save the config
+			log.info("Saving working dir config");
+			
+			File configFile = new File( workingDir, Config.getConfig().getWorkingDirConfig() );
+			Config.getObjectMapper().writeValue(configFile, config);
+			
 			log.info("working dir config saved!");
 		} catch (IOException e) {
 			log.error( "Can not write the workingDir config file!", e );
 		}
 
 	}
-
 
 	protected void connect() throws FtpConnectionException, IOException, SocketException {
 
@@ -346,9 +357,10 @@ public class BioModelsDb extends ModelDatabase {
 	}
 
 	protected List<BioModelRelease> retrieveReleaseList() throws IOException {
-
+		
+		List<BioModelRelease> releaseList = new LinkedList<BioModelRelease>();
 		// cleares the list
-		releaseList.clear();
+//		releaseList.clear();
 
 		if( log.isInfoEnabled() )
 			log.info("retrieving release list form ftp server");
