@@ -120,7 +120,7 @@ public class BioModelsDb extends ModelDatabase {
 	}
 	
 	@Override
-	public void run() {
+	public Map<String, ChangeSet> call() {
 		List<BioModelRelease> newReleases = new ArrayList<BioModelRelease>();
 
 		log.info("Start cloning the BioModels DataBase by fetching the releases!");
@@ -184,6 +184,7 @@ public class BioModelsDb extends ModelDatabase {
 		}
 
 		log.info("finished cloning BioModelsDatabase!");
+		return changeSetMap;
 	}
 
 	/**

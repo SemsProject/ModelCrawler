@@ -150,7 +150,7 @@ public class PmrDb extends ModelDatabase {
 	}
 
 	@Override
-	public void run() {
+	public Map<String, ChangeSet> call() {
 
 		List<String> repositories = null;		
 
@@ -228,7 +228,7 @@ public class PmrDb extends ModelDatabase {
 		}
 
 		log.info("Finished crawling PMR2 Database.");
-
+		return changeSetMap;
 	}
 
 	protected void checkAndInitWorkingDir() {

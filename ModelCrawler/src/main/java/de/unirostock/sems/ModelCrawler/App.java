@@ -58,7 +58,7 @@ public class App
 		if( log.isInfoEnabled() )
 			log.info("running BioModelsDb Crawler");
 
-		bioModelsDb.run();
+		bioModelsDb.call();
 
 		// add all changes from BioModelsDb to the change Map
 		changes.putAll( bioModelsDb.listChanges() );
@@ -67,7 +67,7 @@ public class App
 		if( log.isInfoEnabled() ) 
 			log.info("running PMR2 Crawler");
 
-		pmr2Db.run();
+		pmr2Db.call();
 		// add all changes from PMR2 to the change Map
 		changes.putAll( pmr2Db.listChanges() );
 

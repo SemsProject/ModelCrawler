@@ -3,6 +3,7 @@ package de.unirostock.sems.ModelCrawler.databases.Interface;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -24,7 +25,7 @@ import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
 	@Type( value = BioModelsDb.class, name = ModelDatabase.DatabaseTypes.BMDB ),
 	@Type( value = PmrDb.class, name = ModelDatabase.DatabaseTypes.PMR2 )
 })
-public abstract class ModelDatabase implements Runnable, Closeable {
+public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>, Closeable {
 	
 	public abstract class DatabaseTypes {
 		public static final String NONE = "";
@@ -64,10 +65,10 @@ public abstract class ModelDatabase implements Runnable, Closeable {
 	
 	/**
 	 * Starts the prozess of crawling for this specific Database
+	 * @return 
 	 * 
 	 */
-	@Override
-	public abstract void run();
+	public abstract Map<String, ChangeSet> call();
 
 	
 	public String getType() {
