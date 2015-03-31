@@ -4,12 +4,12 @@
 
 	<groupId>de.unirostock.sems</groupId>
 	<artifactId>ModelCrawler</artifactId>
-	<version>0.0.3-SNAPSHOT</version>
+	<version>0.0.4</version>
 	<packaging>jar</packaging>
 
 	<name>ModelCrawler</name>
 	<url>http://sems.uni-rostock.de</url>
-	
+
 	<scm>
 		<connection>GIT</connection>
 		<url>ssh://sems.uni-rostock.de/modelcrawler</url>
@@ -19,6 +19,13 @@
 		<name>SEMS (Simulation Experiment Management for Systems Biology)</name>
 		<url>http://sems.uni-rostock.de</url>
 	</organization>
+	<developers>
+		<developer>
+			<id>martinP</id>
+			<name>Martin Peters</name>
+			<email>martin@freakybytes.net</email>
+		</developer>
+	</developers>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -33,16 +40,21 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Commons -->
 		<dependency>
 			<groupId>commons-net</groupId>
 			<artifactId>commons-net</artifactId>
 			<version>3.2</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
 			<version>1.5</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.4</version>
 		</dependency>
 
 		<!-- Logging -->
@@ -79,11 +91,6 @@
 			<version>4.3</version>
 		</dependency>
 		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.4</version>
-		</dependency>
-		<dependency>
 			<groupId>com.aragost.javahg</groupId>
 			<artifactId>javahg</artifactId>
 			<version>0.6</version>
@@ -104,6 +111,23 @@
 			<artifactId>morre.client</artifactId>
 			<version>0.0.7-SNAPSHOT</version>
 		</dependency>
+
+		<!-- Jackson -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.5.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -120,5 +144,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>
