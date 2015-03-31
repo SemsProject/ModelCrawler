@@ -59,7 +59,7 @@ import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
 
-public class PmrDb implements ModelDatabase {
+public class PmrDb extends ModelDatabase {
 
 	private static final String HASH_ALGO = "MD5";
 

@@ -49,7 +49,7 @@ import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
 
-public class BioModelsDb implements ModelDatabase {
+public class BioModelsDb extends ModelDatabase {
 
 	private final Log log = LogFactory.getLog( BioModelsDb.class );
 
