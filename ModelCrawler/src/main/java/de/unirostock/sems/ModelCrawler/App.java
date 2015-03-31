@@ -28,20 +28,33 @@ import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreException;
 import de.unirostock.sems.morre.client.impl.HttpMorreClient;
 
+// TODO: Auto-generated Javadoc
 /**
- * Hello world!
- *
+ * Hello world!.
  */
 public class App 
 {
+	
+	/** The Constant log. */
 	private static final Log log = LogFactory.getLog( App.class );
 
+	/** The morre client. */
 	private static MorreCrawlerInterface morreClient;
+	
+	/** The bio models db. */
 	private static ModelDatabase bioModelsDb;
+	
+	/** The pmr2 db. */
 	private static ModelDatabase pmr2Db;
 
+	/** The xml file server. */
 	private static XmlFileServer xmlFileServer = null;
 
+	/**
+	 * The main method.
+	 *
+	 * @param args the arguments
+	 */
 	public static void main( String[] args ) {
 		
 		log.info("ModelCrawler startet");
@@ -77,7 +90,7 @@ public class App
 		// XXX Limiter!
 //		int n = 1; // limiter
 
-		// going throw all changeSets ...
+		// going through all changeSets ...
 		    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
 		    	while( changesSetIterator.hasNext() ) {
 		    		// ... and process them
@@ -94,6 +107,9 @@ public class App
 		log.info("finished crawling");
 	}
 
+	/**
+	 * Prepare.
+	 */
 	private static void prepare() {
 
 		if( log.isInfoEnabled() )
@@ -109,6 +125,9 @@ public class App
 		Properties.checkAndInitWorkingDir();
 	}
 
+	/**
+	 * Inits the connectors.
+	 */
 	private static void initConnectors() {
 
 		if( log.isInfoEnabled() )
@@ -152,6 +171,9 @@ public class App
 
 	}
 
+	/**
+	 * Clean up.
+	 */
 	private static void cleanUp() {
 		log.info("Cleans everything up!");
 
@@ -162,6 +184,11 @@ public class App
 		pmr2Db.cleanUp();
 	}
 
+	/**
+	 * Process change set.
+	 *
+	 * @param changeSet the change set
+	 */
 	private static void processChangeSet( ChangeSet changeSet ) {
 		
 		//XXX some sort of filter

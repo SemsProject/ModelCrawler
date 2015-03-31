@@ -29,8 +29,6 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.UUID;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
@@ -40,14 +38,26 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.LogCommand;
+import org.eclipse.jgit.api.PullCommand;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRefNameException;
+import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
+import org.eclipse.jgit.api.errors.RefNotFoundException;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 
-import com.aragost.javahg.Changeset;
-import com.aragost.javahg.Repository;
-import com.aragost.javahg.commands.ExecutionException;
-import com.aragost.javahg.commands.LogCommand;
-import com.aragost.javahg.commands.PullCommand;
-import com.aragost.javahg.commands.UpdateCommand;
-
+import de.binfalse.bfutils.GeneralTools;
 import de.unirostock.sems.ModelCrawler.Properties;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
@@ -59,31 +69,72 @@ import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
 
+
+/*import com.aragost.javahg.Changeset;
+import com.aragost.javahg.Repository;
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.commands.LogCommand;
+import com.aragost.javahg.commands.PullCommand;
+import com.aragost.javahg.commands.UpdateCommand;*/
+import org.eclipse.jgit.api.CheckoutCommand;
+
+// TODO: Auto-generated Javadoc
+/**
+ * The Class PmrDb.
+ */
 public class PmrDb implements ModelDatabase {
 
+	/** The Constant HASH_ALGO. */
 	private static final String HASH_ALGO = "MD5";
 
+	/** The log. */
 	private final Log log = LogFactory.getLog( PmrDb.class );
 
+	/** The working dir. */
 	protected File workingDir;
+	
+	/** The temp dir. */
 	protected File tempDir;
+	
+	/** The config. */
 	protected java.util.Properties config;
+	
+	/** The morre client. */
 	protected MorreCrawlerInterface morreClient;
+	
+	/** The repo list uri. */
 	protected URI repoListUri;
+	
+	/** The classifier. */
 	protected DocumentClassifier classifier = null;
 	
+	/** The file extension blacklist. */
 	protected HashSet<String> fileExtensionBlacklist = null;
 
+	/** The change set map. */
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 	
 	// REMIND there is difference between ChangeSet and Changeset
 	// ChangeSet is a ModelCrawler Dataholder class
 	// and Changeset a JavaHg Dataholder class
 
+	/**
+	 * The Constructor.
+	 *
+	 * @param morreClient the morre client
+	 * @throws IllegalArgumentException the illegal argument exception
+	 */
 	public PmrDb( MorreCrawlerInterface morreClient ) throws IllegalArgumentException {
 		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.RepoList"), morreClient );
 	}
 
+	/**
+	 * The Constructor.
+	 *
+	 * @param repoListUrl the repo list url
+	 * @param morreClient the morre client
+	 * @throws IllegalArgumentException the illegal argument exception
+	 */
 	public PmrDb(String repoListUrl, MorreCrawlerInterface morreClient) throws IllegalArgumentException {
 		this.morreClient = morreClient;
 
@@ -101,11 +152,11 @@ public class PmrDb implements ModelDatabase {
 			log.info( MessageFormat.format("Init new PMR2 Connector based on Repolist: {0}", this.repoListUri) );
 
 		// Prepare BiVeS Model Classifier
-		try {
+		//try {
 			classifier = new DocumentClassifier ();
-		} catch (ParserConfigurationException e) {
+		/*} catch (ParserConfigurationException e) {
 			log.fatal( "ParserConfigurationException while init BiVeS Document Classifier", e );
-		}
+		}*/
 
 		if( log.isInfoEnabled() )
 			log.info("Started BiVeS Classifier");
@@ -121,21 +172,33 @@ public class PmrDb implements ModelDatabase {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#listModels()
+	 */
 	@Override
 	public List<String> listModels() {
 		return new ArrayList<String>( changeSetMap.keySet() );
 	}
 
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#listChanges()
+	 */
 	@Override
 	public Map<String, ChangeSet> listChanges() {
 		return changeSetMap;
 	}
 
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#getModelChanges(java.lang.String)
+	 */
 	@Override
 	public ChangeSet getModelChanges(String fileId) {
 		return changeSetMap.get(fileId);
 	}
 
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#cleanUp()
+	 */
 	@Override
 	public void cleanUp() {
 		// save the config
@@ -149,6 +212,9 @@ public class PmrDb implements ModelDatabase {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#run()
+	 */
 	@Override
 	public void run() {
 
@@ -171,7 +237,7 @@ public class PmrDb implements ModelDatabase {
 
 		Iterator<String> iter = repositories.iterator();
 		while( iter.hasNext() ) {
-			Repository repo = null;
+			Git repo = null;
 			boolean hasChanges = false;
 			String repoName = iter.next();
 
@@ -200,7 +266,7 @@ public class PmrDb implements ModelDatabase {
 					log.debug( MessageFormat.format("Repository {0} is known. Perform a Pull-Request into local copy {1}", repoName, location.getAbsolutePath()) );
 
 				// Repo is already known -> make a pull
-				Entry<Repository, Boolean> pullResult = pullRepository(location);
+				Entry<Git, Boolean> pullResult = pullRepository(location);
 				repo = pullResult.getKey();
 				// are there changes in the Repo?
 				hasChanges = pullResult.getValue();
@@ -231,6 +297,9 @@ public class PmrDb implements ModelDatabase {
 
 	}
 
+	/**
+	 * Check and init working dir.
+	 */
 	protected void checkAndInitWorkingDir() {
 
 		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.subWorkingDir") );
@@ -269,8 +338,9 @@ public class PmrDb implements ModelDatabase {
 	}
 
 	/**
-	 * Returns a non existent temporary file
-	 * @return
+	 * Returns a non existent temporary file.
+	 *
+	 * @return the temp file
 	 */
 	protected File getTempFile() {
 		File temp = new File( tempDir, UUID.randomUUID().toString() );
@@ -281,6 +351,9 @@ public class PmrDb implements ModelDatabase {
 		return temp;
 	}
 
+	/**
+	 * Save properties.
+	 */
 	protected void saveProperties() {
 
 		if( config == null ) {
@@ -299,10 +372,10 @@ public class PmrDb implements ModelDatabase {
 
 
 	/**
-	 * Retrieves the txt Repository List and puts it in a list
-	 * 
-	 * @return
-	 * @throws HttpException
+	 * Retrieves the txt Repository List and puts it in a list.
+	 *
+	 * @return the repository list
+	 * @throws HttpException the http exception
 	 */
 	protected List<String> getRepositoryList() throws HttpException {
 		List<String> repoList = new LinkedList<String>();
@@ -333,10 +406,10 @@ public class PmrDb implements ModelDatabase {
 
 
 	/**
-	 * Creates the directory for the given Repository
-	 *  
-	 * @param repository
-	 * @return
+	 * Creates the directory for the given Repository.
+	 *
+	 * @param repository the repository
+	 * @return the file
 	 */
 	protected File makeRepositoryDirectory( String repository ) {
 
@@ -383,9 +456,9 @@ public class PmrDb implements ModelDatabase {
 	}
 
 	/**
-	 * Gets the Path to the Repository Directory out of Workspace config or null if it fails
-	 * 
-	 * @param repository
+	 * Gets the Path to the Repository Directory out of Workspace config or null if it fails.
+	 *
+	 * @param repository the repository
 	 * @return File
 	 */
 	protected File getRepositoryDirectory( String repository ) {
@@ -399,10 +472,10 @@ public class PmrDb implements ModelDatabase {
 	}
 
 	/**
-	 * Calculates the hash from the Repository URL
-	 * 
-	 * @param repository
-	 * @return
+	 * Calculates the hash from the Repository URL.
+	 *
+	 * @param repository the repository
+	 * @return the string
 	 */
 	private String calculateRepositoryHash( String repository ) {
 		String repoHash = null;
@@ -418,40 +491,91 @@ public class PmrDb implements ModelDatabase {
 		return repoHash;
 	}
 
-	protected Repository cloneRepository(File local, String remote) {
-		Repository repo = Repository.clone(local, remote);
+	/**
+	 * Clone repository.
+	 *
+	 * @param local the local
+	 * @param remote the remote
+	 * @return the repository
+	 */
+	protected Git cloneRepository(File local, String remote) {
+		
+		
+		
+		Git repo = null;
+		
+		try
+		{
+			repo = Git.cloneRepository()
+				.setURI( remote )
+				.setDirectory( local )
+				.setCloneSubmodules(true)		// include all submodules -> important for PMR2-Project
+				.call();
+		}
+		catch (GitAPIException e)
+		{
+			log.fatal (MessageFormat.format("Can not clone Mercurial Repository {0} into {1}", remote, local.getAbsolutePath()), e);
+		}
+		//Repository.clone(local, remote);
 		if( repo == null )
 			log.fatal( MessageFormat.format("Can not clone Mercurial Repository {0} into {1}", remote, local.getAbsolutePath()) );
 
 		return repo;
 	}
 
-	protected Entry<Repository, Boolean> pullRepository(File location) {
+	/**
+	 * Pull repository.
+	 *
+	 * @param location the location
+	 * @return the entry< repository, boolean>
+	 */
+	protected Entry<Git, Boolean> pullRepository(File location) {
 		boolean hasChanges = false;
-		Repository repo = Repository.open(location);
+		
+		Git repo = null;
+		
+		try
+		{
+			repo = Git.open (location);
+		}
+		catch (IOException e)
+		{
+			log.fatal( MessageFormat.format("Can not open Git Repository in {0}", location.getAbsolutePath()), e);
+		}
 
 		if( repo != null) {
-			PullCommand pull = new PullCommand(repo);
+			//PullCommand pull = new PullCommand(repo);
+			PullCommand pull = repo.pull ();
 
 			try {
-				List<Changeset> changes = pull.execute();
+				PullResult pr = pull.call ();
+				if (pr.isSuccessful () && pr.getFetchResult ().getTrackingRefUpdates ().size () > 0)
+				
+				/*List<Changeset> changes = pull.execute();
 				// when pull was successful and there are some Changes
-				if( pull.isSuccessful() && changes.size() > 0)
+				if( pull.isSuccessful() && changes.size() > 0)*/
 					hasChanges = true;
 
-			} catch (IOException e) {
-				log.fatal( MessageFormat.format("Can not pull Mercurial Repository into {0}", location.getAbsolutePath()), e);
+			} catch (GitAPIException e) {
+				log.fatal( MessageFormat.format("Can not pull Git Repository into {0}", location.getAbsolutePath()), e);
 			}
 		}
 
-		return new AbstractMap.SimpleEntry<Repository, Boolean>(repo, hasChanges);
+		return new AbstractMap.SimpleEntry<Git, Boolean>(repo, hasChanges);
 	}
 
-	protected void scanAndTransferRepository( String repoUrl, File location, Repository repo ) {
+	/**
+	 * Scan and transfer repository.
+	 *
+	 * @param repoUrl the repo url
+	 * @param location the location
+	 * @param repo the repo
+	 */
+	protected void scanAndTransferRepository( String repoUrl, File location, Git repo ) {
 		// select all relevant files
 		// than going throw the versions
 		List<RelevantFile> relevantFiles;
-		List<Changeset> relevantVersions;
+		Iterable<RevCommit> relevantVersions;
 
 		// TODO Logging!
 
@@ -488,12 +612,12 @@ public class PmrDb implements ModelDatabase {
 			return;
 
 		// sorting them (just in case...)
-		Collections.sort(relevantVersions, new Comparator<Changeset>() {
+		/*Collections.sort(relevantVersions, new Comparator<Changeset>() {
 			@Override
 			public int compare(Changeset cs1, Changeset cs2) {
 				return cs1.getTimestamp().getDate().compareTo( cs2.getTimestamp().getDate() );
 			}
-		} );
+		} );*/
 
 		// make it!
 		// (going throw each relevant Version and saves all relevant Files in every relevant - and new - Version)
@@ -513,7 +637,14 @@ public class PmrDb implements ModelDatabase {
 
 	}
 
-	protected List<RelevantFile> scanRepository( File location, Repository repo ) {
+	/**
+	 * Scan repository.
+	 *
+	 * @param location the location
+	 * @param repo the repo
+	 * @return the list< relevant file>
+	 */
+	protected List<RelevantFile> scanRepository( File location, Git repo ) {
 		List<RelevantFile> relevantFiles = new LinkedList<RelevantFile>();
 
 		// scans the directory recursively
@@ -522,6 +653,13 @@ public class PmrDb implements ModelDatabase {
 		return relevantFiles;
 	}
 
+	/**
+	 * Scan repository dir.
+	 *
+	 * @param base the base
+	 * @param dir the dir
+	 * @param relevantFiles the relevant files
+	 */
 	private void scanRepositoryDir( File base, File dir, List<RelevantFile> relevantFiles ) {
 
 		if( log.isTraceEnabled() )
@@ -570,11 +708,11 @@ public class PmrDb implements ModelDatabase {
 
 	/**
 	 * Checks if the file is a model aka relevant <br>
-	 * Returns a RelevantFile object if it is or null
-	 * 
-	 * @param base
-	 * @param model
-	 * @return
+	 * Returns a RelevantFile object if it is or null.
+	 *
+	 * @param base the base
+	 * @param model the model
+	 * @return the relevant file
 	 */
 	private RelevantFile isRelevant( File base, File model ) {
 		int type = 0;
@@ -607,6 +745,11 @@ public class PmrDb implements ModelDatabase {
 		return relevantFile;
 	}
 
+	/**
+	 * Search latest known version.
+	 *
+	 * @param relevantFile the relevant file
+	 */
 	protected void searchLatestKnownVersion( RelevantFile relevantFile ) {
 		String versionId = null;
 		Date versionDate = null;
@@ -665,14 +808,23 @@ public class PmrDb implements ModelDatabase {
 
 	}
 
-	protected List<Changeset> detectRelevantVersions( Repository repo, List<RelevantFile> relevantFiles ) {
-		String[] files;
+	/**
+	 * Detect relevant versions.
+	 *
+	 * @param repo the repo
+	 * @param relevantFiles the relevant files
+	 * @return the list< changeset>
+	 */
+	protected Iterable<RevCommit> detectRelevantVersions( Git repo, List<RelevantFile> relevantFiles ) {
+		//String[] files;
 		Date oldestLatestVersionDate = null;
 		boolean foundOldestLatestVersionDate = false;
-		List<Changeset> relevantVersions = null;
+		Iterable<RevCommit>
+		//List<Changeset> 
+		relevantVersions = null;
 
 		if( log.isInfoEnabled() )
-			log.info("start detection of relevant hg versions");
+			log.info("start detection of relevant git versions");
 
 		if( relevantFiles.size() == 0 ) {
 			if( log.isInfoEnabled() )
@@ -682,14 +834,17 @@ public class PmrDb implements ModelDatabase {
 		}
 
 		// make a list of all relevant files
-		files = new String[relevantFiles.size()];
+		//files = new String[relevantFiles.size()];
 		int index = 0;
 
+		LogCommand logCmd = repo.log();
+		
 		// put the list into the array and gets the oldestLatestVersion :)
 		Iterator<RelevantFile> fileIter = relevantFiles.iterator();
 		while( fileIter.hasNext() ) {
 			RelevantFile file = fileIter.next();
-			files[index] = file.getFilePath();
+			//files[index] =
+			logCmd.addPath (file.getFilePath());
 			index++;
 
 			// checks if the current processed relevantFile has an older latestVersion as the
@@ -705,32 +860,50 @@ public class PmrDb implements ModelDatabase {
 			}
 
 		}
-
+		
 		if( log.isDebugEnabled() )
 			log.debug( MessageFormat.format("execute Log command for {0} file(s)", index) );
 
 		// perform the log command to evaluate all interesting hg changesets
-		LogCommand logCmd = new LogCommand(repo);
-		relevantVersions = logCmd.execute(files);
+		//Iterable<RevCommit> logs
+		try
+		{
+			relevantVersions = logCmd.call();
+		}
+		catch (GitAPIException e)
+		{
+			log.error( "cannot call git log ", e );
+		}
+		/*LogCommand logCmd = new LogCommand(repo);
+		relevantVersions = logCmd.execute(files);*/
 
+		int numVersions = GeneralTools.sizeOfIterable (relevantVersions);/*0;
+		if (relevantVersions instanceof Collection<?>)
+		  numVersions = ((Collection<?>)relevantVersions).size();
+		else
+			for(RevCommit v : relevantVersions) {
+				numVersions++;
+			}*/
+		
 		if( oldestLatestVersionDate == null ) {
 			// oldestLatestVersionDate is null -> there is no latest version known for any of the relevantFiles/-Models
 			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("Found {0} Changesets. Can not skip any of them, because no one is indexed", relevantVersions.size()) );
+				log.info( MessageFormat.format("Found {0} Changesets. Can not skip any of them, because no one is indexed", numVersions) );
 		}
 		else {
 			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("Found {0} Changesets, removes all Changeset older as {1} (oldestLatestVersion) from the list", relevantVersions.size(), oldestLatestVersionDate) );
+				log.info( MessageFormat.format("Found {0} Changesets, removes all Changeset older as {1} (oldestLatestVersion) from the list", numVersions, oldestLatestVersionDate) );
 
 			// remove every Changeset which is older as the oldestLatestVersion (because they are really uninteresting)
-			Iterator<Changeset> changesetIter = relevantVersions.iterator();
-			while( changesetIter.hasNext() ) {
-				if( changesetIter.next().getTimestamp().getDate().compareTo(oldestLatestVersionDate) < 0 )
+			Iterator<RevCommit> changesetIter = relevantVersions.iterator();
+			while( changesetIter.hasNext() )
+			{
+				if (new Date (changesetIter.next().getCommitTime ()).compareTo(oldestLatestVersionDate) < 0)
 					changesetIter.remove();
 			}
 
 			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("{0} Changsets left for examination", relevantVersions.size()) );
+				log.info( MessageFormat.format("{0} Changsets left for examination", GeneralTools.sizeOfIterable (relevantVersions)) );
 
 		}
 
@@ -738,36 +911,66 @@ public class PmrDb implements ModelDatabase {
 		return relevantVersions;
 	}
 
-	protected void iterateRelevantVersions( Repository repo, File location, List<RelevantFile> relevantFiles, List<Changeset> relevantVersions ) throws IOException {
+	/**
+	 * Iterate relevant versions.
+	 *
+	 * @param repo the repo
+	 * @param location the location
+	 * @param relevantFiles the relevant files
+	 * @param relevantVersions the relevant versions
+	 * @throws IOException the IO exception
+	 */
+	protected void iterateRelevantVersions( Git repo, File location, List<RelevantFile> relevantFiles, Iterable<RevCommit> relevantVersions ) throws IOException {
 		Date crawledDate = new Date();
 
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Going throw all relevant versions of {0}", location) );
 
-		for( Changeset currentChangeset : relevantVersions ) {
-			String currentNodeId = currentChangeset.getNode();
-			Date currentVersionDate = currentChangeset.getTimestamp().getDate();
+		for( RevCommit currentChangeset : relevantVersions ) {
+	    // node a changeset ID, must be 40 hexadecimal characters.
+			ObjectId currentNodeId = currentChangeset.getId ();//.getNode();
+			Date currentVersionDate = new Date (currentChangeset.getCommitTime ());//.getTimestamp().getDate();
 
 			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("Update to {0} Message: {1}", currentNodeId, currentChangeset.getMessage()) );
+				log.info( MessageFormat.format("Update to {0} Message: {1}", currentNodeId.toString (), currentChangeset.getShortMessage ()) );
 
 			// update to currentChangeset
-			UpdateCommand updateCmd = new UpdateCommand(repo);
-			updateCmd.rev(currentChangeset);
+			
+			//UpdateCommand updateCmd = new UpdateCommand(repo);
+			CheckoutCommand co = repo.checkout ().setStartPoint (currentChangeset);
+			//updateCmd.rev(currentChangeset);
 			try {
-				updateCmd.execute();
-			} catch (IOException e) {
-				log.error( MessageFormat.format("IOException while updating {0} to {1}. skip this repo after now.", location, currentNodeId), e);
+				co.call ();//.execute();
+			} catch (GitAPIException e) {
+				log.error( MessageFormat.format("IOException while updating {0} to {1}. skip this repo after now.", location, currentNodeId.toString ()), e);
 				return;
-			} catch (ExecutionException e) {
-				log.error( MessageFormat.format("IOException while updating {0} to {1}. skip this repo after now.", location, currentNodeId), e);
+			}/* catch (ExecutionException e) {
+				log.error( MessageFormat.format("IOException while updating {0} to {1}. skip this repo after now.", location, currentNodeId.toString ()), e);
 				return;
-			}
-
+			}*/
+			
+			
 			// get all added or modified files in this Changeset
-			List<String> changedFiles = new ArrayList<String>();
+			List<String> changedFiles = new ArrayList<String>();/*
 			changedFiles.addAll( currentChangeset.getAddedFiles() );
-			changedFiles.addAll( currentChangeset.getModifiedFiles() );
+			changedFiles.addAll( currentChangeset.getModifiedFiles() );*/
+
+			
+
+			Repository repository = repo.getRepository ();
+			RevWalk rw = new RevWalk(repository);
+			ObjectId head = repository.resolve(Constants.HEAD);
+			RevCommit commit = rw.parseCommit (head);
+			RevCommit parent = rw.parseCommit(commit.getParent(0).getId());
+			DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
+			df.setRepository(repository);
+			df.setDiffComparator(RawTextComparator.DEFAULT);
+			df.setDetectRenames(true);
+			List<DiffEntry> diffs = df.scan(parent.getTree(), commit.getTree());
+			for (DiffEntry diff : diffs) {
+				changedFiles.add (diff.getNewPath());
+			}
+			
 
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format("{0} changed files in this version", changedFiles.size()) );
@@ -824,7 +1027,7 @@ public class PmrDb implements ModelDatabase {
 					if( log.isInfoEnabled() )
 						log.info("Model has changes. Adds it to its ChangeSet");
 
-					PmrChange change = new PmrChange(file.getFileId(), file.getRepositoryUrl(), file.getFilePath(), currentNodeId, currentVersionDate, crawledDate);
+					PmrChange change = new PmrChange(file.getFileId(), file.getRepositoryUrl(), file.getFilePath(), currentNodeId.toString (), currentVersionDate, crawledDate);
 					// set some Meta information
 					change.setMeta( CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_PMR2 );
 					if( (file.getType() & DocumentClassifier.SBML) > 0 )

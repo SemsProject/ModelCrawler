@@ -6,19 +6,26 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import de.unirostock.sems.XmlFileServerClient.XmlFileServer;
-
+// TODO: Auto-generated Javadoc
+/**
+ * The Class Properties taking care of settings for the model crawler.
+ */
 public class Properties {
 
+	/** The prop. */
 	private static java.util.Properties prop = null;
+	
+	/** The working dir. */
 	private static File workingDir = null;
 	
+	/** The Constant log. */
 	private static final Log log = LogFactory.getLog( Properties.class );
 	
+	/** The split char to refer to other properties. */
 	public static final String ELEMENT_SPLITTER = ";";
 
 	/**
-	 * Init the Properties System
+	 * Init the Properties System.
 	 */
 	public static void init() {
 		prop = new java.util.Properties();
@@ -39,6 +46,13 @@ public class Properties {
 
 	}
 
+	/**
+	 * Gets a property.
+	 *
+	 * @param key the key
+	 * @param defaultValue the default value
+	 * @return the property
+	 */
 	public static String getProperty( String key, String defaultValue ) {
 		if( prop != null )
 			return prop.getProperty(key, defaultValue);
@@ -46,6 +60,12 @@ public class Properties {
 			return null;
 	}
 
+	/**
+	 * Gets a property.
+	 *
+	 * @param key the key
+	 * @return the property
+	 */
 	public static String getProperty( String key ) {
 		if( prop != null )
 			return prop.getProperty(key);
@@ -53,6 +73,9 @@ public class Properties {
 			return null;
 	}
 
+	/**
+	 * Initialises working dir if not yet done.
+	 */
 	public static void checkAndInitWorkingDir() {
 		
 		// only once needed...
@@ -68,6 +91,11 @@ public class Properties {
 
 	}
 
+	/**
+	 * Gets the working dir.
+	 *
+	 * @return the working dir
+	 */
 	public static File getWorkingDir() {
 		return workingDir;
 	}

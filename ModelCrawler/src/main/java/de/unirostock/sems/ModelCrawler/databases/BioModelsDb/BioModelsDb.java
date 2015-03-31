@@ -49,23 +49,49 @@ import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class BioModelsDb.
+ */
 public class BioModelsDb implements ModelDatabase {
 
+	/** The log. */
 	private final Log log = LogFactory.getLog( BioModelsDb.class );
 
+	/** The ftp url. */
 	private URL ftpUrl;
+	
+	/** The ftp client. */
 	private FTPClient ftpClient;
+	
+	/** The release list. */
 	private List<BioModelRelease> releaseList = new ArrayList<BioModelRelease>();
 
-	protected File workingDir, tempDir;
+	/** The temp dir. */
+	protected File workingDir;
+	
+	/** The temp dir. */
+	protected File tempDir;
+	
+	/** The config. */
 	protected java.util.Properties config;
 
+	/** The change set map. */
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 	
+	/** The morre client. */
 	protected MorreCrawlerInterface morreClient = null;
 //	protected GraphDatabase graphDb = null;
 
-	public BioModelsDb(String ftpUrl, MorreCrawlerInterface morreClient) throws MalformedURLException, IllegalArgumentException {
+	/**
+ * The Constructor.
+ *
+ * @param ftpUrl the ftp url
+ * @param morreClient the morre client
+ * @throws MalformedURLException the malformed url exception
+ * @throws IllegalArgumentException the illegal argument exception
+ */
+public BioModelsDb(String ftpUrl, MorreCrawlerInterface morreClient) throws MalformedURLException, IllegalArgumentException {
 		this.ftpUrl = new URL(ftpUrl);
 //		this.graphDb = graphDb;
 		this.morreClient = morreClient;
@@ -86,25 +112,44 @@ public class BioModelsDb implements ModelDatabase {
 
 	}
 
+	/**
+	 * The Constructor.
+	 *
+	 * @param morreClient the morre client
+	 * @throws MalformedURLException the malformed url exception
+	 * @throws IllegalArgumentException the illegal argument exception
+	 */
 	public BioModelsDb( MorreCrawlerInterface morreClient ) throws MalformedURLException, IllegalArgumentException {
 		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.ftpUrl"), morreClient );
 	}
 
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#listModels()
+	 */
 	@Override
 	public List<String> listModels() {
 		return new ArrayList<String>( changeSetMap.keySet() );
 	}
 
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#listChanges()
+	 */
 	@Override
 	public Map<String, ChangeSet> listChanges() {
 		return changeSetMap;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#getModelChanges(java.lang.String)
+	 */
 	@Override
 	public ChangeSet getModelChanges(String fileId) {
 		return changeSetMap.get(fileId);
 	}
 
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#cleanUp()
+	 */
 	@Override
 	public void cleanUp() {
 		
@@ -119,6 +164,9 @@ public class BioModelsDb implements ModelDatabase {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase#run()
+	 */
 	@Override
 	public void run() {
 		List<BioModelRelease> newReleases = new ArrayList<BioModelRelease>();
@@ -188,9 +236,9 @@ public class BioModelsDb implements ModelDatabase {
 
 	/**
 	 * Downloads, extracts and indexes the gives release
-	 * must called for each new release CHRONOLOGICAL
-	 * 
-	 * @param release
+	 * must called for each new release CHRONOLOGICAL.
+	 *
+	 * @param release the release
 	 */
 	protected void processRelease( BioModelRelease release ) {
 		
@@ -233,6 +281,9 @@ public class BioModelsDb implements ModelDatabase {
 		}
 	}
 
+	/**
+	 * Check and init working dir.
+	 */
 	protected void checkAndInitWorkingDir() {
 
 		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.BioModelsDb.subWorkingDir") );
@@ -270,6 +321,9 @@ public class BioModelsDb implements ModelDatabase {
 
 	}
 
+	/**
+	 * Save properties.
+	 */
 	protected void saveProperties() {
 
 		if( config == null ) {
@@ -287,6 +341,13 @@ public class BioModelsDb implements ModelDatabase {
 	}
 
 
+	/**
+	 * Connect.
+	 *
+	 * @throws FtpConnectionException the ftp connection exception
+	 * @throws IOException the IO exception
+	 * @throws SocketException the socket exception
+	 */
 	protected void connect() throws FtpConnectionException, IOException, SocketException {
 
 		log.info("connecting to ftp server");
@@ -335,6 +396,9 @@ public class BioModelsDb implements ModelDatabase {
 
 	}
 
+	/**
+	 * Disconnect.
+	 */
 	protected void disconnect() {
 		try {
 			ftpClient.logout();
@@ -344,6 +408,12 @@ public class BioModelsDb implements ModelDatabase {
 		}
 	}
 
+	/**
+	 * Retrieve release list.
+	 *
+	 * @return the list< bio model release>
+	 * @throws IOException the IO exception
+	 */
 	protected List<BioModelRelease> retrieveReleaseList() throws IOException {
 
 		// cleares the list
@@ -394,6 +464,13 @@ public class BioModelsDb implements ModelDatabase {
 		return releaseList;
 	}
 
+	/**
+	 * Download release.
+	 *
+	 * @param release the release
+	 * @return true, if download release
+	 * @throws UnsupportedCompressionAlgorithmException the unsupported compression algorithm exception
+	 */
 	private boolean downloadRelease( BioModelRelease release ) throws UnsupportedCompressionAlgorithmException {
 		String archiv;
 		File target;
@@ -507,6 +584,12 @@ public class BioModelsDb implements ModelDatabase {
 		return true;
 	}
 
+	/**
+	 * Find sbml archiv file.
+	 *
+	 * @return the string
+	 * @throws IOException the IO exception
+	 */
 	private String findSbmlArchivFile() throws IOException {
 
 		FTPFile[] files = ftpClient.listFiles();
@@ -525,6 +608,13 @@ public class BioModelsDb implements ModelDatabase {
 		return null;
 	}
 
+	/**
+	 * Extract release.
+	 *
+	 * @param release the release
+	 * @throws IllegalArgumentException the illegal argument exception
+	 * @throws ExtractException the extract exception
+	 */
 	private void extractRelease( BioModelRelease release ) throws IllegalArgumentException, ExtractException {
 
 		// already extracted or not even downloaded - just for safety... 
@@ -619,6 +709,13 @@ public class BioModelsDb implements ModelDatabase {
 		} 
 	}
 
+	/**
+	 * Tranfer change.
+	 *
+	 * @param fileId the file id
+	 * @param release the release
+	 * @param crawledDate the crawled date
+	 */
 	private void tranferChange( String fileId, BioModelRelease release, Date crawledDate ) {
 
 		boolean isChangeNew = false;

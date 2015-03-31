@@ -4,11 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class RelativPath.
+ */
 public class RelativPath {
 
 	/**
 	 * Returns the path of one File relative to another. <br>
-	 * copy'n'paste from {@link http://stackoverflow.com/a/1269907}
+	 * copy'n'paste from <a href="http://stackoverflow.com/a/1269907">stackoverflow</a>
 	 * 
 	 * @param target the target directory
 	 * @param base the base directory

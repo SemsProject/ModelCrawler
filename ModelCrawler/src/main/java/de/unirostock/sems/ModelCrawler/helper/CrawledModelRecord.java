@@ -10,11 +10,24 @@ import java.util.Map;
 
 import de.unirostock.sems.morre.client.dataholder.CrawledModel;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class CrawledModelRecord.
+ */
 public class CrawledModelRecord extends CrawledModel {
 	
+	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 6382870895044981027L;
+	
+	/** The Constant DATE_FORMAT. */
 	public static final String DATE_FORMAT = "dd.MM.yyyy-HH:mm:ss";
 	
+	/**
+	 * Extend dataholder.
+	 *
+	 * @param model the model
+	 * @return the crawled model record
+	 */
 	public static CrawledModelRecord extendDataholder( CrawledModel model ) {
 		if( model != null )
 			return new CrawledModelRecord(model);
@@ -23,24 +36,54 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Creates a new CrawledModelRecord based on a simple CrawledModel Dataholder
-	 * 
-	 * @param model
+	 * Creates a new CrawledModelRecord based on a simple CrawledModel Dataholder.
+	 *
+	 * @param model the model
 	 */
 	public CrawledModelRecord( CrawledModel model ) {
 		super( model.getFileId(), model.getVersionId(), model.getXmldoc(), model.getParentMap(), model.getMetaMap(), model.getModelType() );
 	}
 	
+	/**
+	 * The Constructor.
+	 *
+	 * @param fileId the file id
+	 * @param versionId the version id
+	 * @param xmldoc the xmldoc
+	 * @param parentMap the parent map
+	 * @param metaMap the meta map
+	 * @param modelType the model type
+	 */
 	public CrawledModelRecord(String fileId, String versionId, String xmldoc, Map<String, List<String>> parentMap, Map<String, String> metaMap, String modelType) {
 		super(fileId, versionId, xmldoc, parentMap, metaMap, modelType);
 	}
 	
+	/**
+	 * The Constructor.
+	 *
+	 * @param fileId the file id
+	 * @param versionId the version id
+	 * @param xmldoc the xmldoc
+	 * @param parentMap the parent map
+	 * @param metaMap the meta map
+	 * @param modelType the model type
+	 * @param versionDate the version date
+	 * @param crawledDate the crawled date
+	 */
 	public CrawledModelRecord(String fileId, String versionId, String xmldoc, Map<String, List<String>> parentMap, Map<String, String> metaMap, String modelType, Date versionDate, Date crawledDate) {
 		super(fileId, versionId, xmldoc, parentMap, metaMap, modelType);
 		setVersionDate(versionDate);
 		setCrawledDate(crawledDate);
 	}
 	
+	/**
+	 * The Constructor.
+	 *
+	 * @param fileId the file id
+	 * @param versionId the version id
+	 * @param versionDate the version date
+	 * @param crawledDate the crawled date
+	 */
 	public CrawledModelRecord(String fileId, String versionId, Date versionDate, Date crawledDate) {
 		super(fileId, versionId, null, null, null, null);
 		setVersionDate(versionDate);
@@ -49,8 +92,8 @@ public class CrawledModelRecord extends CrawledModel {
 	
 	/**
 	 * Checks if the model dataholder is valid.
-	 * 
-	 * @return
+	 *
+	 * @return true, if checks if is available
 	 */
 	public boolean isAvailable() {
 		
@@ -67,10 +110,10 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Returns the value of a meta field or null
-	 * 
-	 * @param metaField
-	 * @return
+	 * Returns the value of a meta field or null.
+	 *
+	 * @param metaField the meta field
+	 * @return the meta
 	 */
 	public String getMeta( String metaField ) {
 		Map<String, String> metaMap = getMetaMap();
@@ -81,10 +124,10 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Sets the value of a meta field and overrides the previous value
-	 * 
-	 * @param metaField
-	 * @param value
+	 * Sets the value of a meta field and overrides the previous value.
+	 *
+	 * @param metaField the meta field
+	 * @param value the value
 	 */
 	public void setMeta( String metaField, String value ) {
 		Map<String, String> metaMap = getMetaMap();
@@ -96,9 +139,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Returns the parsed VersionDate if it is set, or null
-	 * 
-	 * @return
+	 * Returns the parsed VersionDate if it is set, or null.
+	 *
+	 * @return the version date
 	 */
 	public Date getVersionDate() {
 		Date versionDate = null;
@@ -117,18 +160,18 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Sets the VersionDate in the Meta Field
-	 * 
-	 * @param versionDate
+	 * Sets the VersionDate in the Meta Field.
+	 *
+	 * @param versionDate the version date
 	 */
 	public void setVersionDate( Date versionDate ) {
 		setMeta(META_VERSION_DATE, new SimpleDateFormat(DATE_FORMAT).format(versionDate) );
 	}
 	
 	/**
-	 * Returns the parsed CrawledDate if it is set, or null
-	 * 
-	 * @return
+	 * Returns the parsed CrawledDate if it is set, or null.
+	 *
+	 * @return the crawled date
 	 */
 	public Date getCrawledDate() {
 		Date crawledDate = null;
@@ -147,9 +190,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Sets the CrawledDate in the Meta Field
-	 * 
-	 * @param versionDate
+	 * Sets the CrawledDate in the Meta Field.
+	 *
+	 * @param crawledDate the crawled date
 	 */
 	public void setCrawledDate( Date crawledDate ) {
 		setMeta(META_CRAWLED_DATE, new SimpleDateFormat(DATE_FORMAT).format(crawledDate) );
@@ -157,9 +200,9 @@ public class CrawledModelRecord extends CrawledModel {
 	
 	/**
 	 * Adds a parent to this model.
-	 * 
-	 * @param parentFileId
-	 * @param parentVersionId
+	 *
+	 * @param parentFileId the parent file id
+	 * @param parentVersionId the parent version id
 	 */
 	public void addParent( String parentFileId, String parentVersionId ) {
 		
@@ -187,9 +230,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Adds a parent to this model with the same fileId
-	 * 
-	 * @param parentVersionId
+	 * Adds a parent to this model with the same fileId.
+	 *
+	 * @param parentVersionId the parent version id
 	 */
 	public void addParent( String parentVersionId ) {
 		addParent( getFileId(), parentVersionId );
