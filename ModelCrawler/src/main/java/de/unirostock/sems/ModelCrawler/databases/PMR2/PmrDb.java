@@ -222,8 +222,8 @@ public class PmrDb implements ModelDatabase {
 			if( repo != null )
 				repo.close();
 			
-//			if( limiter++ >= 5 )
-//				break;
+			if( limiter++ >= 25 )
+				break;
 
 		}
 
@@ -700,7 +700,7 @@ public class PmrDb implements ModelDatabase {
 					foundOldestLatestVersionDate = true;
 				}
 			}
-			else if( file.getLatestVersionDate().compareTo(oldestLatestVersionDate) < 0 ) {
+			else if( file.getLatestVersionDate() != null && oldestLatestVersionDate.compareTo( file.getLatestVersionDate() ) > 0 ) {
 				oldestLatestVersionDate = file.getLatestVersionDate();
 			}
 
