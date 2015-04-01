@@ -3,26 +3,25 @@ package de.unirostock.sems.ModelCrawler.XmlFileRepository;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import de.unirostock.sems.ModelCrawler.Properties;
+import de.unirostock.sems.ModelCrawler.Config;
 
 public class XmlFileRepository {
 	
-	public static final String URL_ENCODING = Properties.getProperty("de.unirostock.sems.ModelCrawler.encoding", "UTF-8");
-	public static final String URL_PATH_SEPARATOR = Properties.getProperty("de.unirostock.sems.ModelCrawler.pathSeparator", "/");
-	
-//	private final Log log = LogFactory.getLog( XmlFileRepository.class );
 	
 	
 	public static String generateFileId( String repositoryUrl, String fileName ) throws UnsupportedEncodingException {
+		String urlEncoding = Config.getConfig().getEncoding();
+		String urlPathSeparator = String.valueOf( Config.getConfig().getPathSeparator() ); 
+				
 		StringBuilder result = new StringBuilder(repositoryUrl);
 		
 		// if repo Url does not end and the file name does not starts with a slash /
-		if( !repositoryUrl.endsWith(URL_PATH_SEPARATOR) && !fileName.startsWith(URL_PATH_SEPARATOR) )
+		if( !repositoryUrl.endsWith(urlPathSeparator) && !fileName.startsWith(urlPathSeparator) )
 			// ... adds one
-			result.append(URL_PATH_SEPARATOR);
+			result.append(urlPathSeparator);
 		
 		result.append(fileName);
-		return URLEncoder.encode( result.toString(), URL_ENCODING );
+		return URLEncoder.encode( result.toString(), urlEncoding );
 	}
 	
 }

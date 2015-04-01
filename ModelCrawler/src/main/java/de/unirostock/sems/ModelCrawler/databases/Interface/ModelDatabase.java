@@ -89,6 +89,7 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	 * 
 	 * @return List with all model IDs
 	 */
+	@JsonIgnore
 	public abstract List<String> listModels();
 	
 	/**
@@ -97,6 +98,7 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	 * 
 	 * @return Map<fileId, ChangeSet>
 	 */
+	@JsonIgnore
 	public abstract Map<String, ChangeSet> listChanges();
 	
 	/** 
@@ -105,11 +107,13 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	 * @param fileId
 	 * @return ChangeSet
 	 */
+	@JsonIgnore
 	public abstract ChangeSet getModelChanges( String fileId );
 	
 	/**
 	 * Cleans up the working directory
 	 */
+	@JsonIgnore
 	public abstract void close();
 	
 	/**
@@ -117,6 +121,7 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	 * @return 
 	 * 
 	 */
+	@JsonIgnore
 	public abstract Map<String, ChangeSet> call();
 
 	

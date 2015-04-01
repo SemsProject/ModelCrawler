@@ -91,9 +91,9 @@
 			<version>4.3</version>
 		</dependency>
 		<dependency>
-			<groupId>com.aragost.javahg</groupId>
-			<artifactId>javahg</artifactId>
-			<version>0.6</version>
+			<groupId>org.eclipse.jgit</groupId>
+			<artifactId>org.eclipse.jgit</artifactId>
+			<version>3.7.0.201502260915-r</version>
 		</dependency>
 
 		<dependency>

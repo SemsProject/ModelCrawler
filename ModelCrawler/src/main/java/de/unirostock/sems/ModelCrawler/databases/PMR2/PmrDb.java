@@ -1,14 +1,11 @@
 package de.unirostock.sems.ModelCrawler.databases.PMR2;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -35,92 +32,64 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
-import com.aragost.javahg.Changeset;
-import com.aragost.javahg.Repository;
-import com.aragost.javahg.commands.ExecutionException;
-import com.aragost.javahg.commands.LogCommand;
-import com.aragost.javahg.commands.PullCommand;
-import com.aragost.javahg.commands.UpdateCommand;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.unirostock.sems.ModelCrawler.Properties;
+import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 import de.unirostock.sems.bives.tools.DocumentClassifier;
-import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
 
 public class PmrDb extends ModelDatabase {
 
-	private static final String HASH_ALGO = "MD5";
-
+	private static final long serialVersionUID = -5332599172641988743L;
+	@JsonIgnore
 	private final Log log = LogFactory.getLog( PmrDb.class );
-
-	protected File workingDir;
-	protected File tempDir;
-	protected java.util.Properties config;
-	protected MorreCrawlerInterface morreClient;
-	protected URI repoListUri;
-	protected DocumentClassifier classifier = null;
 	
+	protected String hashAlgo = "MD5";
+	protected URL repoListUrl = null;
+	
+	@JsonIgnore
+	protected DocumentClassifier classifier = null;
+	@JsonIgnore
 	protected HashSet<String> fileExtensionBlacklist = null;
-
+	@JsonIgnore
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
+	@JsonIgnore
+	protected WorkingDirConfig config = null;
+	
+	private class WorkingDirConfig {
+		
+		private Map<String, String> repositories = new HashMap<String, String>();
+
+		public Map<String, String> getRepositories() {
+			return repositories;
+		}
+
+		public void setRepositories(Map<String, String> repositories) {
+			this.repositories = repositories;
+		}
+		
+	}
 	
 	// REMIND there is difference between ChangeSet and Changeset
 	// ChangeSet is a ModelCrawler Dataholder class
 	// and Changeset a JavaHg Dataholder class
-
-	public PmrDb( MorreCrawlerInterface morreClient ) throws IllegalArgumentException {
-		this( Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.RepoList"), morreClient );
-	}
-
-	public PmrDb(String repoListUrl, MorreCrawlerInterface morreClient) throws IllegalArgumentException {
-		this.morreClient = morreClient;
-
-		try {
-			this.repoListUri = new URI(repoListUrl);
-		} catch (URISyntaxException e) {
-			throw new IllegalArgumentException("Uri Syntax Error in the RepositoryList URL. Maybe a config mistake?", e);
-		}
-
-		// Http only!
-		if( !repoListUri.getScheme().toLowerCase().equals("http") )
-			throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
-
-		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("Init new PMR2 Connector based on Repolist: {0}", this.repoListUri) );
-
-		// Prepare BiVeS Model Classifier
-		try {
-			classifier = new DocumentClassifier ();
-		} catch (ParserConfigurationException e) {
-			log.fatal( "ParserConfigurationException while init BiVeS Document Classifier", e );
-		}
-
-		if( log.isInfoEnabled() )
-			log.info("Started BiVeS Classifier");
-
-		// Prepare WorkingDir 
-		checkAndInitWorkingDir();
-		
-		// load fileExtensionBlacklist
-		fileExtensionBlacklist = new HashSet<String>();
-		String blacklist[] = Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.extensionBlacklist", "html").split(Properties.ELEMENT_SPLITTER) ;
-		for( int index = 0; index < blacklist.length; index++ )  {
-			fileExtensionBlacklist.add( blacklist[index] );
-		}
-	}
-
+	
+	/**
+	 * Default dataholder
+	 * 
+	 */
+	public PmrDb() {}
+	
 	@Override
 	public List<String> listModels() {
 		return new ArrayList<String>( changeSetMap.keySet() );
@@ -134,6 +103,22 @@ public class PmrDb extends ModelDatabase {
 	@Override
 	public ChangeSet getModelChanges(String fileId) {
 		return changeSetMap.get(fileId);
+	}
+	
+	public String getHashAlgo() {
+		return hashAlgo;
+	}
+
+	public void setHashAlgo(String hashAlgo) {
+		this.hashAlgo = hashAlgo;
+	}
+
+	public URL getRepoListUrl() {
+		return repoListUrl;
+	}
+
+	public void setRepoListUrl(URL repoListUri) {
+		this.repoListUrl = repoListUri;
 	}
 
 	@Override
@@ -151,116 +136,77 @@ public class PmrDb extends ModelDatabase {
 
 	@Override
 	public Map<String, ChangeSet> call() {
+		List<String> repositories = null;
+		
+		if( morreClient == null ) {
+			log.error("No Morre crawler interface provided!");
+			throw new IllegalArgumentException("No Morre crawler interface provided!");
+		}
+		
+		// Http only!
+		if( !repoListUrl.getProtocol().toLowerCase().startsWith("http") )
+			throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
 
-		List<String> repositories = null;		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Init new PMR2 Connector based on Repolist: {0}", this.repoListUrl) );
+		
+		// Prepare BiVeS Model Classifier
+		try {
+			classifier = new DocumentClassifier ();
+		} catch (ParserConfigurationException e) {
+			log.fatal( "ParserConfigurationException while init BiVeS Document Classifier", e );
+		}
 
+		if( log.isInfoEnabled() )
+			log.info("Started BiVeS Classifier");
+
+		// Prepare WorkingDir 
+		init();
 		log.info("Start crawling the PMR2 Database by going throw the Mercurial Workspaces");
-
+		
 		// list all available Repos
 		try {
 			repositories = getRepositoryList();
 		} catch (HttpException e) {
 			log.fatal("Can not download RepositoryList", e);
 		}
-
-		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("Iterate throw {0} repositories", repositories.size()) );
-
-		// XXX Limiter
-		int limiter = 1;
-
-		Iterator<String> iter = repositories.iterator();
-		while( iter.hasNext() ) {
-			Repository repo = null;
-			boolean hasChanges = false;
-			String repoName = iter.next();
-
+		
+		// limiting releases
+		if( limit > 0 ) {
 			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("Check Repository {0}", repoName ) );
-
-			File location = getRepositoryDirectory(repoName);
-			if( location == null ) {
-
-				if( log.isDebugEnabled() )
-					log.debug( MessageFormat.format("Repository {0} is unknown. Create new folder and clone it", repoName) );
-
-				// Repo is unknown -> make a directory
-				location = makeRepositoryDirectory(repoName);
-				repo = cloneRepository(location, repoName);
-
-				if( log.isInfoEnabled() )
-					log.info( MessageFormat.format("Repository {0} has been cloned into {1}", repoName, location.getAbsolutePath()) );
-
-				// of course there are changes
-				hasChanges = true;
-			}
-			else {
-
-				if( log.isDebugEnabled() )
-					log.debug( MessageFormat.format("Repository {0} is known. Perform a Pull-Request into local copy {1}", repoName, location.getAbsolutePath()) );
-
-				// Repo is already known -> make a pull
-				Entry<Repository, Boolean> pullResult = pullRepository(location);
-				repo = pullResult.getKey();
-				// are there changes in the Repo?
-				hasChanges = pullResult.getValue();
-
-				if( log.isInfoEnabled() ) {
-					if( hasChanges )
-						log.info( MessageFormat.format("Pulled changes from {0} into local copy {1}", repoName, location.getAbsolutePath()) );
-					else
-						log.info( "No changes to pull. Local copy is up to date." );
-				}
-			}
-
-			if( hasChanges ) {
-				// Scan for cellml and other model files and transfer them
-				scanAndTransferRepository(repoName, location, repo);
-			}
+				log.info( MessageFormat.format("Limit processed Repositories to {0}", limit) );
 			
-			// closes the repo
-			if( repo != null )
-				repo.close();
-			
-			if( limiter++ >= 25 )
-				break;
+			repositories = repositories.subList(0, limit);
+		}
+		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Iterate over {0} repositories", repositories.size()) );
 
+		// process all repos
+		for( String repoLink : repositories ) {
+			processRepository(repoLink);
 		}
 
 		log.info("Finished crawling PMR2 Database.");
 		return changeSetMap;
 	}
 
-	protected void checkAndInitWorkingDir() {
-
-		workingDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.subWorkingDir") );
-		tempDir = new File( Properties.getWorkingDir(), Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.subTempDir") );
-
+	protected void init() {
+		
 		log.trace( "Preparing working dir " + workingDir.getAbsolutePath() );
-
+		
 		if( workingDir.exists() == false ) {
 			// creates it!
 			workingDir.mkdirs();
 		}
-		if( tempDir.exists() == false ) {
-			// creates it!
-			tempDir.mkdirs();
-		}
-
-		// inits the config
-		config = new java.util.Properties();
-		log.info("Loading working dir config");
+		// create temp dir
+		createTempDir();
+		
 		try {
-			File configFile = new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.workingDirConfig", "config.properties") );
-			if( configFile.exists() ) {
-				FileReader configFileReader = new FileReader( configFile );
-				if( configFileReader != null ) {
-					config.load(configFileReader);
-					configFileReader.close();
-				}
-
-			}
-
+			// inits the config
+			log.info("Loading working dir config");
+			File configFile = new File( workingDir, Config.getConfig().getWorkingDirConfig() );
+			config = Config.getObjectMapper().readValue( configFile, WorkingDirConfig.class );
 		}
 		catch (IOException e) {
 			log.fatal( "IOException while reading the workingdir config file", e );
@@ -284,12 +230,16 @@ public class PmrDb extends ModelDatabase {
 	protected void saveProperties() {
 
 		if( config == null ) {
-			config = new java.util.Properties();
+			config = new WorkingDirConfig();
 		}
 
 		try {
-			FileWriter configFile = new FileWriter( new File( workingDir, Properties.getProperty("de.unirostock.sems.ModelCrawler.PMR2.workingDirConfig", "config.properties") ));
-			config.store(configFile, null);
+			// save the config
+			log.info("Saving working dir config");
+			
+			File configFile = new File( workingDir, Config.getConfig().getWorkingDirConfig() );
+			Config.getObjectMapper().writeValue(configFile, config);
+			
 			log.info("working dir config saved!");
 		} catch (IOException e) {
 			log.error( "Can not write the workingDir config file!", e );
@@ -306,24 +256,21 @@ public class PmrDb extends ModelDatabase {
 	 */
 	protected List<String> getRepositoryList() throws HttpException {
 		List<String> repoList = new LinkedList<String>();
-
-		HttpClient httpClient = HttpClientBuilder.create().build(); 
-		HttpGet request = new HttpGet(repoListUri);
-
+		
 		try {
-			HttpResponse response = httpClient.execute(request);
-
-			InputStream entityStream = response.getEntity().getContent();
-			Scanner scanner = new Scanner(entityStream).useDelimiter("\n");
+			InputStream input = repoListUrl.openStream();
+			
+			Scanner scanner = new Scanner(input);
+			scanner.useDelimiter("\n");
+			
 			while( scanner.hasNext() ) {
 				String repo = scanner.next();
 				if( repo != null && !repo.isEmpty() )
 					repoList.add( repo );				
 			}
+			
 			scanner.close();
 
-		} catch (ClientProtocolException e) {
-			throw new HttpException("Can not download RepositoryList", e);
 		} catch (IOException e) {
 			throw new HttpException("IOException while downloading RepositoryList", e);
 		}
@@ -368,7 +315,7 @@ public class PmrDb extends ModelDatabase {
 			}
 
 			// store the directory name into the config
-			config.setProperty("repo." + repoHash, name);
+			config.getRepositories().put(repoHash, name);
 
 		}
 
@@ -392,7 +339,7 @@ public class PmrDb extends ModelDatabase {
 		String repoHash = calculateRepositoryHash(repository);
 		String name = null;
 
-		if( (name = config.getProperty("repo." + repoHash)) != null )
+		if( (name = config.getRepositories().get(repoHash)) != null )
 			return new File( workingDir, name );
 		else
 			return null;
@@ -408,7 +355,7 @@ public class PmrDb extends ModelDatabase {
 		String repoHash = null;
 
 		try {
-			MessageDigest digest = MessageDigest.getInstance(HASH_ALGO);
+			MessageDigest digest = MessageDigest.getInstance(hashAlgo);
 			digest.update( repository.getBytes() );
 			repoHash = (new BigInteger( digest.digest() )).toString(16);
 		} catch (NoSuchAlgorithmException e) {
@@ -417,15 +364,78 @@ public class PmrDb extends ModelDatabase {
 
 		return repoHash;
 	}
+	
+	protected void processRepository( String repoLink ) {
+		Git repo = null;
+		boolean hasChanges = false;
+		
+		if( log.isInfoEnabled() )
+			log.info( MessageFormat.format("Check Repository {0}", repoLink ) );
 
-	protected Repository cloneRepository(File local, String remote) {
-		Repository repo = Repository.clone(local, remote);
-		if( repo == null )
-			log.fatal( MessageFormat.format("Can not clone Mercurial Repository {0} into {1}", remote, local.getAbsolutePath()) );
+		File location = getRepositoryDirectory(repoLink);
+		if( location == null ) {
+			// clone repo
+			
+			if( log.isDebugEnabled() )
+				log.debug( MessageFormat.format("Repository {0} is unknown. Create new folder and clone it", repoLink) );
 
-		return repo;
+			// Repo is unknown -> make a directory
+			try {
+				location = makeRepositoryDirectory(repoLink);
+				repo = Git.cloneRepository()
+						.setURI(repoLink)
+						.setDirectory(location)
+						.setCloneSubmodules(true)
+						.setCloneAllBranches(false)
+						.call();
+				
+				if( log.isInfoEnabled() )
+					log.info( MessageFormat.format("Repository {0} has been cloned into {1}", repoLink, location.getAbsolutePath()) );
+
+				// of course there are changes
+				hasChanges = true;
+				
+			}
+			catch (GitAPIException e) {
+				log.error( MessageFormat.format("Can not clone Git Repository {0} into {1}", repoLink, location.getAbsolutePath()), e );
+				continue;
+			}
+				
+		}
+		else {
+
+			if( log.isDebugEnabled() )
+				log.debug( MessageFormat.format("Repository {0} is known. Perform a Pull-Request into local copy {1}", repoLink, location.getAbsolutePath()) );
+
+			// Repo is already known -> make a pull
+			repo = Git.open(location);
+			PullResult pullResult = repo.pull().call();
+			
+			pullResult.
+			
+			Entry<Repository, Boolean> pullResult = pullRepository(location);
+			repo = pullResult.getKey();
+			// are there changes in the Repo?
+			hasChanges = pullResult.getValue();
+
+			if( log.isInfoEnabled() ) {
+				if( hasChanges )
+					log.info( MessageFormat.format("Pulled changes from {0} into local copy {1}", repoLink, location.getAbsolutePath()) );
+				else
+					log.info( "No changes to pull. Local copy is up to date." );
+			}
+		}
+
+		if( hasChanges ) {
+			// Scan for cellml and other model files and transfer them
+			scanAndTransferRepository(repoLink, location, repo);
+		}
+		
+		// closes the repo
+		if( repo != null )
+			repo.close();
 	}
-
+	
 	protected Entry<Repository, Boolean> pullRepository(File location) {
 		boolean hasChanges = false;
 		Repository repo = Repository.open(location);

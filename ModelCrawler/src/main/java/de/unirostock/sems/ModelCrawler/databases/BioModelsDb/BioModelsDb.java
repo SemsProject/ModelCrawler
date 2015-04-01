@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -47,7 +46,6 @@ import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConne
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
-import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
 
@@ -82,9 +80,11 @@ public class BioModelsDb extends ModelDatabase {
 	@JsonIgnore
 	protected WorkingDirConfig config = null;
 	
-	public BioModelsDb() {
-		
-	}
+	/**
+	 * Default empty constructor
+	 * 
+	 */
+	public BioModelsDb() {}
 	
 	@Override
 	public List<String> listModels() {
