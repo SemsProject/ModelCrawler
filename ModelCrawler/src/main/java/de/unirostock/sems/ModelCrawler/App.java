@@ -1,5 +1,6 @@
 package de.unirostock.sems.ModelCrawler;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -11,6 +12,8 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.core.impl.Log4jContextFactory;
+import org.slf4j.helpers.MessageFormatter;
 
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
@@ -18,6 +21,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.Interface.exceptions.XmlNotFoundException;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
+import de.unirostock.sems.ModelCrawler.exceptions.ConfigurationException;
 import de.unirostock.sems.XmlFileServerClient.XmlFileServer;
 import de.unirostock.sems.XmlFileServerClient.XmlFileServerClientFactory;
 import de.unirostock.sems.XmlFileServerClient.exceptions.ModelAlreadyExistsException;
@@ -32,61 +36,97 @@ import de.unirostock.sems.morre.client.impl.HttpMorreClient;
  * Hello world!
  *
  */
-public class App 
-{
+public class App {
 	private static final Log log = LogFactory.getLog( App.class );
-
+	
+	public static enum WorkingMode {
+		NORMAL,
+		TEMPLATE_CONFIG,
+		TEST
+	}
+	
 	private static MorreCrawlerInterface morreClient;
-	private static ModelDatabase bioModelsDb;
-	private static ModelDatabase pmr2Db;
-
 	private static XmlFileServer xmlFileServer = null;
 
 	public static void main( String[] args ) {
+		File configFile = null;
+		WorkingMode mode = WorkingMode.NORMAL;
+		
+		if( args.length == 0 ) {
+			printHelp();
+			System.exit(0);
+		}
+		
+		for( int index = 0; index < args.length; index++ ) {
+			
+			if( args[index].equals("-c") || args[index].equals("--config") )
+				configFile = new File(args[++index]);
+			else if( args[index].equals("--template") )
+				mode = WorkingMode.TEMPLATE_CONFIG;
+			else if( args[index].equals("--test") )
+				mode = WorkingMode.TEST;
+		}
 		
 		log.info("ModelCrawler startet");
-		// Properties and WorkingDir
-		prepare();
+		
+		if( mode == WorkingMode.TEST ) {
+			if( configFile == null ) {
+				log.error("No config file provided, use -c flag");
+				System.exit(0);
+			}
+			
+			log.info( MessageFormat.format("Writing default config to {0}", configFile) );
+			
+			Config.defaultConfig();
+			try {
+				Config.getConfig().save(configFile);
+			} catch (ConfigurationException e) {
+				log.fatal( MessageFormat.format("Can not save config file {0}", configFile), e );
+			}
+			
+			log.info("done.");
+			System.exit(0);
+		}
+		
+		// load config
+		try {
+			Config.load( configFile );
+		} catch (ConfigurationException e) {
+			log.fatal( MessageFormat.format("Can not load config file {0}", configFile), e );
+		}
+		
+		
 		// Connectors
-		initConnectors();
+		Config config = Config.getConfig();
+		initConnectors( config );
 
 		// map for all changes!
 		Map<String, ChangeSet> changes = new HashMap<String, ChangeSet>();
 
 		// run it!
-
-		if( log.isInfoEnabled() )
-			log.info("running BioModelsDb Crawler");
-
-		bioModelsDb.call();
-
-		// add all changes from BioModelsDb to the change Map
-		changes.putAll( bioModelsDb.listChanges() );
-
-
-		if( log.isInfoEnabled() ) 
-			log.info("running PMR2 Crawler");
-
-		pmr2Db.call();
-		// add all changes from PMR2 to the change Map
-		changes.putAll( pmr2Db.listChanges() );
-
-		if( log.isInfoEnabled() )
-			log.info("crawling model changes finished. Now start pushing");
-
-		// XXX Limiter!
-//		int n = 1; // limiter
-
-		// going throw all changeSets ...
-		    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
-		    	while( changesSetIterator.hasNext() ) {
-		    		// ... and process them
-		    		processChangeSet( changesSetIterator.next() );
-		    		
-		    		// limiter
-//		    		if( n++ >= 5 )
-//		    			break;
-		    	}
+		for( ModelDatabase database : config.getDatabases() ) {
+			
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("running crawler for {0}", database.getClass().getName()) );
+			
+			database.call();
+			
+			// add all changes to the change Map
+			changes.putAll( database.listChanges() );
+			
+			if( log.isInfoEnabled() )
+				log.info( MessageFormat.format("finished crawling for {0}", database.getClass().getName()) );
+		}
+		
+		if( mode == WorkingMode.TEST )
+			log.info("Don not push ChangeSets to morre in test-mode");
+		else {
+	    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
+	    	while( changesSetIterator.hasNext() ) {
+	    		// ... and process them
+	    		processChangeSet( changesSetIterator.next() );
+	    	}
+		}
 
 		// After everthing is done: Hide the bodies...
 		cleanUp();
@@ -94,58 +134,35 @@ public class App
 		log.info("finished crawling");
 	}
 
-	private static void prepare() {
-
-		if( log.isInfoEnabled() )
-			log.info("Loading Properties");
-
-		// inits the Properties System
-		Properties.init();
-
-		if( log.isInfoEnabled() )
-			log.info("prepare working directory");
-
-		// working dir
-		Properties.init();
+	private static void printHelp() {
+		System.out.println("ModelCrawler");
+		System.out.println(
+				"  -c               Path to config\n" + 
+				"  --config \n" +
+				"  --template       Writes down a template config file (overrides existing config!) \n" +
+				"  --test           Test mode. Nothing is pushed to morre \n"
+		);
 	}
 
-	private static void initConnectors() {
+	private static void initConnectors(Config config) {
 
 		if( log.isInfoEnabled() )
 			log.info("Start GraphDb/MORRE connector");
 
 		// morre.client connector
 		try {
-			morreClient = new HttpMorreClient(Properties.getProperty("de.unirostock.sems.ModelCrawler.graphDb.api"));
+			morreClient = new HttpMorreClient( config.getMorreUrl() );
 		} catch (MalformedURLException e) {
 			log.fatal("Malformed Url for MORRE in config file", e);
 		}
-
-		if( log.isInfoEnabled() )
-			log.info("Starting BioModelsDb connector");
-		// BioModelsDatabase
-		try {
-			bioModelsDb = new BioModelsDb(morreClient);
-		} catch (MalformedURLException e) {
-			log.fatal("Malformed Url for the BioModelsDb in config file", e);
-		} catch (IllegalArgumentException e) {
-			log.fatal("Something went wrong with the config while starting BioModelsDb connector.", e);
+		
+		// setting morre for each database connector
+		for( ModelDatabase connector : config.getDatabases() ) {
+			connector.setMorreClient(morreClient);
 		}
-
-		if( log.isInfoEnabled() )
-			log.info("Starting Pmr2Db connector");
-		// PMR2 aka CellML
+		
 		try {
-			pmr2Db = new PmrDb(morreClient);
-		} catch (IllegalArgumentException e) {
-			log.fatal("IllegalArgument Exception while init the PMR2 connector. Maybe a config error?", e);
-		}
-
-		if( log.isInfoEnabled() )
-			log.info("Starting Http XmlFileServer connector");
-
-		try {
-			xmlFileServer = XmlFileServerClientFactory.getClient( new URI(Properties.getProperty("de.unirostock.sems.ModelCrawler.xmlFileServer")) );
+			xmlFileServer = XmlFileServerClientFactory.getClient(new URI( config.getXmlFsUrl() ));
 		} catch (URISyntaxException e) {
 			log.fatal("Can not start XmlFileServer connector! URI is invalid! Maybe a config erro?", e);
 		}
@@ -154,12 +171,11 @@ public class App
 
 	private static void cleanUp() {
 		log.info("Cleans everything up!");
-
-		// cleans BioModelsDb connector workingDir
-		bioModelsDb.close();
-
-		// cleans PMR2 connector workingDir
-		pmr2Db.close();
+		
+		// closing every database connector
+		for( ModelDatabase connector : Config.getConfig().getDatabases() ) {
+			connector.close();
+		}
 	}
 
 	private static void processChangeSet( ChangeSet changeSet ) {

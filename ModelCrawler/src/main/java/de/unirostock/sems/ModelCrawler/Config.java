@@ -81,10 +81,13 @@ public class Config implements Serializable {
 	
 	private File workingDir = null;
 	private String encoding = "UTF-8";
-	private char pathSeparator = File.separatorChar;
+	private char pathSeparator = '/';
 	private String[] extensionBlacklist = { "png", "bmp", "jpg", "jpeg", "html", "xhtml", "svg", "pdf", "json", "pl", "rdf", "rar", "msh", "zip" };
 	private String tempDirPrefix = "ModelCrawler";
 	private String workingDirConfig = "config.json";
+	
+	private String morreUrl = "http://localhost:7474/morre/";
+	private String xmlFsUrl = "http://taylor.informatik.uni-rostock.de:8000/XmlFileServer/";
 	
 	private List<ModelDatabase> databases = new ArrayList<ModelDatabase>();
 	
@@ -168,6 +171,21 @@ public class Config implements Serializable {
 	public void setWorkingDirConfig(String workingDirConfig) {
 		this.workingDirConfig = workingDirConfig;
 	}
-	
+
+	public String getMorreUrl() {
+		return morreUrl;
+	}
+
+	public void setMorreUrl(String morreUrl) {
+		this.morreUrl = morreUrl;
+	}
+
+	public String getXmlFsUrl() {
+		return xmlFsUrl;
+	}
+
+	public void setXmlFsUrl(String xmlFsUrl) {
+		this.xmlFsUrl = xmlFsUrl;
+	}
 	
 }
