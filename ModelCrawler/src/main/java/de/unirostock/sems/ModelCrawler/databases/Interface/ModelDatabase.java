@@ -15,8 +15,6 @@ import java.util.concurrent.Callable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -28,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
+import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonTypeInfo(
@@ -58,6 +57,8 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	
 	@JsonIgnore
 	protected File tempDir = null;
+	@JsonIgnore
+	protected MorreCrawlerInterface morreClient = null;
 	
 	public ModelDatabase() {}		
 	
@@ -137,6 +138,14 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 
 	public void setLimit(int limit) {
 		this.limit = limit;
+	}
+
+	public MorreCrawlerInterface getMorreClient() {
+		return morreClient;
+	}
+
+	public void setMorreClient(MorreCrawlerInterface morreClient) {
+		this.morreClient = morreClient;
 	}
 	
 }

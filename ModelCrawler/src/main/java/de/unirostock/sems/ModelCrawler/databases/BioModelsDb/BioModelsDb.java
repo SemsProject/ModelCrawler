@@ -4,8 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,7 +14,6 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,7 +22,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -79,14 +75,10 @@ public class BioModelsDb extends ModelDatabase {
 	
 	private URL ftpUrl;
 	
-//	@JsonIgnore
-//	private List<BioModelRelease> releaseList = new ArrayList<BioModelRelease>();
 	@JsonIgnore
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 	@JsonIgnore
 	private FTPClient ftpClient;
-	@JsonIgnore
-	protected MorreCrawlerInterface morreClient = null;
 	@JsonIgnore
 	protected WorkingDirConfig config = null;
 	
@@ -94,27 +86,6 @@ public class BioModelsDb extends ModelDatabase {
 		
 	}
 	
-	public BioModelsDb(String ftpUrl, MorreCrawlerInterface morreClient) throws MalformedURLException, IllegalArgumentException {
-		this.ftpUrl = new URL(ftpUrl);
-		this.morreClient = morreClient;
-
-		if (!this.ftpUrl.getProtocol().toLowerCase().equals("ftp")) {
-			// Protocoll is not ftp -> not (yet) supported
-			log.error("Only ftp is support at the moment for BioModelsDataBase!");
-			throw new IllegalArgumentException(
-					"Only ftp ist support at the moment!");
-		}
-
-		log.info("Init new BioModels Database connector. URL: " + ftpUrl );
-		// creating a ftp client
-		ftpClient = new FTPClient();
-
-		// prepares the working directory
-		init();
-
-	}
-
-
 	@Override
 	public List<String> listModels() {
 		return new ArrayList<String>( changeSetMap.keySet() );
@@ -148,6 +119,28 @@ public class BioModelsDb extends ModelDatabase {
 	public Map<String, ChangeSet> call() {
 		List<BioModelRelease> newReleases = new ArrayList<BioModelRelease>();
 		
+		if( ftpUrl == null ) {
+			log.error("Url for BMDB crawler not set!");
+			throw new IllegalArgumentException("Url for BMDB crawler not set!");
+		}
+		
+		if( morreClient == null ) {
+			log.error("No Morre crawler interface provided!");
+			throw new IllegalArgumentException("No Morre crawler interface provided!");
+		}
+		
+		// check url protocol
+		if (!this.ftpUrl.getProtocol().toLowerCase().equals("ftp")) {
+			// Protocol is not ftp -> not supported
+			log.error("Only ftp is supported at the moment for BioModelsDataBase!");
+			throw new IllegalArgumentException("Only ftp is supported at the moment!");
+		}
+
+		log.info("Init new BioModels Database connector. URL: " + ftpUrl );
+		// creating a ftp client
+		ftpClient = new FTPClient();
+
+		// prepares the working directory
 		init();
 		
 		log.info("Start cloning the BioModels DataBase by fetching the releases!");
