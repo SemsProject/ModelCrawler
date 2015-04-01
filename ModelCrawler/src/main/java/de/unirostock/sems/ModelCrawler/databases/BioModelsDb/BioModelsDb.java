@@ -71,7 +71,7 @@ public class BioModelsDb extends ModelDatabase {
 
 	}
 	
-	private URL ftpUrl;
+	private URL ftpUrl = null;
 	
 	@JsonIgnore
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
@@ -79,6 +79,8 @@ public class BioModelsDb extends ModelDatabase {
 	private FTPClient ftpClient;
 	@JsonIgnore
 	protected WorkingDirConfig config = null;
+
+	private File workingDir;
 	
 	/**
 	 * Default empty constructor
@@ -250,7 +252,8 @@ public class BioModelsDb extends ModelDatabase {
 	}
 
 	protected void init() {
-
+		
+		workingDir = obtainWorkingDir();
 		log.trace( "Preparing working dir " + workingDir.getAbsolutePath() );
 
 		if( workingDir.exists() == false ) {
@@ -753,4 +756,12 @@ public class BioModelsDb extends ModelDatabase {
 
 	}
 
+	public URL getFtpUrl() {
+		return ftpUrl;
+	}
+
+	public void setFtpUrl(URL ftpUrl) {
+		this.ftpUrl = ftpUrl;
+	}
+	
 }

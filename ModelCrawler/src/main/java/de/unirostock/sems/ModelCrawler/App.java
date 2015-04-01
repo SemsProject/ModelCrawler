@@ -12,8 +12,6 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.logging.log4j.core.impl.Log4jContextFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
@@ -69,7 +67,7 @@ public class App {
 		
 		log.info("ModelCrawler startet");
 		
-		if( mode == WorkingMode.TEST ) {
+		if( mode == WorkingMode.TEMPLATE_CONFIG ) {
 			if( configFile == null ) {
 				log.error("No config file provided, use -c flag");
 				System.exit(0);
@@ -77,7 +75,10 @@ public class App {
 			
 			log.info( MessageFormat.format("Writing default config to {0}", configFile) );
 			
-			Config.defaultConfig();
+			Config config = Config.defaultConfig();
+			config.getDatabases().add( new BioModelsDb() );
+			config.getDatabases().add( new PmrDb() );
+			
 			try {
 				Config.getConfig().save(configFile);
 			} catch (ConfigurationException e) {
@@ -105,6 +106,9 @@ public class App {
 
 		// run it!
 		for( ModelDatabase database : config.getDatabases() ) {
+			
+			if( database.isEnabled() == false )
+				continue;
 			
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format("running crawler for {0}", database.getClass().getName()) );

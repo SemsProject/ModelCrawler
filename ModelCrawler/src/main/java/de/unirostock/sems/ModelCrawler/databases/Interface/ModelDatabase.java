@@ -51,8 +51,9 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	@JsonIgnore
 	private final Log log = LogFactory.getLog( ModelDatabase.class );
 	
-	protected String type = DatabaseTypes.NONE;
-	protected File workingDir = null;
+	protected boolean enabled = false;
+	private String workingDirName = "wd-" + String.valueOf( new Random(new Date().getTime()).nextLong() );
+	private File workingDir = null;
 	protected int limit = 0;
 	
 	@JsonIgnore
@@ -124,17 +125,19 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	@JsonIgnore
 	public abstract Map<String, ChangeSet> call();
 
-	
-	public String getType() {
-		return type;
-	}
-
 	public String getWorkingDir() {
-		return workingDir.toPath().relativize( Config.getConfig().getWorkingDir().toPath() ).toString();
+		return this.workingDirName;
+	}
+	
+	protected synchronized File obtainWorkingDir() {
+		if( workingDir == null )
+			workingDir = new File( Config.getConfig().getWorkingDir(), workingDirName );
+		
+		return workingDir;
 	}
 
 	public void setWorkingDir(String workingDir) {
-		this.workingDir = new File( Config.getConfig().getWorkingDir(), workingDir );
+		this.workingDirName = workingDir;
 	}
 
 	public int getLimit() {
@@ -144,11 +147,21 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	public void setLimit(int limit) {
 		this.limit = limit;
 	}
+	
+	public boolean isEnabled() {
+		return enabled;
+	}
 
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	@JsonIgnore
 	public MorreCrawlerInterface getMorreClient() {
 		return morreClient;
 	}
-
+	
+	@JsonIgnore
 	public void setMorreClient(MorreCrawlerInterface morreClient) {
 		this.morreClient = morreClient;
 	}

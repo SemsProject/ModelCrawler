@@ -51,7 +51,6 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
-import de.unirostock.sems.bives.Main.ExecutionException;
 import de.unirostock.sems.bives.tools.DocumentClassifier;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
@@ -73,6 +72,8 @@ public class PmrDb extends ModelDatabase {
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 	@JsonIgnore
 	protected WorkingDirConfig config = null;
+	@JsonIgnore
+	private File workingDir;
 
 	private class WorkingDirConfig {
 
@@ -196,7 +197,8 @@ public class PmrDb extends ModelDatabase {
 	}
 
 	protected void init() {
-
+		
+		workingDir = obtainWorkingDir();
 		log.trace( "Preparing working dir " + workingDir.getAbsolutePath() );
 
 		if( workingDir.exists() == false ) {

@@ -10,6 +10,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.exceptions.ConfigurationException;
@@ -36,8 +37,12 @@ public class Config implements Serializable {
 	
 	public static ObjectMapper getObjectMapper() {
 		
-		if( mapper == null )
+		// create new mapper
+		if( mapper == null ) {
 			mapper = new ObjectMapper();
+			mapper.enable( SerializationFeature.INDENT_OUTPUT );
+			mapper.enable( SerializationFeature.WRITE_NULL_MAP_VALUES );
+		}
 		
 		return mapper;
 	}
