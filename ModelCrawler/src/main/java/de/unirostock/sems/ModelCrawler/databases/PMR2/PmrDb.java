@@ -3,8 +3,9 @@ package de.unirostock.sems.ModelCrawler.databases.PMR2;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -486,7 +487,7 @@ public class PmrDb extends ModelDatabase {
 				searchLatestKnownVersion( file );
 			}
 		}
-		catch (UnsupportedEncodingException e) {
+		catch (MalformedURLException | URISyntaxException e) {
 			log.fatal("Unsupported Encoding. Can not generate fileId", e);
 		}
 
@@ -682,7 +683,7 @@ public class PmrDb extends ModelDatabase {
 		Iterable<RevCommit> relevantVersions = null;
 
 		if( log.isDebugEnabled() )
-			log.debug("start detection of relevant hg versions");
+			log.debug("start detection of relevant git versions");
 
 		if( relevantFiles.size() == 0 ) {
 			if( log.isInfoEnabled() )
@@ -800,7 +801,10 @@ public class PmrDb extends ModelDatabase {
 				log.info( MessageFormat.format("{0} changed files in this version", changedFiles.size()) );
 
 			// going throw the relevant files
-			for( RelevantFile file : relevantFiles ) {
+			Iterator<RelevantFile> fileIterator = relevantFiles.iterator();
+			RelevantFile file = null;
+			while( (file = fileIterator.next()) != null ) {
+				
 				boolean hasChanges = false;
 
 				if( log.isInfoEnabled() )
@@ -850,22 +854,29 @@ public class PmrDb extends ModelDatabase {
 					// this file has change or is new -> archive it!
 					if( log.isInfoEnabled() )
 						log.info("Model has changes. Adds it to its ChangeSet");
+					
+					PmrChange change;
+					try {
+						change = new PmrChange(file.getRepositoryUrl(), file.getFilePath(), currentName.toString (), currentVersionDate, crawledDate);
+						
+						// set some Meta information
+						change.setMeta( CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_PMR2 );
+						if( (file.getType() & DocumentClassifier.SBML) > 0 )
+							change.setModelType( CrawledModelRecord.TYPE_SBML );
+						else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
+							change.setModelType( CrawledModelRecord.TYPE_CELLML );
 
-					PmrChange change = new PmrChange(file.getFileId(), file.getRepositoryUrl(), file.getFilePath(), currentName.toString (), currentVersionDate, crawledDate);
-					// set some Meta information
-					change.setMeta( CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_PMR2 );
-					if( (file.getType() & DocumentClassifier.SBML) > 0 )
-						change.setModelType( CrawledModelRecord.TYPE_SBML );
-					else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
-						change.setModelType( CrawledModelRecord.TYPE_CELLML );
+						// copy the file to a templocation
+						File tempFile = getTempFile();
+						FileUtils.copyFile( fileLocation, tempFile);
+						change.setXmlFile(tempFile);
 
-					// copy the file to a templocation
-					File tempFile = getTempFile();
-					FileUtils.copyFile( fileLocation, tempFile);
-					change.setXmlFile(tempFile);
-
-					// add the change to the ChangeSet (ChangeSet is controlled by RelevantFile)
-					file.addChange(change);
+						// add the change to the ChangeSet (ChangeSet is controlled by RelevantFile)
+						file.addChange(change);
+					} catch (URISyntaxException e) {
+						log.error("Error while creating Change Object", e);
+//						fileIterator.remove();
+					}
 				}
 				else if( log.isInfoEnabled() )
 					log.info("Model has no changes.");

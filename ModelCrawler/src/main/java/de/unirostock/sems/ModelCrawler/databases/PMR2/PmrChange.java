@@ -3,11 +3,12 @@ package de.unirostock.sems.ModelCrawler.databases.PMR2;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Date;
 
-import de.unirostock.sems.ModelCrawler.XmlFileRepository.XmlFileRepository;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.exceptions.XmlNotFoundException;
 import de.unirostock.sems.XmlFileServerClient.XmlFileServer;
@@ -19,24 +20,13 @@ import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollE
 public class PmrChange extends Change {
 
 	private static final long serialVersionUID = 4740459688628719898L;
-	protected transient String repositoryUrl = null;
-	protected transient String fileName = null;
 	
-	public PmrChange(String fileId, String versionId, Date versionDate, Date crawledDate) {
-		super(fileId, versionId, versionDate, crawledDate);
+	public PmrChange( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
+		super( repositoryUrl, filePath, versionId, versionDate, crawledDate );
 	}
 	
-	public PmrChange( String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws UnsupportedEncodingException {
-		super( null, versionId, versionDate, crawledDate );
-		this.repositoryUrl = repositoryUrl;
-		this.fileName = fileName;
-		setFileId( XmlFileRepository.generateFileId(repositoryUrl, fileName) );
-	}
-	
-	public PmrChange( String fileId, String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws UnsupportedEncodingException {
-		super( fileId, versionId, versionDate, crawledDate );
-		this.repositoryUrl = repositoryUrl;
-		this.fileName = fileName;
+	public PmrChange( String repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws MalformedURLException, URISyntaxException {
+		this( new URL(repositoryUrl), filePath, versionId, versionDate, crawledDate );
 	}
 	
 	@Override
@@ -55,7 +45,7 @@ public class PmrChange extends Change {
 		stream = new FileInputStream(xmlFile);
 			
 		// do it!
-		URI uri = server.pushModel(repositoryUrl, fileName, getVersionId(), stream);
+		URI uri = server.pushModel(repositoryUrl.toString(), filePath, getVersionId(), stream);
 		// finally set the document Uri, generated from the XmlFileRepo
 		setXmldoc( uri.toString() );
 		
@@ -66,7 +56,7 @@ public class PmrChange extends Change {
 	
 	@Override
 	public String toString() {
-		return "PmrChg:" + repositoryUrl+":"+fileName+"@"+getVersionId();
+		return "PmrChg:" + getFileId()+"@"+getVersionId();
 	}
 	
 }

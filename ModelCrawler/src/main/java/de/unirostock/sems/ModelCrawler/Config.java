@@ -90,6 +90,7 @@ public class Config implements Serializable {
 	private String[] extensionBlacklist = { "png", "bmp", "jpg", "jpeg", "html", "xhtml", "svg", "pdf", "json", "pl", "rdf", "rar", "msh", "zip" };
 	private String tempDirPrefix = "ModelCrawler";
 	private String workingDirConfig = "config.json";
+	private String urnNamespace = "model";
 	
 	private String morreUrl = "http://localhost:7474/morre/";
 	private String xmlFsUrl = "http://taylor.informatik.uni-rostock.de:8000/XmlFileServer/";
@@ -191,6 +192,14 @@ public class Config implements Serializable {
 
 	public void setXmlFsUrl(String xmlFsUrl) {
 		this.xmlFsUrl = xmlFsUrl;
+	}
+
+	public String getUrnNamespace() {
+		return urnNamespace;
+	}
+
+	public void setUrnNamespace(String urnNamespace) {
+		this.urnNamespace = urnNamespace;
 	}
 	
 }

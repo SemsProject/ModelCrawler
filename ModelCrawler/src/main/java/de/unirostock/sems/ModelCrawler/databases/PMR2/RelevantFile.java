@@ -1,15 +1,16 @@
 package de.unirostock.sems.ModelCrawler.databases.PMR2;
 
-import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Date;
 
-import de.unirostock.sems.ModelCrawler.XmlFileRepository.XmlFileRepository;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 
 public class RelevantFile {
 
 	private String filePath;
-	private String repoUrl = null;
+	private URL repoUrl = null;
 	private String fileId;
 	private String latestKnownVersionId = null;
 	private Date latestKnownVersionDate = null;
@@ -26,16 +27,16 @@ public class RelevantFile {
 		this.filePath = filePath;
 	}
 	
-	public String generateFileId( String repoUrl ) throws UnsupportedEncodingException {
-		this.repoUrl = repoUrl;
-		return this.fileId = XmlFileRepository.generateFileId(repoUrl, filePath);
+	public String generateFileId( String repoUrl ) throws MalformedURLException, URISyntaxException {
+		this.repoUrl = new URL(repoUrl);
+		return this.fileId = Change.generateFileId(this.repoUrl , filePath);
 	}
 	
 	public String getFilePath() {
 		return filePath;
 	}
 	
-	public String getRepositoryUrl() {
+	public URL getRepositoryUrl() {
 		return repoUrl;
 	}
 	

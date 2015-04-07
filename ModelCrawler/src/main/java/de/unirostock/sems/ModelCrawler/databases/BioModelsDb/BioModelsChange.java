@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -24,9 +27,13 @@ public class BioModelsChange extends Change {
 	public final static String HASH_ALGORITHM_FALLBACK = "SHA";
 	
 	public final static String META_HASH = "filehash";
-
-	public BioModelsChange( String fileId, String versionId, Date versionDate, Date crawledDate ) {
-		super(fileId, versionId, versionDate, crawledDate);
+	
+	public BioModelsChange( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
+		super( repositoryUrl, filePath, versionId, versionDate, crawledDate );
+	}
+	
+	public BioModelsChange( String repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws MalformedURLException, URISyntaxException {
+		this( new URL(repositoryUrl), filePath, versionId, versionDate, crawledDate );
 	}
 	
 	public boolean setXmlFile(File xmlFile, String hash) {
