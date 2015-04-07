@@ -133,7 +133,7 @@ public class App {
 		}
 
 		// After everthing is done: Hide the bodies...
-		cleanUp();
+		close();
 
 		log.info("finished crawling");
 	}
@@ -173,12 +173,15 @@ public class App {
 
 	}
 
-	private static void cleanUp() {
+	private static void close() {
 		log.info("Cleans everything up!");
 		
 		// closing every database connector
-		for( ModelDatabase connector : Config.getConfig().getDatabases() ) {
-			connector.close();
+		for( ModelDatabase database : Config.getConfig().getDatabases() ) {
+			if( database.isEnabled() == false )
+				continue;
+			
+			database.close();
 		}
 	}
 

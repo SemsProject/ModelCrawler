@@ -52,7 +52,7 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	private final Log log = LogFactory.getLog( ModelDatabase.class );
 	
 	protected boolean enabled = false;
-	private String workingDirName = "wd-" + String.valueOf( new Random(new Date().getTime()).nextLong() );
+	private String workingDirName = "wd-" + String.valueOf( Math.abs(new Random(new Date().getTime()).nextLong()) );
 	private File workingDir = null;
 	protected int limit = 0;
 	

@@ -39,6 +39,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
@@ -61,14 +62,18 @@ public class BioModelsDb extends ModelDatabase {
 	 * @author martin
 	 *
 	 */
-	private class WorkingDirConfig {
+	private static class WorkingDirConfig {
 		
-		private Set<String> knownReleases = new HashSet<String>();
-
-		public Set<String> getKnownReleases() {
+		private HashSet<String> knownReleases = new HashSet<String>();
+		
+		public HashSet<String> getKnownReleases() {
 			return knownReleases;
 		}
 
+		public void setKnownReleases(HashSet<String> knownReleases) {
+			this.knownReleases = knownReleases;
+		}
+		
 	}
 	
 	private URL ftpUrl = null;
@@ -166,7 +171,7 @@ public class BioModelsDb extends ModelDatabase {
 			Iterator<BioModelRelease> iter = newReleases.iterator();
 			while( iter.hasNext() ) {
 				BioModelRelease release = iter.next();
-				if( config.getKnownReleases().contains(release) )
+				if( config.getKnownReleases().contains( release.getReleaseName() ) )
 					iter.remove();
 			}
 
@@ -267,10 +272,13 @@ public class BioModelsDb extends ModelDatabase {
 			// inits the config
 			log.info("Loading working dir config");
 			File configFile = new File( workingDir, Config.getConfig().getWorkingDirConfig() );
-			config = Config.getObjectMapper().readValue( configFile, WorkingDirConfig.class );
+			if( configFile.exists() )
+				config = Config.getObjectMapper().readValue( configFile, WorkingDirConfig.class );
+			else
+				config = new WorkingDirConfig();
 		}
 		catch (IOException e) {
-			log.fatal( "IOException while reading the workingdir config file", e );
+			log.fatal( "Exception while reading the workingdir config file", e );
 		}
 
 	}

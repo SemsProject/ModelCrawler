@@ -121,5 +121,10 @@ public class BioModelRelease implements Comparable<BioModelRelease> {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "BioModelRelease [" + releaseName + "]";
+	}
 	
 }

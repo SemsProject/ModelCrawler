@@ -72,13 +72,15 @@ public class PmrDb extends ModelDatabase {
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 	@JsonIgnore
 	protected WorkingDirConfig config = null;
-	@JsonIgnore
+	
 	private File workingDir;
 
-	private class WorkingDirConfig {
+	private static class WorkingDirConfig {
 
 		private Map<String, String> repositories = new HashMap<String, String>();
-
+		
+		public WorkingDirConfig() {}
+		
 		public Map<String, String> getRepositories() {
 			return repositories;
 		}
@@ -212,7 +214,10 @@ public class PmrDb extends ModelDatabase {
 			// inits the config
 			log.info("Loading working dir config");
 			File configFile = new File( workingDir, Config.getConfig().getWorkingDirConfig() );
-			config = Config.getObjectMapper().readValue( configFile, WorkingDirConfig.class );
+			if( configFile.exists() )
+				config = Config.getObjectMapper().readValue( configFile, WorkingDirConfig.class );
+			else
+				config = new WorkingDirConfig();
 		}
 		catch (IOException e) {
 			log.fatal( "IOException while reading the workingdir config file", e );
