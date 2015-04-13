@@ -7,5 +7,7 @@ public abstract class Constants {
 	public static final String URN_VERSION_PLACEHOLDER = "!";
 	
 	public static final String PATH_SPLIT_REGEX = "\\/";
-
+	
+	public static final int FTP_DEFAULT_PORT = 21;
+	
 }
