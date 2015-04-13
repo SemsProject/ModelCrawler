@@ -7,7 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.text.ParseException;
@@ -21,7 +23,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -39,7 +40,6 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
@@ -605,14 +605,12 @@ public class BioModelsDb extends ModelDatabase {
 					String fileName = entryFile.getName();
 					int extensionPos = fileName.lastIndexOf('.');
 					if( fileName.substring(extensionPos+1).toLowerCase().equals("xml") ) {
-						// filename as xml ending
-						String fileId = fileName.substring(0, extensionPos);
 
 						if( log.isDebugEnabled() )
-							log.debug( MessageFormat.format("Found model {0} from file {1}", fileId, fileName) );
+							log.debug( MessageFormat.format("Found model {0} from file {1}", fileName, fileName) );
 
 						// put it in the map
-						fileMap.put(fileId, entryFile);
+						fileMap.put(fileName, entryFile);
 					}
 				}
 
@@ -636,32 +634,50 @@ public class BioModelsDb extends ModelDatabase {
 		} 
 	}
 
-	private void tranferChange( String fileId, BioModelRelease release, Date crawledDate ) {
+	private void tranferChange( String fileName, BioModelRelease release, Date crawledDate ) {
 
 		boolean isChangeNew = false;
 		
 		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("Check if model {0} from release {1} is a new change", fileId, release.getReleaseName()) );
+			log.info( MessageFormat.format("Check if model {0} from release {1} is a new change", fileName, release.getReleaseName()) );
 		
 		BioModelsChangeSet changeSet = null;
-		if( changeSetMap.containsKey(fileId) ) {
+		if( changeSetMap.containsKey(fileName) ) {
 			// if fileId is already known -> get it from changeSetMap
-			changeSet = (BioModelsChangeSet) changeSetMap.get(fileId);
+			changeSet = (BioModelsChangeSet) changeSetMap.get(fileName);
 			if( log.isDebugEnabled() )
 				log.debug("ChangeSet exists, fileId is not unknown!");
 		}
-
-		// create the Change-Entry
-		BioModelsChange change = new BioModelsChange(fileId, release.getReleaseName(), release.getReleaseDate(), crawledDate);
 		
-		// sets soure meta information
-		change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB);
-		change.setModelType( CrawledModelRecord.TYPE_SBML );
-		
-		// set up the xml file and calc the hash
-		change.setXmlFile( release.getModelPath(fileId) );
-		if( log.isTraceEnabled() )
-			log.trace( MessageFormat.format("calced file hash: {0}", change.getHash()) );
+		BioModelsChange change = null;
+		try {
+			// emulate repository Url
+			String filePath = ftpUrl.getFile();
+			if( filePath.endsWith( String.valueOf(Config.getConfig().getPathSeparator()) ) )
+				filePath = filePath + fileName;
+			else
+				filePath = filePath + String.valueOf(Config.getConfig().getPathSeparator()) + fileName;
+			
+			URL repositoryUrl = new URL( ftpUrl.getProtocol(), ftpUrl.getHost(), filePath );
+			
+			// create the Change-Entry
+			change = new BioModelsChange(repositoryUrl, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+			
+			// sets soure meta information
+			change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB);
+			change.setModelType( CrawledModelRecord.TYPE_SBML );
+			
+			// set up the xml file and calc the hash
+			change.setXmlFile( release.getModelPath(fileName) );
+			if( log.isTraceEnabled() )
+				log.trace( MessageFormat.format("calced file hash: {0}", change.getHash()) );
+			
+		} catch (MalformedURLException e) {
+			// TODO
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		// --------
 		// try to find some parents for this model.
@@ -692,7 +708,7 @@ public class BioModelsDb extends ModelDatabase {
 				log.debug("ChangeSet does not exists, checking database");
 			
 			// ... creates one ...
-			changeSet = new BioModelsChangeSet(fileId);
+			changeSet = new BioModelsChangeSet(fileName);
 			// only put this in the map, if there is a latest version anywhere
 
 			// if GraphDb is available for this instance
@@ -706,7 +722,7 @@ public class BioModelsDb extends ModelDatabase {
 				// try to get the latest version of this model
 				CrawledModelRecord latest = null;
 				try {
-					latest = CrawledModelRecord.extendDataholder( morreClient.getLatestModelVersion(fileId) );
+					latest = CrawledModelRecord.extendDataholder( morreClient.getLatestModelVersion(fileName) );
 				} catch (MorreCommunicationException e) {
 					log.fatal("Getting latest model version, to check, if processed model version is new, failed", e);
 				} catch (MorreException e) {
@@ -750,9 +766,9 @@ public class BioModelsDb extends ModelDatabase {
 		if( isChangeNew )  {
 			// pushs it into changeSet
 			changeSet.addChange(change);
-			if( !changeSetMap.containsKey(fileId) ) {
+			if( !changeSetMap.containsKey(fileName) ) {
 				// make this changeset public!
-				changeSetMap.put(fileId, changeSet);
+				changeSetMap.put(fileName, changeSet);
 			}
 			
 			if( log.isDebugEnabled() )

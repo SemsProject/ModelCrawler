@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,15 +16,9 @@ import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
-import de.unirostock.sems.ModelCrawler.databases.Interface.exceptions.XmlNotFoundException;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
 import de.unirostock.sems.ModelCrawler.exceptions.ConfigurationException;
-import de.unirostock.sems.XmlFileServerClient.XmlFileServer;
-import de.unirostock.sems.XmlFileServerClient.XmlFileServerClientFactory;
-import de.unirostock.sems.XmlFileServerClient.exceptions.ModelAlreadyExistsException;
-import de.unirostock.sems.XmlFileServerClient.exceptions.UnsupportedUriException;
-import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerBadRequestException;
-import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollException;
+import de.unirostock.sems.ModelCrawler.storage.ModelStorage;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreException;
 import de.unirostock.sems.morre.client.impl.HttpMorreClient;
@@ -44,7 +37,7 @@ public class App {
 	}
 	
 	private static MorreCrawlerInterface morreClient;
-	private static XmlFileServer xmlFileServer = null;
+	private static ModelStorage storage = null;
 
 	public static void main( String[] args ) {
 		File configFile = null;
@@ -165,11 +158,7 @@ public class App {
 			connector.setMorreClient(morreClient);
 		}
 		
-		try {
-			xmlFileServer = XmlFileServerClientFactory.getClient(new URI( config.getXmlFsUrl() ));
-		} catch (URISyntaxException e) {
-			log.fatal("Can not start XmlFileServer connector! URI is invalid! Maybe a config erro?", e);
-		}
+		// TODO create ModelStorage
 
 	}
 
@@ -187,10 +176,6 @@ public class App {
 
 	private static void processChangeSet( ChangeSet changeSet ) {
 		
-		//XXX some sort of filter
-//		if( !changeSet.getFileId().equals("http%3A%2F%2Fmodels.cellml.org%2Fworkspace%2F186%2Fdecker_2009.cellml") )
-//			return;
-		
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Start processing ChangeSet for model {0} with {1} entrie(s)", changeSet.getFileId(), changeSet.getChanges().size() ) );
 
@@ -203,26 +188,17 @@ public class App {
 				if( log.isInfoEnabled() )
 					log.info( MessageFormat.format("pushes model {0}:{1}", change.getFileId(), change.getVersionId()) );
 
-				// Push it into XmlFileRepository!
-				change.pushToXmlFileServer( xmlFileServer );
+				// store the model
+				URI modelUri = storage.storeModel(change);
+				change.setXmldoc( modelUri.toString() );
+				
 				// insert the model into MaSyMos via Morre
 				morreClient.addModel(change);
 			}
-		} catch (XmlNotFoundException e) {
-			log.fatal( MessageFormat.format("Can not find xml file while pushing model {0} to the server!", change), e);
-		} catch (ModelAlreadyExistsException e) {
-			log.fatal( MessageFormat.format("The model {0} already exists on the XmlFileServer!", change), e);
-		} catch (XmlFileServerBadRequestException e) {
-			log.fatal( MessageFormat.format("The XmlFileServer received a Bad Request while pushing model {0} !", change), e);
-		} catch (UnsupportedUriException e) {
-			log.fatal( MessageFormat.format("The URI from model {0} is not Supported!", change), e);
-		} catch (XmlFileServerProtocollException e) {
-			log.fatal( MessageFormat.format("ProtocollError while pushing model {0} into the XmlFileServer!", change), e);
 		} catch (IOException e) {
 			log.fatal( MessageFormat.format("Some IO stuff went wrong while pushing model {0} !", change), e);
 		} catch (MorreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error( MessageFormat.format("Morre encountered an error while puschin model {0} : {1}", change, e.getMessage()), e);
 		}
 
 	}

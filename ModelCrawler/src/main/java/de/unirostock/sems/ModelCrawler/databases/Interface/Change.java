@@ -1,23 +1,13 @@
 package de.unirostock.sems.ModelCrawler.databases.Interface;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Date;
 
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Constants;
-import de.unirostock.sems.ModelCrawler.databases.Interface.exceptions.XmlNotFoundException;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
-import de.unirostock.sems.XmlFileServerClient.XmlFileServer;
-import de.unirostock.sems.XmlFileServerClient.exceptions.ModelAlreadyExistsException;
-import de.unirostock.sems.XmlFileServerClient.exceptions.UnsupportedUriException;
-import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerBadRequestException;
-import de.unirostock.sems.XmlFileServerClient.exceptions.XmlFileServerProtocollException;
 
 public abstract class Change extends CrawledModelRecord implements Comparable<Change> {
 	
@@ -100,31 +90,6 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 				fileId.append( Constants.URN_SEPARATOR );
 		}
 		return fileId.toString();
-	}
-	
-	public void pushToXmlFileServer( XmlFileServer server ) throws XmlNotFoundException, ModelAlreadyExistsException, XmlFileServerBadRequestException, UnsupportedUriException, XmlFileServerProtocollException, IOException {
-		
-		if( xmlFile == null )
-			throw new XmlNotFoundException("XmlFile is not set!");
-		
-		if( !xmlFile.exists() || !xmlFile.isFile() )
-			throw new XmlNotFoundException("xmlFile does not exists or is no file!");
-		
-		if( server == null )
-			throw new IllegalArgumentException("XmlFileServer can not be null!");
-		
-		InputStream stream = null;
-		
-		stream = new FileInputStream(xmlFile);
-			
-		// do it!
-		URI uri = server.pushModel(getFileId(), getVersionId(), stream);
-		// finally set the document Uri, generated from the XmlFileRepo
-		setXmldoc( uri.toString() );
-		
-		// closes the stream
-		stream.close();
-		
 	}
 	
 	public File getXmlFile() {
