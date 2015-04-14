@@ -38,16 +38,18 @@ public abstract class ModelStorage implements Serializable, Closeable {
 	 * 
 	 * @param modelChange
 	 * @return
+	 * @throws StorageException 
 	 */
-	public abstract URI storeModel( Change modelChange );
+	public abstract URI storeModel( Change modelChange ) throws StorageException;
 	
 	/**
 	 * Puts a whole ChangeSet of models into the storage system
 	 * 
 	 * @param changeSet
 	 * @return
+	 * @throws StorageException 
 	 */
-	public List<URI> storeModelChangeSet( ChangeSet changeSet ) {
+	public List<URI> storeModelChangeSet( ChangeSet changeSet ) throws StorageException {
 		List<URI> result = new LinkedList<URI>();
 		
 		for( Change model : changeSet.getChanges() )

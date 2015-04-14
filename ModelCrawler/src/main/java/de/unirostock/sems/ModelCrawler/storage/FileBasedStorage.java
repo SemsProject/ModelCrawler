@@ -1,10 +1,12 @@
 package de.unirostock.sems.ModelCrawler.storage;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,7 +70,7 @@ public abstract class FileBasedStorage extends ModelStorage {
 	}
 	
 	@Override
-	public URI storeModel(Change modelChange) {
+	public URI storeModel(Change modelChange) throws StorageException {
 		String outerPath = null;
 		String innerPath = null;
 		String fileName = null;
@@ -111,16 +113,35 @@ public abstract class FileBasedStorage extends ModelStorage {
 			}
 			info.getVerisons().add( modelChange.getVersionId() );
 			
-			modelChange.getXmlFile();
+			// store model
+			InputStream input = new FileInputStream( modelChange.getXmlFile() );
+			storeFile(input, pathToFile + fileName);
+			input.close();
 			
 			// write info back
 			writeVersionInfo(outerPath, info);
+			
+			String accessPath = httpAccessPath.getPath();
+			if( !accessPath.endsWith(config.getPathSeparatorString()) )
+				accessPath = accessPath + config.getPathSeparatorString();
+			
+			URI uri = new URI( httpAccessPath.getProtocol(), httpAccessPath.getHost(), accessPath, null);
+			return uri;
 		}
 		catch (StorageException e) {
-			// TODO
+			log.error("Exception while accessing storage layer", e);
+			throw e;
+		} catch (FileNotFoundException e) {
+			log.error("Cannot find xml document.", e);
+			throw new StorageException("Cannot find xml document", e);
+		} catch (IOException e) {
+			log.error("Cannot store xml document.", e);
+			throw new StorageException("Cannot store xml document.", e);
+		} catch (URISyntaxException e) {
+			log.error("Exception while building access URI", e);
+			throw new StorageException("Exception while building access URI", e);
 		}
 		
-		return null;
 	}
 	
 	private VersionInfo getVersionInfo( String outerPath ) throws StorageException {
@@ -163,12 +184,8 @@ public abstract class FileBasedStorage extends ModelStorage {
 			// write file
 			storeFile(input, outerPath + Constants.VERSION_INFO_FILENAME);
 			input.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (StorageException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (IOException | StorageException e) {
+			log.error("Cannot write VersionInfo", e);
 		}
 		
 	}

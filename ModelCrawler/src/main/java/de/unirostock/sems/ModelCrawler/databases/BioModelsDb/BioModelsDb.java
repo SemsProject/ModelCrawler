@@ -673,11 +673,8 @@ public class BioModelsDb extends ModelDatabase {
 			if( log.isTraceEnabled() )
 				log.trace( MessageFormat.format("calced file hash: {0}", change.getHash()) );
 			
-		} catch (MalformedURLException e) {
+		} catch (MalformedURLException | URISyntaxException e) {
 			// TODO
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		
 		// --------
