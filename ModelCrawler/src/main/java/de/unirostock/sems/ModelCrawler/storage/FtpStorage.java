@@ -1,7 +1,7 @@
 package de.unirostock.sems.ModelCrawler.storage;
 
 import java.io.IOException;
-import java.net.URI;
+import java.io.InputStream;
 import java.net.URL;
 import java.text.MessageFormat;
 
@@ -13,10 +13,9 @@ import org.apache.commons.net.ftp.FTPClient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.unirostock.sems.ModelCrawler.Constants;
-import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
 
-public class FtpStorage extends ModelStorage {
+public class FtpStorage extends FileBasedStorage {
 	
 	@JsonIgnore
 	private static final long serialVersionUID = 1221888596087293844L;
@@ -26,7 +25,6 @@ public class FtpStorage extends ModelStorage {
 	private URL ftpUrl = null;
 	private String ftpUser = null;
 	private String ftpPass = null;
-	private URL httpAccessPath = null;
 	
 	@JsonIgnore
 	private FTPClient ftpClient = null;
@@ -36,7 +34,7 @@ public class FtpStorage extends ModelStorage {
 	}
 	
 	@Override
-	public void connect() throws StorageException {
+	public void initConnection() throws StorageException {
 		
 		if( ftpClient != null )
 			throw new IllegalStateException("Storage is already connected");
@@ -89,7 +87,7 @@ public class FtpStorage extends ModelStorage {
 	}
 
 	@Override
-	public void close() {
+	public void closeConnection() {
 		
 		try {
 			if( ftpClient != null ) {
@@ -105,7 +103,19 @@ public class FtpStorage extends ModelStorage {
 	}
 	
 	@Override
-	public URI storeModel(Change modelChange) {
+	protected boolean makeDirs(String path) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	@Override
+	protected void storeFile(InputStream source, String path) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected InputStream getFile(String path) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -134,14 +144,6 @@ public class FtpStorage extends ModelStorage {
 
 	public void setFtpPass(String ftpPass) {
 		this.ftpPass = ftpPass;
-	}
-
-	public URL getHttpAccessPath() {
-		return httpAccessPath;
-	}
-
-	public void setHttpAccessPath(URL httpAccessPath) {
-		this.httpAccessPath = httpAccessPath;
 	}
 
 }

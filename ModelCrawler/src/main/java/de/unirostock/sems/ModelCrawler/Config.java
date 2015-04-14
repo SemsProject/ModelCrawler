@@ -9,6 +9,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -140,6 +141,11 @@ public class Config implements Serializable {
 
 	public char getPathSeparator() {
 		return pathSeparator;
+	}
+	
+	@JsonIgnore
+	public String getPathSeparatorString() {
+		return String.valueOf(pathSeparator);
 	}
 
 	public void setPathSeparator(char pathSeparator) {

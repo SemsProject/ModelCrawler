@@ -10,4 +10,6 @@ public abstract class Constants {
 	
 	public static final int FTP_DEFAULT_PORT = 21;
 	
+	public static final String VERSION_INFO_FILENAME = "info.json";
+	
 }
