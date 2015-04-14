@@ -26,7 +26,7 @@ public abstract class FileBasedStorage extends ModelStorage {
 	@JsonIgnore
 	private static final long serialVersionUID = 5628650761119478142L;
 	@JsonIgnore
-	private final Log log = LogFactory.getLog( FtpStorage.class );
+	private final Log log = LogFactory.getLog( FileBasedStorage.class );
 	
 	protected URL httpAccessPath = null;
 	@JsonIgnore
