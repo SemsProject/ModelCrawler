@@ -33,7 +33,7 @@ public class FileStorage extends FileBasedStorage {
 	@Override
 	protected void initConnection() throws StorageException {
 		
-		if( baseDir != null )
+		if( baseDir == null )
 			throw new StorageException("No base Directory was set");
 		
 		if( baseDir.exists() == false || baseDir.isDirectory() == false ) {

@@ -38,6 +38,7 @@ public class App {
 	}
 	
 	private static MorreCrawlerInterface morreClient;
+	private static ModelStorage storage = null;
 
 	public static void main( String[] args ) {
 		File configFile = null;
@@ -94,7 +95,7 @@ public class App {
 		// Connectors
 		Config config = Config.getConfig();
 		initConnectors( config );
-
+		
 		// map for all changes!
 		Map<String, ChangeSet> changes = new HashMap<String, ChangeSet>();
 
@@ -119,11 +120,24 @@ public class App {
 		if( mode == WorkingMode.TEST )
 			log.info("Don not push ChangeSets to morre in test-mode");
 		else {
+			
+			// Storage
+			log.info("Prepare storage connector");
+			storage = config.getStorage();
+			try {
+				storage.connect();
+			} catch (StorageException e) {
+				log.fatal("Exception while connecting to storage", e);
+				return;
+			}
+			
 	    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
 	    	while( changesSetIterator.hasNext() ) {
 	    		// ... and process them
 	    		processChangeSet( changesSetIterator.next() );
 	    	}
+	    	
+	    	storage.close();
 		}
 
 		// After everthing is done: Hide the bodies...
@@ -180,9 +194,6 @@ public class App {
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Start processing ChangeSet for model {0} with {1} entrie(s)", changeSet.getFileId(), changeSet.getChanges().size() ) );
 		
-		Config config = Config.getConfig();
-		ModelStorage storage = config.getStorage();
-
 		Iterator<Change> changeIterator = changeSet.getChanges().iterator();
 		Change change = null;
 		try {
