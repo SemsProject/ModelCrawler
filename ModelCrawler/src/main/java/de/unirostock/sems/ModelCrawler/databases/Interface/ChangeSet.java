@@ -1,10 +1,20 @@
 package de.unirostock.sems.ModelCrawler.databases.Interface;
 
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public abstract class ChangeSet {
+	
+	@JsonIgnore
+	private final Log log = LogFactory.getLog( ChangeSet.class );
 	
 	protected String fileId;
 	protected NavigableSet<Change> changes;
@@ -25,8 +35,17 @@ public abstract class ChangeSet {
 			changes.add(change);
 	}
 	
+	public ChangeSet( URL repositoryUrl, String filePath ) {
+		this.changes = new TreeSet<Change>();
+		try {
+			this.fileId = Change.generateFileId(repositoryUrl, filePath);
+		} catch (URISyntaxException e) {
+			log.fatal("Exception while generation fileId", e);
+		}
+	}
+	
 	public ChangeSet( String fileId ) {
-		changes = new TreeSet<Change>();
+		this.changes = new TreeSet<Change>();
 		this.fileId = fileId;
 	}
 	

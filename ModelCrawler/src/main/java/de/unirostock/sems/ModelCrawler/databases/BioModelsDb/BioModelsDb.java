@@ -638,6 +638,7 @@ public class BioModelsDb extends ModelDatabase {
 	private void tranferChange( String fileName, BioModelRelease release, Date crawledDate ) {
 
 		boolean isChangeNew = false;
+		URL repositoryUrl = null;
 		
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Check if model {0} from release {1} is a new change", fileName, release.getReleaseName()) );
@@ -659,7 +660,7 @@ public class BioModelsDb extends ModelDatabase {
 			else
 				filePath = filePath + String.valueOf(Config.getConfig().getPathSeparator()) + fileName;
 			
-			URL repositoryUrl = new URL( ftpUrl.getProtocol(), ftpUrl.getHost(), filePath );
+			repositoryUrl = new URL( ftpUrl.getProtocol(), ftpUrl.getHost(), filePath );
 			
 			// create the Change-Entry
 			change = new BioModelsChange(repositoryUrl, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
@@ -706,7 +707,7 @@ public class BioModelsDb extends ModelDatabase {
 				log.debug("ChangeSet does not exists, checking database");
 			
 			// ... creates one ...
-			changeSet = new BioModelsChangeSet(fileName);
+			changeSet = new BioModelsChangeSet(repositoryUrl, fileName);
 			// only put this in the map, if there is a latest version anywhere
 
 			// if GraphDb is available for this instance
