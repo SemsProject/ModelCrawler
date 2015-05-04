@@ -53,8 +53,11 @@ public class FileStorage extends FileBasedStorage {
 	@Override
 	protected void makeDirs(String path) throws StorageException {
 		File newDirectory = new File(baseDir, path);
-		if( newDirectory.mkdirs() == false )
-			throw new StorageException("Cannot create directory: " + newDirectory.toString());
+		// create only if necessary
+		if( newDirectory.exists() == false ) {
+			if( newDirectory.mkdirs() == false )
+				throw new StorageException("Cannot create directory: " + newDirectory.toString());
+		}
 		
 	}
 

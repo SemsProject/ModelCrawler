@@ -125,6 +125,8 @@ public abstract class FileBasedStorage extends ModelStorage {
 			if( !accessPath.endsWith(config.getPathSeparatorString()) )
 				accessPath = accessPath + config.getPathSeparatorString();
 			
+			// add file name
+			accessPath = accessPath + pathToFile + fileName;
 			URI uri = new URI( httpAccessPath.getProtocol(), httpAccessPath.getHost(), accessPath, null);
 			return uri;
 		}
