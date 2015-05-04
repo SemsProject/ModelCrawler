@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.exceptions.ConfigurationException;
+import de.unirostock.sems.ModelCrawler.storage.ModelStorage;
 
 public class Config implements Serializable {
 
@@ -94,9 +95,9 @@ public class Config implements Serializable {
 	private String urnNamespace = "model";
 	
 	private String morreUrl = "http://localhost:7474/morre/";
-	private String xmlFsUrl = "http://taylor.informatik.uni-rostock.de:8000/XmlFileServer/";
 	
 	private List<ModelDatabase> databases = new ArrayList<ModelDatabase>();
+	private ModelStorage storage = null;
 	
 	/**
 	 * Default private constructor.
@@ -192,12 +193,12 @@ public class Config implements Serializable {
 		this.morreUrl = morreUrl;
 	}
 
-	public String getXmlFsUrl() {
-		return xmlFsUrl;
+	public ModelStorage getStorage() {
+		return storage;
 	}
 
-	public void setXmlFsUrl(String xmlFsUrl) {
-		this.xmlFsUrl = xmlFsUrl;
+	public void setStorage(ModelStorage storage) {
+		this.storage = storage;
 	}
 
 	public String getUrnNamespace() {

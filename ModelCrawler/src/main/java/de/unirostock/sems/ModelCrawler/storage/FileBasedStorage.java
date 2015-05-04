@@ -36,11 +36,11 @@ public abstract class FileBasedStorage extends ModelStorage {
 		// Default constructor
 	}
 	
-	protected abstract boolean makeDirs( String path ) throws StorageException;
-	protected abstract void storeFile( InputStream source, String path ) throws StorageException;
-	protected abstract InputStream getFile( String path ) throws StorageException;
 	protected abstract void initConnection() throws StorageException;
 	protected abstract void closeConnection();
+	protected abstract void makeDirs( String path ) throws StorageException;
+	protected abstract void storeFile( InputStream source, String path ) throws StorageException;
+	protected abstract InputStream getFile( String path ) throws StorageException;
 	
 	protected static class VersionInfo {
 		private String fileId = null; 

@@ -30,6 +30,7 @@ public class FtpStorage extends FileBasedStorage {
 	private FTPClient ftpClient = null;
 	
 	public FtpStorage() {
+		super();
 		// Just the default constructor
 	}
 	
@@ -103,9 +104,8 @@ public class FtpStorage extends FileBasedStorage {
 	}
 	
 	@Override
-	protected boolean makeDirs(String path) {
+	protected void makeDirs(String path) {
 		// TODO Auto-generated method stub
-		return false;
 	}
 	
 	@Override

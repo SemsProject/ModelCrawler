@@ -18,6 +18,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
 import de.unirostock.sems.ModelCrawler.exceptions.ConfigurationException;
+import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
 import de.unirostock.sems.ModelCrawler.storage.ModelStorage;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreException;
@@ -37,7 +38,6 @@ public class App {
 	}
 	
 	private static MorreCrawlerInterface morreClient;
-	private static ModelStorage storage = null;
 
 	public static void main( String[] args ) {
 		File configFile = null;
@@ -84,7 +84,8 @@ public class App {
 		
 		// load config
 		try {
-			Config.load( configFile );
+			if( configFile != null )
+				Config.load( configFile );
 		} catch (ConfigurationException e) {
 			log.fatal( MessageFormat.format("Can not load config file {0}", configFile), e );
 		}
@@ -178,6 +179,9 @@ public class App {
 		
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Start processing ChangeSet for model {0} with {1} entrie(s)", changeSet.getFileId(), changeSet.getChanges().size() ) );
+		
+		Config config = Config.getConfig();
+		ModelStorage storage = config.getStorage();
 
 		Iterator<Change> changeIterator = changeSet.getChanges().iterator();
 		Change change = null;
@@ -199,6 +203,8 @@ public class App {
 			log.fatal( MessageFormat.format("Some IO stuff went wrong while pushing model {0} !", change), e);
 		} catch (MorreException e) {
 			log.error( MessageFormat.format("Morre encountered an error while puschin model {0} : {1}", change, e.getMessage()), e);
+		} catch (StorageException e) {
+			log.fatal( MessageFormat.format("Something went wrong while pushing model {0} !", change), e);
 		}
 
 	}
