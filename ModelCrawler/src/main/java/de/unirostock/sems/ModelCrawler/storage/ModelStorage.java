@@ -6,13 +6,34 @@ import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
 
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonTypeInfo(
+		use = JsonTypeInfo.Id.NAME,
+		include = JsonTypeInfo.As.PROPERTY,
+		property = "type" )
+@JsonSubTypes({
+	@Type( value = FileStorage.class, name = ModelStorage.Types.FILE ),
+	@Type( value = FtpStorage.class, name = ModelStorage.Types.FTP )
+})
 public abstract class ModelStorage implements Serializable, Closeable {
 	
 	private static final long serialVersionUID = -1028829011896100407L;
+	
+	public abstract static class Types {
+		public static final String FILE = "file";
+		public static final String FTP = "ftp";
+	}
 
 	public ModelStorage() {
 		
