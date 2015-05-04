@@ -12,6 +12,7 @@ import org.apache.commons.net.ftp.FTPClient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
 
@@ -104,8 +105,23 @@ public class FtpStorage extends FileBasedStorage {
 	}
 	
 	@Override
-	protected void makeDirs(String path) {
-		// TODO Auto-generated method stub
+	protected void makeDirs(String path) throws StorageException {
+		
+		String pathSeparator = Config.getConfig().getPathSeparatorString();
+		
+		try {
+			// change to base dir
+			if( ftpClient.changeWorkingDirectory("/") == false )
+				throw new StorageException( "Cannot change to FTP base directory" );
+			
+			if( path.startsWith(pathSeparator) == false )
+				path = pathSeparator + path;
+			
+			ftpClient.makeDirectory(path);
+		} catch (IOException e) {
+			throw new StorageException("Cannot create new ftp dir: " + path, e);
+		}
+		
 	}
 	
 	@Override
