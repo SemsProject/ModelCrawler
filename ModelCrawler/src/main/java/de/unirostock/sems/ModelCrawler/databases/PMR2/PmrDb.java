@@ -14,10 +14,11 @@ import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,6 @@ import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.binfalse.bfutils.GeneralTools;
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
@@ -402,7 +402,7 @@ public class PmrDb extends ModelDatabase {
 						.setURI(repoLink)
 						.setDirectory(location)
 						.setCloneSubmodules(true)
-						.setCloneAllBranches(false)
+//						.setCloneAllBranches(false)
 						.call();
 
 				if( log.isInfoEnabled() )
@@ -464,7 +464,7 @@ public class PmrDb extends ModelDatabase {
 		// select all relevant files
 		// than going throw the versions
 		List<RelevantFile> relevantFiles;
-		Iterable<RevCommit> relevantVersions;
+		List<RevCommit> relevantVersions;
 
 		// TODO Logging!
 
@@ -497,15 +497,6 @@ public class PmrDb extends ModelDatabase {
 		if( relevantVersions == null )
 			// no version is relevant - exit
 			return;
-
-		// sorting them (just in case...)
-		// TODO is sorting necessary?
-		//		Collections.sort(relevantVersions, new Comparator<RevCommit>() {
-		//			@Override
-		//			public int compare(RevCommit arg0, RevCommit arg1) {
-		//				return new Date( arg0.getCommitTime() ).compareTo( new Date( arg1.getCommitTime() ));
-		//			}
-		//		} );
 
 		// make it!
 		// (going throw each relevant Version and saves all relevant Files in every relevant - and new - Version)
@@ -677,10 +668,11 @@ public class PmrDb extends ModelDatabase {
 
 	}
 
-	protected Iterable<RevCommit> detectRelevantVersions( Git repo, List<RelevantFile> relevantFiles ) {
+	protected List<RevCommit> detectRelevantVersions( Git repo, List<RelevantFile> relevantFiles ) {
 		Date oldestLatestVersionDate = null;
 		boolean foundOldestLatestVersionDate = false;
 		Iterable<RevCommit> relevantVersions = null;
+		List<RevCommit> relevantVersionList = new LinkedList<RevCommit>();
 
 		if( log.isDebugEnabled() )
 			log.debug("start detection of relevant git versions");
@@ -723,38 +715,38 @@ public class PmrDb extends ModelDatabase {
 			log.error("Error while executing log command", e);
 			return null;
 		}
-		int numVersions = GeneralTools.sizeOfIterable( relevantVersions );
 
-		if( oldestLatestVersionDate == null ) {
-			// oldestLatestVersionDate is null -> there is no latest version known for any of the relevantFiles/-Models
-			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("Found {0} Commits. Can not skip any of them, because no one is indexed", numVersions) );
-
-			Iterator<RevCommit> changesetIter = relevantVersions.iterator();
-			while( changesetIter.hasNext() ) {
-
+		int originalLength = 0;
+		int newLength = 0;
+		
+		// oldestLatestVersionDate is null -> there is no latest version known for any of the relevantFiles/-Models
+		for( RevCommit commit : relevantVersions ) {
+			originalLength++;
+			if( oldestLatestVersionDate == null || new Date( commit.getCommitTime() ).compareTo(oldestLatestVersionDate) > 0 ) {
+				newLength++;
+				relevantVersionList.add(commit);
 			}
 		}
-		else {
-			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("Found {0} Commits, removes all Commits older as {1} (oldestLatestVersion) from the list", numVersions, oldestLatestVersionDate) );
-
-			// remove every Changeset which is older as the oldestLatestVersion (because they are really uninteresting)
-			Iterator<RevCommit> changesetIter = relevantVersions.iterator();
-			while( changesetIter.hasNext() ) {
-				if( new Date( changesetIter.next().getCommitTime() ).compareTo(oldestLatestVersionDate) < 0 )
-					changesetIter.remove();
+		
+		// sorting versions
+		Collections.sort(relevantVersionList, new Comparator<RevCommit>() {
+			@Override
+			public int compare(RevCommit o1, RevCommit o2) {
+				return o1.getCommitTime() - o2.getCommitTime();
 			}
+		});
+		
+		if( log.isInfoEnabled() )
+			if( originalLength == newLength )
+				log.info( MessageFormat.format("Found {0} commits. Cannot skip any of them,  because no one is indexed", originalLength) );
+			else 
+				log.info( MessageFormat.format("Found {0} commits, removes all commits older than {1} (oldestLatestVersion) from the list. {2} commits left.", originalLength, oldestLatestVersionDate, newLength) );
+			
 
-			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("{0} Commits left for examination", GeneralTools.sizeOfIterable(relevantVersions)) );
-
-		}
-
-		return relevantVersions;
+		return relevantVersionList;
 	}
 
-	protected void iterateRelevantVersions( Git repo, File location, List<RelevantFile> relevantFiles, Iterable<RevCommit> relevantVersions ) throws IOException {
+	protected void iterateRelevantVersions( Git repo, File location, List<RelevantFile> relevantFiles, List<RevCommit> relevantVersions ) throws IOException {
 		Date crawledDate = new Date();
 
 		if( log.isInfoEnabled() )
@@ -770,7 +762,7 @@ public class PmrDb extends ModelDatabase {
 			// update to currentCommit
 			try {
 				repo.checkout()
-				.setStartPoint(currentCommit)
+				.setName( currentName )
 				.call();
 			} catch (GitAPIException e) {
 				log.error( MessageFormat.format("Exception while updating {0} to {1}. skip this repo.", location, currentName), e);
@@ -785,25 +777,35 @@ public class PmrDb extends ModelDatabase {
 
 			ObjectId head = repository.resolve(Constants.HEAD);
 			RevCommit commit = revWalk.parseCommit (head);
-			RevCommit parent = revWalk.parseCommit(commit.getParent(0).getId());
+			RevCommit parent = null;
+			
+			// check if commit is Batman (no parents)
+			if( commit.getParentCount() > 0) {
+				parent = revWalk.parseCommit(commit.getParent(0).getId());
+	
+				DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
+				diffFormatter.setRepository(repository);
+				diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
+				diffFormatter.setDetectRenames(true);
+	
+				List<DiffEntry> diffs = diffFormatter.scan(parent.getTree(), commit.getTree());
+				for (DiffEntry diff : diffs) {
+					changedFiles.add (diff.getNewPath());
+				}
+			}
+			else
+				// nanananana BATMAN!
+				changedFiles = null;
 
-			DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
-			diffFormatter.setRepository(repository);
-			diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
-			diffFormatter.setDetectRenames(true);
-
-			List<DiffEntry> diffs = diffFormatter.scan(parent.getTree(), commit.getTree());
-			for (DiffEntry diff : diffs) {
-				changedFiles.add (diff.getNewPath());
+			if( log.isInfoEnabled() ) {
+				if( changedFiles != null )
+					log.info( MessageFormat.format("{0} changed files in this version", changedFiles.size()) );
+				else
+					log.info( "This is the first commit. Assume every file has changed" );
 			}
 
-			if( log.isInfoEnabled() )
-				log.info( MessageFormat.format("{0} changed files in this version", changedFiles.size()) );
-
 			// going throw the relevant files
-			Iterator<RelevantFile> fileIterator = relevantFiles.iterator();
-			RelevantFile file = null;
-			while( (file = fileIterator.next()) != null ) {
+			for( RelevantFile file : relevantFiles ) {
 				
 				boolean hasChanges = false;
 
@@ -843,7 +845,7 @@ public class PmrDb extends ModelDatabase {
 						log.trace("Check if model is in the changed files list");
 
 					// file is in the list of changedFiles
-					if( changedFiles.contains(file.getFilePath()) == true ) {
+					if( changedFiles == null || changedFiles.contains(file.getFilePath()) == true ) {
 						hasChanges = true;
 						if( log.isDebugEnabled() )
 							log.debug("Model is in the changed files list.");
