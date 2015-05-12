@@ -129,9 +129,29 @@ public abstract class FileBasedStorage extends ModelStorage {
 	
 	@Override
 	public URI linkModelVersion(String fileId, String sourceVersionId, String targetVersionId) throws StorageException {
-		// TODO
 		
-		return null;
+		if( fileId == null || fileId.isEmpty() )
+			throw new StorageException("FileId should not be null");
+		if( sourceVersionId == null || sourceVersionId.isEmpty() || targetVersionId == null | targetVersionId.isEmpty() )
+			throw new StorageException("VersionId should not be null");
+		if( sourceVersionId.equals(targetVersionId) )
+			throw new StorageException("target and source versionId are not allowed to be equal");
+		
+		String[] splittedFileId = splitFileId(fileId);
+		String sourcePath = splittedFileId[0] + sourceVersionId + splittedFileId[1] + config.getPathSeparatorString() + splittedFileId[2];
+		String targetPath = splittedFileId[0] + targetVersionId + splittedFileId[1] + config.getPathSeparatorString() + splittedFileId[2];
+		
+		try {
+			linkFiles(sourcePath, targetPath);
+			return new URI( httpAccessPath.getProtocol(), httpAccessPath.getHost(), sourcePath, null);
+		}
+		catch (StorageException e) {
+			log.error("Exception while accessing storage layer", e);
+			throw e;
+		} catch (URISyntaxException e) {
+			log.error("Exception while building access URI", e);
+			throw new StorageException("Exception while building access URI", e);
+		}
 	}
 
 	/**

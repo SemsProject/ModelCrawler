@@ -812,6 +812,7 @@ public class PmrDb extends ModelDatabase {
 			for( RelevantFile file : relevantFiles ) {
 				
 				boolean hasChanges = false;
+				String latestVersionId = null;
 
 				if( log.isInfoEnabled() )
 					log.info( MessageFormat.format("Check model {0}", file.getFileId()) );
@@ -834,10 +835,13 @@ public class PmrDb extends ModelDatabase {
 
 						continue;
 					}
+					else 
+						latestVersionId = file.getLatestVersionId();
 				}
 				else {
 					// there is no parent Version -> so there are changes
 					hasChanges = true;
+					latestVersionId = null;		// no parent
 					if( log.isDebugEnabled() )
 						log.debug("Model has no parents -> this is a new version.");
 				}
@@ -851,59 +855,59 @@ public class PmrDb extends ModelDatabase {
 					// file is in the list of changedFiles
 					if( changedFiles == null || changedFiles.contains(file.getFilePath()) == true ) {
 						hasChanges = true;
+						latestVersionId = null;		// no parent?
 						if( log.isDebugEnabled() )
 							log.debug("Model is in the changed files list.");
 					}
 				}
-
+					
+				PmrChange change = null;
+				try {
+					change = new PmrChange(file.getRepositoryUrl(), file.getFilePath(), currentName.toString (), currentVersionDate, crawledDate);
+				} catch (URISyntaxException e) {
+					log.error("Error while creating Change Object. Abort processing current repo.", e);
+					return;
+				}
+				
 				if( hasChanges ) {
 					// this file has change or is new -> archive it!
 					if( log.isInfoEnabled() )
 						log.info("Model has changes. Adds it to its ChangeSet");
 					
-					PmrChange change;
+					// set some Meta information
+					change.setMeta( CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_PMR2 );
+					if( (file.getType() & DocumentClassifier.SBML) > 0 )
+						change.setModelType( CrawledModelRecord.TYPE_SBML );
+					else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
+						change.setModelType( CrawledModelRecord.TYPE_CELLML );
+
+					// pushes the model to the storage
 					try {
-						change = new PmrChange(file.getRepositoryUrl(), file.getFilePath(), currentName.toString (), currentVersionDate, crawledDate);
-						
-						// set some Meta information
-						change.setMeta( CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_PMR2 );
-						if( (file.getType() & DocumentClassifier.SBML) > 0 )
-							change.setModelType( CrawledModelRecord.TYPE_SBML );
-						else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
-							change.setModelType( CrawledModelRecord.TYPE_CELLML );
+						change.setXmlFile(fileLocation);
+						URI modelUri = modelStorage.storeModel(change);
+						change.setXmldoc( modelUri.toString() );
+					} catch (StorageException e) {
+						log.fatal("Error while storing model. Abort processing current repo.", e);
+						return;
+					}
 
-						// copy the file to a temp location
-						// TODO get rid of the temp shit
-						File tempFile = getTempFile();
-						FileUtils.copyFile( fileLocation, tempFile);
-						change.setXmlFile(tempFile);
-						
-						// pushes the model to the storage
-						try {
-							change.setXmlFile(fileLocation);
-							URI modelUri = modelStorage.storeModel(change);
-							change.setXmldoc( modelUri.toString() );
-						} catch (StorageException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-
-						// add the change to the ChangeSet (ChangeSet is controlled by RelevantFile)
-						file.addChange(change);
-					} catch (URISyntaxException e) {
-						log.error("Error while creating Change Object", e);
-//						fileIterator.remove();
+					// add the change to the ChangeSet (ChangeSet is controlled by RelevantFile)
+					file.addChange(change);
+				}
+				else if( latestVersionId != null ) {
+					// Model has no changes -> symlink to parent version
+					if( log.isInfoEnabled() )
+						log.info("Model has no changes. Link to parent version.");
+					
+					try {
+						modelStorage.linkModelVersion(change.getFileId(), change.getVersionId(), latestVersionId);
+					} catch (StorageException e) {
+						log.error("Error while linking to parent version.", e);
 					}
 				}
-				else {
-					// Model has no changes -> symlink to parent version
-					// TODO
-					if( log.isInfoEnabled() )
-						log.info("Model has no changes.");
-					
-				}
-					
-
+				else if( log.isInfoEnabled() )
+					log.info("Model has no changes and no parent version. Nothing to link to");
+						
 			}
 
 		}

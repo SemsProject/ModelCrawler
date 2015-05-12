@@ -3,7 +3,6 @@ package de.unirostock.sems.ModelCrawler;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -202,9 +201,12 @@ public class App {
 				if( log.isInfoEnabled() )
 					log.info( MessageFormat.format("pushes model {0}:{1}", change.getFileId(), change.getVersionId()) );
 
-				// store the model
-				URI modelUri = storage.storeModel(change);
-				change.setXmldoc( modelUri.toString() );
+				// store the model, only if not already stored
+				String modelUri = change.getXmldoc();
+				if( modelUri == null )
+					modelUri = storage.storeModel(change).toString();
+				
+				change.setXmldoc( modelUri );
 				
 				// insert the model into MaSyMos via Morre
 				morreClient.addModel(change);
