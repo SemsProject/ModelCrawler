@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
+import de.unirostock.sems.ModelCrawler.storage.ModelStorage;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -60,6 +61,8 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	protected File tempDir = null;
 	@JsonIgnore
 	protected MorreCrawlerInterface morreClient = null;
+	@JsonIgnore
+	protected ModelStorage modelStorage = null;
 	
 	public ModelDatabase() {}		
 	
@@ -164,6 +167,16 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	@JsonIgnore
 	public void setMorreClient(MorreCrawlerInterface morreClient) {
 		this.morreClient = morreClient;
+	}
+	
+	@JsonIgnore
+	public ModelStorage getModelStorage() {
+		return modelStorage;
+	}
+	
+	@JsonIgnore
+	public void setModelStorage(ModelStorage modelStorage) {
+		this.modelStorage = modelStorage;
 	}
 	
 }

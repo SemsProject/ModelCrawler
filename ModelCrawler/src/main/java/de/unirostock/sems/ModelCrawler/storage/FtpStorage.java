@@ -136,6 +136,13 @@ public class FtpStorage extends FileBasedStorage {
 		return null;
 	}
 	
+	@Override
+	protected void linkFiles(String sourcePath, String targetPath)
+			throws StorageException {
+		// TODO Auto-generated method stub
+		
+	}
+
 	// getter/setter
 	
 	public URL getFtpUrl() {

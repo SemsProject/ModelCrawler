@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -51,6 +52,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.exceptions.HttpException;
+import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 import de.unirostock.sems.bives.tools.DocumentClassifier;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
@@ -870,10 +872,21 @@ public class PmrDb extends ModelDatabase {
 						else if( (file.getType() & DocumentClassifier.CELLML) > 0 )
 							change.setModelType( CrawledModelRecord.TYPE_CELLML );
 
-						// copy the file to a templocation
+						// copy the file to a temp location
+						// TODO get rid of the temp shit
 						File tempFile = getTempFile();
 						FileUtils.copyFile( fileLocation, tempFile);
 						change.setXmlFile(tempFile);
+						
+						// pushes the model to the storage
+						try {
+							change.setXmlFile(fileLocation);
+							URI modelUri = modelStorage.storeModel(change);
+							change.setXmldoc( modelUri.toString() );
+						} catch (StorageException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 
 						// add the change to the ChangeSet (ChangeSet is controlled by RelevantFile)
 						file.addChange(change);
@@ -882,8 +895,14 @@ public class PmrDb extends ModelDatabase {
 //						fileIterator.remove();
 					}
 				}
-				else if( log.isInfoEnabled() )
-					log.info("Model has no changes.");
+				else {
+					// Model has no changes -> symlink to parent version
+					// TODO
+					if( log.isInfoEnabled() )
+						log.info("Model has no changes.");
+					
+				}
+					
 
 			}
 

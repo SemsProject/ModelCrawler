@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.text.MessageFormat;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -101,7 +103,29 @@ public class FileStorage extends FileBasedStorage {
 		}
 			
 	}
-
+	
+	@Override
+	protected void linkFiles(String sourcePath, String targetPath) throws StorageException {
+		File sourceFile = new File(baseDir, sourcePath);
+		File targetFile = new File(baseDir, targetPath);
+		
+		if( targetFile.exists() == false )
+			throw new StorageException("Cannot create link to a non-existing file: " + targetFile);
+		
+		try {
+			try {
+				Files.createSymbolicLink( sourceFile.toPath(), targetFile.toPath() );
+			} catch (UnsupportedOperationException e1) {
+				// file system cannot handle sym links, try hard linking
+				log.warn( MessageFormat.format("File system cannot handle symlink from {0} to {1}. Try hard link instead.", sourceFile, targetFile), e1 );
+				Files.createLink( sourceFile.toPath(), targetFile.toPath() );
+			}
+		} catch (IOException e) {
+			log.error( MessageFormat.format("Cannot create link from {0} to {1}.", sourceFile, targetFile), e );
+			throw new StorageException( MessageFormat.format("Cannot create link from {0} to {1}.", sourceFile, targetFile), e );
+		}
+	}
+	
 	// getter/setter
 	
 	public File getBaseDir() {

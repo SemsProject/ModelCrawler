@@ -121,16 +121,6 @@ public class App {
 			log.info("Don not push ChangeSets to morre in test-mode");
 		else {
 			
-			// Storage
-			log.info("Prepare storage connector");
-			storage = config.getStorage();
-			try {
-				storage.connect();
-			} catch (StorageException e) {
-				log.fatal("Exception while connecting to storage", e);
-				return;
-			}
-			
 	    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
 	    	while( changesSetIterator.hasNext() ) {
 	    		// ... and process them
@@ -158,23 +148,32 @@ public class App {
 
 	private static void initConnectors(Config config) {
 
+		// Storage
+		log.info("Prepare storage connector");
+		storage = config.getStorage();
+		try {
+			storage.connect();
+		} catch (StorageException e) {
+			log.fatal("Exception while connecting to storage", e);
+			return;
+		}
+		
+		// morre.client connector
 		if( log.isInfoEnabled() )
 			log.info("Start GraphDb/MORRE connector");
-
-		// morre.client connector
+		
 		try {
 			morreClient = new HttpMorreClient( config.getMorreUrl() );
 		} catch (MalformedURLException e) {
 			log.fatal("Malformed Url for MORRE in config file", e);
 		}
 		
-		// setting morre for each database connector
+		// setting morre and storage for each database connector
 		for( ModelDatabase connector : config.getDatabases() ) {
 			connector.setMorreClient(morreClient);
+			connector.setModelStorage(storage);
 		}
 		
-		// TODO create ModelStorage
-
 	}
 
 	private static void close() {

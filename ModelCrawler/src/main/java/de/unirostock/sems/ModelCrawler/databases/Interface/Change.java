@@ -97,8 +97,12 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 	}
 	
 	public boolean setXmlFile( File xmlFile ) {
-		//REMIND the xml file can only be setted once in a Change
-		if( this.xmlFile == null ) {
+		return setXmlFile(xmlFile, false);
+	}
+	
+	public boolean setXmlFile( File xmlFile, boolean override ) {
+		//REMIND the xml file should only be setted once in a Change
+		if( this.xmlFile == null || override == true) {
 			this.xmlFile = xmlFile;
 			return true;
 		}

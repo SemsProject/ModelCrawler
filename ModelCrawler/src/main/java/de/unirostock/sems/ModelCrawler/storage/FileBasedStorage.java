@@ -41,6 +41,7 @@ public abstract class FileBasedStorage extends ModelStorage {
 	protected abstract void makeDirs( String path ) throws StorageException;
 	protected abstract void storeFile( InputStream source, String path ) throws StorageException;
 	protected abstract InputStream getFile( String path ) throws StorageException;
+	protected abstract void linkFiles( String sourcePath, String targetPath ) throws StorageException;
 	
 	protected static class VersionInfo {
 		private String fileId = null; 
@@ -71,31 +72,11 @@ public abstract class FileBasedStorage extends ModelStorage {
 	
 	@Override
 	public URI storeModel(Change modelChange) throws StorageException {
-		String outerPath = null;
-		String innerPath = null;
-		String fileName = null;
 		
-		// split fileId along the urn separator
-		String[] fileId = modelChange.getFileId().split( Constants.URN_SEPARATOR );
-		
-		// ignore first 2 fields (urn and namespace)
-		StringBuilder path = new StringBuilder();
-		for( int index = 2; index < fileId.length; index++ ) {
-			if( fileId[index] == null || fileId[index].isEmpty() )
-				continue;
-			else if( fileId[index].equals(Constants.URN_VERSION_PLACEHOLDER) && outerPath == null ) {
-				outerPath = path.toString();
-				path = new StringBuilder();
-			}
-			else if( index == fileId.length-1 && outerPath != null && innerPath == null ) {
-				innerPath = path.toString();
-				fileName = fileId[index];
-			}
-			else {
-				path.append( fileId[index] );
-				path.append( config.getPathSeparator() );
-			}
-		}
+		String[] fileId = splitFileId( modelChange.getFileId() );
+		String outerPath = fileId[0];
+		String innerPath = fileId[1];
+		String fileName = fileId[2];
 		
 		try {
 			// create outer Path
@@ -144,6 +125,54 @@ public abstract class FileBasedStorage extends ModelStorage {
 			throw new StorageException("Exception while building access URI", e);
 		}
 		
+	}
+	
+	@Override
+	public URI linkModelVersion(String fileId, String sourceVersionId, String targetVersionId) throws StorageException {
+		// TODO
+		
+		return null;
+	}
+
+	/**
+	 * Splits the fileId into handy parts<br>
+	 *  0 - outerPath<br>
+	 *  1 - innerPath<br>
+	 *  2 - fileName<br>
+	 *  
+	 * @param fileId
+	 * @return
+	 */
+	private String[] splitFileId( String fileId ) {
+		final int OUTER_PATH = 0;
+		final int INNER_PATH = 1;
+		final int FILENAME = 2;
+		
+		String[] result = new String[3];
+		
+		// split fileId along the urn separator
+		String[] splittedFileId = fileId.split( Constants.URN_SEPARATOR );
+		
+		// ignore first 2 fields (urn and namespace)
+		StringBuilder path = new StringBuilder();
+		for( int index = 2; index < splittedFileId.length; index++ ) {
+			if( splittedFileId[index] == null || splittedFileId[index].isEmpty() )
+				continue;
+			else if( splittedFileId[index].equals(Constants.URN_VERSION_PLACEHOLDER) && result[OUTER_PATH] == null ) {
+				result[OUTER_PATH] = path.toString();
+				path = new StringBuilder();
+			}
+			else if( index == splittedFileId.length-1 && result[OUTER_PATH] != null && result[INNER_PATH] == null ) {
+				result[INNER_PATH] = path.toString();
+				result[FILENAME] = splittedFileId[index];
+			}
+			else {
+				path.append( splittedFileId[index] );
+				path.append( config.getPathSeparator() );
+			}
+		}
+		
+		return result;
 	}
 	
 	private VersionInfo getVersionInfo( String outerPath ) throws StorageException {
