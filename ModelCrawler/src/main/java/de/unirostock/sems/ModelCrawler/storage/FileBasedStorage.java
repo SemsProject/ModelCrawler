@@ -44,7 +44,7 @@ public abstract class FileBasedStorage extends ModelStorage {
 	
 	protected static class VersionInfo {
 		private String fileId = null; 
-		private List<String> verisons = new LinkedList<String>();
+		private List<String> versions = new LinkedList<String>();
 		
 		public String getFileId() {
 			return fileId;
@@ -52,11 +52,11 @@ public abstract class FileBasedStorage extends ModelStorage {
 		public void setFileId(String fileId) {
 			this.fileId = fileId;
 		}
-		public List<String> getVerisons() {
-			return verisons;
+		public List<String> getVersions() {
+			return versions;
 		}
-		public void setVerisons(List<String> verisons) {
-			this.verisons = verisons;
+		public void setVersions(List<String> versions) {
+			this.versions = versions;
 		}
 	}
 	
@@ -111,7 +111,7 @@ public abstract class FileBasedStorage extends ModelStorage {
 				info = new VersionInfo();
 				info.setFileId( modelChange.getFileId() );
 			}
-			info.getVerisons().add( modelChange.getVersionId() );
+			info.getVersions().add( modelChange.getVersionId() );
 			
 			// store model
 			InputStream input = new FileInputStream( modelChange.getXmlFile() );

@@ -596,6 +596,16 @@ public class BioModelsDb extends ModelDatabase {
 
 					if( log.isTraceEnabled() )
 						log.trace( MessageFormat.format("Extract file {0}", entryFile.getAbsolutePath() ));
+					
+					File parentDir = entryFile.getAbsoluteFile().getParentFile();
+					if( !parentDir.exists() ) {
+						// directory does not exists
+						if( log.isDebugEnabled() )
+							log.debug( MessageFormat.format("Create directory {0} to store file {1}", parentDir, entryFile) );
+						
+						if( !parentDir.mkdirs() )
+							throw new IllegalStateException("Can not create directory " + parentDir.getAbsolutePath() );
+					}
 
 					OutputStream entryStream = new FileOutputStream(entryFile);
 					IOUtils.copy(archivStream, entryStream);

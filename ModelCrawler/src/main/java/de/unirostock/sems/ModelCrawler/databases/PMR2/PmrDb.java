@@ -426,6 +426,8 @@ public class PmrDb extends ModelDatabase {
 			// Repo is already known -> make a pull
 			try {
 				repo = Git.open(location);
+				// checkout head
+				repo.checkout().setName("master").call();
 				PullResult pullResult = repo.pull().call();
 
 				if( pullResult.isSuccessful() == false ) {
