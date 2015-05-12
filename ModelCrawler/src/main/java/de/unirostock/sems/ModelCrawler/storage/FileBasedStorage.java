@@ -138,12 +138,22 @@ public abstract class FileBasedStorage extends ModelStorage {
 			throw new StorageException("target and source versionId are not allowed to be equal");
 		
 		String[] splittedFileId = splitFileId(fileId);
-		String sourcePath = splittedFileId[0] + sourceVersionId + splittedFileId[1] + config.getPathSeparatorString() + splittedFileId[2];
-		String targetPath = splittedFileId[0] + targetVersionId + splittedFileId[1] + config.getPathSeparatorString() + splittedFileId[2];
+		String pathToSource = splittedFileId[0] + sourceVersionId + config.getPathSeparatorString() + splittedFileId[1];
+		String sourcePath =  pathToSource + splittedFileId[2];
+		String targetPath = splittedFileId[0] + targetVersionId + config.getPathSeparatorString() + splittedFileId[1] + splittedFileId[2];
 		
 		try {
+			makeDirs( pathToSource );
 			linkFiles(sourcePath, targetPath);
-			return new URI( httpAccessPath.getProtocol(), httpAccessPath.getHost(), sourcePath, null);
+			
+			String accessPath = httpAccessPath.getPath();
+			if( !accessPath.endsWith(config.getPathSeparatorString()) )
+				accessPath = accessPath + config.getPathSeparatorString();
+			
+			// add file name
+			accessPath = accessPath + sourcePath;
+			URI uri = new URI( httpAccessPath.getProtocol(), httpAccessPath.getHost(), accessPath, null);
+			return uri;
 		}
 		catch (StorageException e) {
 			log.error("Exception while accessing storage layer", e);
