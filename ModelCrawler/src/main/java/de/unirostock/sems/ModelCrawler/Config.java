@@ -27,7 +27,8 @@ public class Config implements Serializable {
 	public static enum WorkingMode {
 		NORMAL,
 		TEMPLATE_CONFIG,
-		TEST
+		TEST,
+		NO_MORRE
 	}
 	
 	private static WorkingMode workingMode = WorkingMode.NORMAL;

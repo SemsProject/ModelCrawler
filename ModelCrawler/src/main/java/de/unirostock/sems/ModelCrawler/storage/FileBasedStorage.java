@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,7 +19,9 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.ModelCrawler.Config;
+import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
 import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
@@ -109,6 +112,11 @@ public abstract class FileBasedStorage extends ModelStorage {
 	@Override
 	public URI storeModel(Change modelChange) throws StorageException {
 		
+		if( Config.getWorkingMode() == WorkingMode.TEST ) {
+			log.info( MessageFormat.format("Test model. Skip storage of {0}", modelChange) );
+			return null;
+		}
+		
 		String[] fileId = splitFileId( modelChange.getFileId() );
 		String outerPath = fileId[0];
 		String innerPath = fileId[1];
@@ -168,6 +176,11 @@ public abstract class FileBasedStorage extends ModelStorage {
 	
 	@Override
 	public URI linkModelVersion(String fileId, String sourceVersionId, String targetVersionId) throws StorageException {
+		
+		if( Config.getWorkingMode() == WorkingMode.TEST ) {
+			log.info( MessageFormat.format("Test model. Skip linking {2}, {0} to {1}", sourceVersionId, targetVersionId, fileId) );
+			return null;
+		}
 		
 		if( fileId == null || fileId.isEmpty() )
 			throw new StorageException("FileId should not be null");
