@@ -137,7 +137,8 @@ public class App {
 				"  --template       Writes down a template config file (overrides existing config!) \n" +
 				"  --test           Test mode. Nothing is pushed to morre nor stored persistent \n" +
 				"  --no-morre       Do not utilize morre to determine the latest known version nor \n" +
-				"                   stores any model in the database. Just download and store models. \n"
+				"                   stores any model in the database. Just download and store models. \n" +
+				"                   May cause doubles, when used for BioModels"
 		);
 	}
 

@@ -731,7 +731,7 @@ public class BioModelsDb extends ModelDatabase {
 			// only put this in the map, if there is a latest version anywhere
 
 			// if GraphDb is available for this instance
-			if( morreClient != null  ) {
+			if( morreClient != null && Config.getWorkingMode() != WorkingMode.NO_MORRE ) {
 
 				// TODO cache the result of the latest request!
 				
@@ -778,6 +778,10 @@ public class BioModelsDb extends ModelDatabase {
 							log.info("hashs are not equal -> new version");
 					}
 				}
+			}
+			else if( Config.getWorkingMode() == WorkingMode.NO_MORRE ) {
+				// without morre, we can just assume its new. May cause doubles
+				isChangeNew = true;
 			}
 
 		}
