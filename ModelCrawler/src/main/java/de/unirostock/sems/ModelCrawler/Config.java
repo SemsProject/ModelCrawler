@@ -24,6 +24,14 @@ public class Config implements Serializable {
 	private static volatile Config instance = null;
 	private static volatile ObjectMapper mapper = null;
 	
+	public static enum WorkingMode {
+		NORMAL,
+		TEMPLATE_CONFIG,
+		TEST
+	}
+	
+	private static WorkingMode workingMode = WorkingMode.NORMAL;
+	
 	/** 
 	 * Gets the config instance
 	 * 
@@ -82,6 +90,23 @@ public class Config implements Serializable {
 		
 		instance = new Config();
 		return instance;
+	}
+	
+	/**
+	 * Gets the current working mode of the crawler
+	 * @return
+	 */
+	public static WorkingMode getWorkingMode() {
+		return Config.workingMode;
+	}
+	
+	/**
+	 * Sets the current working mode of the crawler
+	 * 
+	 * @param workingMode
+	 */
+	public static void setWorkingMode(WorkingMode workingMode) {
+		Config.workingMode = workingMode; 
 	}
 	
 	// ----------------------------------------

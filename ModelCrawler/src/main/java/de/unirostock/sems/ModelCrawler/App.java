@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
@@ -23,25 +24,14 @@ import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreException;
 import de.unirostock.sems.morre.client.impl.HttpMorreClient;
 
-/**
- * Hello world!
- *
- */
 public class App {
 	private static final Log log = LogFactory.getLog( App.class );
-	
-	public static enum WorkingMode {
-		NORMAL,
-		TEMPLATE_CONFIG,
-		TEST
-	}
 	
 	private static MorreCrawlerInterface morreClient;
 	private static ModelStorage storage = null;
 
 	public static void main( String[] args ) {
 		File configFile = null;
-		WorkingMode mode = WorkingMode.NORMAL;
 		
 		if( args.length == 0 ) {
 			printHelp();
@@ -53,14 +43,14 @@ public class App {
 			if( args[index].equals("-c") || args[index].equals("--config") )
 				configFile = new File(args[++index]);
 			else if( args[index].equals("--template") )
-				mode = WorkingMode.TEMPLATE_CONFIG;
+				Config.setWorkingMode( WorkingMode.TEMPLATE_CONFIG );
 			else if( args[index].equals("--test") )
-				mode = WorkingMode.TEST;
+				Config.setWorkingMode( WorkingMode.TEST );
 		}
 		
 		log.info("ModelCrawler startet");
 		
-		if( mode == WorkingMode.TEMPLATE_CONFIG ) {
+		if( Config.getWorkingMode() == WorkingMode.TEMPLATE_CONFIG ) {
 			if( configFile == null ) {
 				log.error("No config file provided, use -c flag");
 				System.exit(0);
@@ -116,7 +106,7 @@ public class App {
 				log.info( MessageFormat.format("finished crawling for {0}", database.getClass().getName()) );
 		}
 		
-		if( mode == WorkingMode.TEST )
+		if( Config.getWorkingMode() == WorkingMode.TEST )
 			log.info("Don not push ChangeSets to morre in test-mode");
 		else {
 			
@@ -141,7 +131,7 @@ public class App {
 				"  -c               Path to config\n" + 
 				"  --config \n" +
 				"  --template       Writes down a template config file (overrides existing config!) \n" +
-				"  --test           Test mode. Nothing is pushed to morre \n"
+				"  --test           Test mode. Nothing is pushed to morre nor stored persistent \n"
 		);
 	}
 
