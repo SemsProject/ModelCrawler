@@ -8,8 +8,12 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,6 +24,7 @@ import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
+import de.unirostock.sems.ModelCrawler.storage.FileBasedStorage.VersionInfo.FileVersionInfo;
 
 public abstract class FileBasedStorage extends ModelStorage {
 	
@@ -44,20 +49,53 @@ public abstract class FileBasedStorage extends ModelStorage {
 	protected abstract void linkFiles( String sourcePath, String targetPath ) throws StorageException;
 	
 	protected static class VersionInfo {
-		private String fileId = null; 
-		private List<String> versions = new LinkedList<String>();
+		private String origin = null;
+		private Map<String, FileVersionInfo> models = new HashMap<String, FileBasedStorage.VersionInfo.FileVersionInfo>();
 		
-		public String getFileId() {
-			return fileId;
+		public String getOrigin() {
+			return origin;
 		}
-		public void setFileId(String fileId) {
-			this.fileId = fileId;
+		public void setOrigin(String origin) {
+			this.origin = origin;
 		}
-		public List<String> getVersions() {
-			return versions;
+		
+		public Collection<FileVersionInfo> getModels() {
+			return models.values();
 		}
-		public void setVersions(List<String> versions) {
-			this.versions = versions;
+		@JsonIgnore
+		public FileVersionInfo getSingleModel(String fileId) {
+			return models.get(fileId);
+		}
+		
+		public FileVersionInfo addModel(String fileId) {
+			FileVersionInfo result = null;
+			if( models.containsKey(fileId) == false ) {
+				result = new FileVersionInfo();
+				result.setFileId(fileId);
+				models.put(fileId, result);
+			}
+			else
+				result = models.get(fileId);
+			
+			return result;
+		}
+
+		protected static class FileVersionInfo {
+			private String fileId = null;
+			private Map<String, Date> versions = new HashMap<String, Date>();
+			
+			public String getFileId() {
+				return fileId;
+			}
+			public void setFileId(String fileId) {
+				this.fileId = fileId;
+			}
+			public Map<String, Date> getVersions() {
+				return versions;
+			}
+			public void addVersion(Date versionDate, String versionId) {
+				versions.put(versionId, versionDate);				
+			}
 		}
 	}
 	
@@ -90,9 +128,12 @@ public abstract class FileBasedStorage extends ModelStorage {
 			// add version to info
 			if( info == null ) {
 				info = new VersionInfo();
-				info.setFileId( modelChange.getFileId() );
 			}
-			info.getVersions().add( modelChange.getVersionId() );
+			
+			// add version to Info
+			FileVersionInfo versionInfo = null;
+			versionInfo = info.addModel( modelChange.getFileId() );  // this method do not override
+			versionInfo.addVersion( modelChange.getVersionDate(), modelChange.getVersionId() );
 			
 			// store model
 			InputStream input = new FileInputStream( modelChange.getXmlFile() );
