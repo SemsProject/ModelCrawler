@@ -19,6 +19,7 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
 import de.unirostock.sems.ModelCrawler.exceptions.ConfigurationException;
 import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
+import de.unirostock.sems.ModelCrawler.storage.FileStorage;
 import de.unirostock.sems.ModelCrawler.storage.ModelStorage;
 import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 import de.unirostock.sems.morre.client.exception.MorreException;
@@ -61,8 +62,10 @@ public class App {
 			log.info( MessageFormat.format("Writing default config to {0}", configFile) );
 			
 			Config config = Config.defaultConfig();
+			
 			config.getDatabases().add( new BioModelsDb() );
 			config.getDatabases().add( new PmrDb() );
+			config.setStorage( new FileStorage() );
 			
 			try {
 				Config.getConfig().save(configFile);
