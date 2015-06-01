@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.SocketException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -47,6 +48,7 @@ import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractE
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
+import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
@@ -254,6 +256,13 @@ public class BioModelsDb extends ModelDatabase {
 		Iterator<String> iter = release.getModelList().iterator();
 		while( iter.hasNext() ) {
 			tranferChange( iter.next(), release, crawledDate );
+		}
+		
+		// clean up
+		try {
+			FileUtils.deleteDirectory( release.getContentDir() );
+		} catch (IOException e) {
+			log.warn("Cannot clean up tmp dir for repository", e);
 		}
 	}
 
@@ -773,6 +782,16 @@ public class BioModelsDb extends ModelDatabase {
 		}
 
 		if( isChangeNew )  {
+			
+			// pushes the model to the storage
+			try {
+				URI modelUri = modelStorage.storeModel(change);
+				change.setXmldoc( modelUri.toString() );
+			} catch (StorageException e) {
+				log.fatal("Error while storing model. Abort processing current change.", e);
+				return;
+			}
+			
 			// pushs it into changeSet
 			changeSet.addChange(change);
 			if( !changeSetMap.containsKey(fileName) ) {
