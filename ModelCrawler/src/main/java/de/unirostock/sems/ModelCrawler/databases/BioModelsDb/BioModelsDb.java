@@ -44,6 +44,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Constants;
+import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
@@ -134,7 +135,7 @@ public class BioModelsDb extends ModelDatabase {
 			throw new IllegalArgumentException("Url for BMDB crawler not set!");
 		}
 		
-		if( morreClient == null ) {
+		if( morreClient == null && Config.getWorkingMode() != WorkingMode.NO_MORRE ) {
 			log.error("No Morre crawler interface provided!");
 			throw new IllegalArgumentException("No Morre crawler interface provided!");
 		}

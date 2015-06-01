@@ -46,6 +46,8 @@ public class App {
 				Config.setWorkingMode( WorkingMode.TEMPLATE_CONFIG );
 			else if( args[index].equals("--test") )
 				Config.setWorkingMode( WorkingMode.TEST );
+			else if( args[index].equals("--no-morre") )
+				Config.setWorkingMode( WorkingMode.NO_MORRE );
 		}
 		
 		log.info("ModelCrawler startet");
@@ -107,7 +109,9 @@ public class App {
 		}
 		
 		if( Config.getWorkingMode() == WorkingMode.TEST )
-			log.info("Don not push ChangeSets to morre in test-mode");
+			log.info("Do not push ChangeSets to morre or store them in test-mode");
+		else if( Config.getWorkingMode() == WorkingMode.NO_MORRE )
+			log.info("Do not push ChangeSets to morre in NO_MORRE mode.");
 		else {
 			
 	    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
@@ -131,7 +135,9 @@ public class App {
 				"  -c               Path to config\n" + 
 				"  --config \n" +
 				"  --template       Writes down a template config file (overrides existing config!) \n" +
-				"  --test           Test mode. Nothing is pushed to morre nor stored persistent \n"
+				"  --test           Test mode. Nothing is pushed to morre nor stored persistent \n" +
+				"  --no-morre       Do not utilize morre to determine the latest known version nor \n" +
+				"                   stores any model in the database. Just download and store models. \n"
 		);
 	}
 

@@ -48,6 +48,7 @@ import org.eclipse.jgit.util.io.DisabledOutputStream;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.unirostock.sems.ModelCrawler.Config;
+import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
 import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
@@ -152,7 +153,7 @@ public class PmrDb extends ModelDatabase {
 	public Map<String, ChangeSet> call() {
 		List<String> repositories = null;
 
-		if( morreClient == null ) {
+		if( morreClient == null && Config.getWorkingMode() != WorkingMode.NO_MORRE ) {
 			log.error("No Morre crawler interface provided!");
 			throw new IllegalArgumentException("No Morre crawler interface provided!");
 		}
@@ -647,7 +648,11 @@ public class PmrDb extends ModelDatabase {
 			// search in database
 			CrawledModelRecord latest = null;
 			try {
-				latest = CrawledModelRecord.extendDataholder( morreClient.getLatestModelVersion( relevantFile.getFileId() ) );
+				// knock of morre
+				if( Config.getWorkingMode() == WorkingMode.NO_MORRE )
+					latest = null;
+				else
+					latest = CrawledModelRecord.extendDataholder( morreClient.getLatestModelVersion( relevantFile.getFileId() ) );
 			} catch (MorreCommunicationException e) {
 				log.fatal( MessageFormat.format("Getting latest model version from {0}, to check, if processed model version is new, failed", relevantFile.getFileId()), e);
 			} catch (MorreException e) {
