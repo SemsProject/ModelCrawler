@@ -60,9 +60,13 @@ public abstract class FileBasedStorage extends ModelStorage {
 			this.origin = origin;
 		}
 		
-		public Collection<FileVersionInfo> getModels() {
-			return models.values();
+		public Map<String, FileVersionInfo> getModels() {
+			return models;
 		}
+		public void setModels(Map<String, FileVersionInfo> models) {
+			this.models = models;
+		}
+		
 		@JsonIgnore
 		public FileVersionInfo getSingleModel(String fileId) {
 			return models.get(fileId);
