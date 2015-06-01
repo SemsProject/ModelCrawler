@@ -162,7 +162,8 @@ public class App {
 			log.info("Start GraphDb/MORRE connector");
 		
 		try {
-			morreClient = new HttpMorreClient( config.getMorreUrl() );
+			if( Config.getWorkingMode() != WorkingMode.NO_MORRE )
+				morreClient = new HttpMorreClient( config.getMorreUrl() );
 		} catch (MalformedURLException e) {
 			log.fatal("Malformed Url for MORRE in config file", e);
 		}
