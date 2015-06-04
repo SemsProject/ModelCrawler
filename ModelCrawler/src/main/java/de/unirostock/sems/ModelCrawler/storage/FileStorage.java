@@ -68,6 +68,13 @@ public class FileStorage extends FileBasedStorage {
 		File file = new File(baseDir, path);
 		
 		try {
+			// check if file already exists and if it is symbolic link
+			if( Files.isSymbolicLink(file.toPath()) )
+				file.delete();
+			else if( file.exists() )
+				// file exists and is not a sym link
+				throw new StorageException( MessageFormat.format("File exists already. Cannot overrid {0}", file) );
+			
 			// open output file
 			OutputStream output = new FileOutputStream(file);
 			// copy stuff
