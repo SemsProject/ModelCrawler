@@ -84,7 +84,7 @@
 			<artifactId>json-simple</artifactId>
 			<version>1.1</version>
 		</dependency>
-		
+
 		<!-- Git -->
 		<dependency>
 			<groupId>org.eclipse.jgit</groupId>
@@ -109,7 +109,7 @@
 			<artifactId>BFUtils</artifactId>
 			<version>0.4</version>
 		</dependency>
-		
+
 		<!-- WebService connector -->
 		<dependency>
 			<groupId>de.unirostock.sems</groupId>
@@ -138,6 +138,13 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>2.5.1</version>
 		</dependency>
+
+		<!-- Collection+JSON -->
+		<dependency>
+			<groupId>net.hamnaberg.rest</groupId>
+			<artifactId>json-collection</artifactId>
+			<version>3.1.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -153,28 +160,28 @@
 				</configuration>
 			</plugin>
 			<plugin>
-			        <artifactId>maven-assembly-plugin</artifactId>
-			        <version>2.5.4</version>
-			        <configuration>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.5.4</version>
+				<configuration>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs> 
-			          <archive>
-					<manifest>
-						<mainClass>de.unirostock.sems.ModelCrawler.App</mainClass>
-					</manifest>
-			          </archive>
-			        </configuration>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>de.unirostock.sems.ModelCrawler.App</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
 				<executions>
-			          <execution>
-			            <id>make-assembly</id> <!-- this is used for inheritance merges -->
-			            <phase>package</phase> <!-- bind to the packaging phase -->
-			            <goals>
-			              <goal>single</goal>
-			            </goals>
-			          </execution>
-			        </executions>
-      			</plugin>
+					<execution>
+						<id>make-assembly</id> <!-- this is used for inheritance merges -->
+						<phase>package</phase> <!-- bind to the packaging phase -->
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>

@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -26,9 +27,16 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import net.hamnaberg.json.Collection;
+import net.hamnaberg.json.Link;
+import net.hamnaberg.json.parser.CollectionParser;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jgit.api.Git;
@@ -67,6 +75,7 @@ public class PmrDb extends ModelDatabase {
 
 	protected String hashAlgo = "MD5";
 	protected URL repoListUrl = null;
+	protected URL collectionEndpoint = null;
 
 	@JsonIgnore
 	protected DocumentClassifier classifier = null;
@@ -76,15 +85,15 @@ public class PmrDb extends ModelDatabase {
 	protected Map<String, ChangeSet> changeSetMap = new HashMap<String, ChangeSet>();
 	@JsonIgnore
 	protected WorkingDirConfig config = null;
-	
+
 	private File workingDir;
 
 	private static class WorkingDirConfig {
 
 		private Map<String, String> repositories = new HashMap<String, String>();
-		
+
 		public WorkingDirConfig() {}
-		
+
 		public Map<String, String> getRepositories() {
 			return repositories;
 		}
@@ -135,6 +144,14 @@ public class PmrDb extends ModelDatabase {
 	public void setRepoListUrl(URL repoListUri) {
 		this.repoListUrl = repoListUri;
 	}
+	
+	public URL getCollectionEndpoint() {
+		return collectionEndpoint;
+	}
+
+	public void setCollectionEndpoint(URL collectionEndpoint) {
+		this.collectionEndpoint = collectionEndpoint;
+	}
 
 	@Override
 	public void close() {
@@ -162,9 +179,6 @@ public class PmrDb extends ModelDatabase {
 		if( !repoListUrl.getProtocol().toLowerCase().startsWith("http") )
 			throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
 
-		if( log.isInfoEnabled() )
-			log.info( MessageFormat.format("Init new PMR2 Connector based on Repolist: {0}", this.repoListUrl) );
-
 		// init Document classifier
 		classifier = new DocumentClassifier ();
 
@@ -177,7 +191,21 @@ public class PmrDb extends ModelDatabase {
 
 		// list all available Repos
 		try {
-			repositories = getRepositoryList();
+			if( repoListUrl != null ) {
+				if( log.isInfoEnabled() )
+					log.info( MessageFormat.format("Init new PMR2 Connector based on Repolist: {0}", this.repoListUrl) );
+
+				repositories = getRepositoryList();
+			}
+			else if( collectionEndpoint != null ) {
+				if( log.isInfoEnabled() )
+					log.info( MessageFormat.format("Init new PMR2 Connector based on Collection+JSON: {0}", this.repoListUrl) );
+
+				repositories = getRespositoriesFromCollection();
+			}
+			else
+				log.fatal("No suitable endpoint was passed");
+
 		} catch (HttpException e) {
 			log.fatal("Can not download RepositoryList", e);
 		}
@@ -203,7 +231,7 @@ public class PmrDb extends ModelDatabase {
 	}
 
 	protected void init() {
-		
+
 		workingDir = obtainWorkingDir();
 		log.trace( "Preparing working dir " + workingDir.getAbsolutePath() );
 
@@ -297,6 +325,53 @@ public class PmrDb extends ModelDatabase {
 		return repoList;
 	}
 
+	private List<String> getRespositoriesFromCollection() throws HttpException {
+		List<String> repoList = new LinkedList<String>();
+
+		try {
+			Collection expose = getCollection( collectionEndpoint );
+			for(Link expLink : expose.getLinks() ) {
+				URL newLink = transformExposureUrl( expLink.getHref().toURL() );
+				if( newLink != null )
+					repoList.add( newLink.toString() );
+			}
+		} catch (IOException e) {
+			throw new HttpException("IOException while getting exposure list", e);
+		}
+		return repoList;
+	}
+
+	private Collection getCollection( URL url ) throws IOException {
+		URLConnection connection = url.openConnection();
+		connection.setRequestProperty("Accept", "application/json");
+		connection.setRequestProperty("Content-Type", "application/json");
+		connection.connect();
+		if( "application/vnd.collection+json".equals(connection.getContentType()) == false )
+			throw new IOException("Returned message is not Collection+JSON");
+
+		return new CollectionParser().parse( connection.getInputStream() );
+	}
+
+	private URL transformExposureUrl(URL link) {
+
+		try {
+			InputStream exposureStream = link.openStream();
+			String source = IOUtils.toString(exposureStream);
+
+			Pattern gitClonePattern = Pattern.compile("<input [^>]*value=.git clone ([^'\"]*). ");
+			Matcher matcher = gitClonePattern.matcher(source);
+
+			if( matcher.find() ) {
+				String newLink = matcher.group(1);
+				log.debug( MessageFormat.format("resolved exposure url {0} to {1}", link, newLink) );
+				return new URL(newLink);
+			}
+		} catch (IOException e) {
+			log.error("Exception while transforming " + link.toString() + " to workspace link", e);
+		}
+		
+		return null;
+	}
 
 	/**
 	 * Creates the directory for the given Repository
@@ -405,7 +480,7 @@ public class PmrDb extends ModelDatabase {
 						.setURI(repoLink)
 						.setDirectory(location)
 						.setCloneSubmodules(true)
-//						.setCloneAllBranches(false)
+						//						.setCloneAllBranches(false)
 						.call();
 
 				if( log.isInfoEnabled() )
@@ -727,7 +802,7 @@ public class PmrDb extends ModelDatabase {
 
 		int originalLength = 0;
 		int newLength = 0;
-		
+
 		// oldestLatestVersionDate is null -> there is no latest version known for any of the relevantFiles/-Models
 		for( RevCommit commit : relevantVersions ) {
 			originalLength++;
@@ -736,7 +811,7 @@ public class PmrDb extends ModelDatabase {
 				relevantVersionList.add(commit);
 			}
 		}
-		
+
 		// sorting versions
 		Collections.sort(relevantVersionList, new Comparator<RevCommit>() {
 			@Override
@@ -744,13 +819,13 @@ public class PmrDb extends ModelDatabase {
 				return o1.getCommitTime() - o2.getCommitTime();
 			}
 		});
-		
+
 		if( log.isInfoEnabled() )
 			if( originalLength == newLength )
 				log.info( MessageFormat.format("Found {0} commits. Cannot skip any of them,  because no one is indexed", originalLength) );
 			else 
 				log.info( MessageFormat.format("Found {0} commits, removes all commits older than {1} (oldestLatestVersion) from the list. {2} commits left.", originalLength, oldestLatestVersionDate, newLength) );
-			
+
 
 		return relevantVersionList;
 	}
@@ -787,16 +862,16 @@ public class PmrDb extends ModelDatabase {
 			ObjectId head = repository.resolve(Constants.HEAD);
 			RevCommit commit = revWalk.parseCommit (head);
 			RevCommit parent = null;
-			
+
 			// check if commit is Batman (no parents)
 			if( commit.getParentCount() > 0) {
 				parent = revWalk.parseCommit(commit.getParent(0).getId());
-	
+
 				DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
 				diffFormatter.setRepository(repository);
 				diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
 				diffFormatter.setDetectRenames(true);
-	
+
 				List<DiffEntry> diffs = diffFormatter.scan(parent.getTree(), commit.getTree());
 				for (DiffEntry diff : diffs) {
 					changedFiles.add (diff.getNewPath());
@@ -815,7 +890,7 @@ public class PmrDb extends ModelDatabase {
 
 			// going throw the relevant files
 			for( RelevantFile file : relevantFiles ) {
-				
+
 				boolean hasChanges = false;
 				String latestVersionId = null;
 
@@ -865,7 +940,7 @@ public class PmrDb extends ModelDatabase {
 							log.debug("Model is in the changed files list.");
 					}
 				}
-					
+
 				PmrChange change = null;
 				try {
 					change = new PmrChange(file.getRepositoryUrl(), file.getFilePath(), currentName.toString (), currentVersionDate, crawledDate);
@@ -873,12 +948,12 @@ public class PmrDb extends ModelDatabase {
 					log.error("Error while creating Change Object. Abort processing current repo.", e);
 					return;
 				}
-				
+
 				if( hasChanges ) {
 					// this file has change or is new -> archive it!
 					if( log.isInfoEnabled() )
 						log.info("Model has changes. Adds it to its ChangeSet");
-					
+
 					// set some Meta information
 					change.setMeta( CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_PMR2 );
 					if( (file.getType() & DocumentClassifier.SBML) > 0 )
@@ -903,7 +978,7 @@ public class PmrDb extends ModelDatabase {
 					// Model has no changes -> symlink to parent version
 					if( log.isInfoEnabled() )
 						log.info("Model has no changes. Link to parent version.");
-					
+
 					try {
 						modelStorage.linkModelVersion(change.getFileId(), change.getVersionId(), latestVersionId);
 					} catch (StorageException e) {
@@ -912,7 +987,7 @@ public class PmrDb extends ModelDatabase {
 				}
 				else if( log.isInfoEnabled() )
 					log.info("Model has no changes and no parent version. Nothing to link to");
-						
+
 			}
 
 		}
