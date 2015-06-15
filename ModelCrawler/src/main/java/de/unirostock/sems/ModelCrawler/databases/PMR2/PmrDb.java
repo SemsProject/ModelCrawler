@@ -21,12 +21,20 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -176,7 +184,7 @@ public class PmrDb extends ModelDatabase {
 		}
 
 		// Http only!
-		if( !repoListUrl.getProtocol().toLowerCase().startsWith("http") )
+		if( repoListUrl != null && !repoListUrl.getProtocol().toLowerCase().startsWith("http") )
 			throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
 
 		// init Document classifier
@@ -325,34 +333,73 @@ public class PmrDb extends ModelDatabase {
 		return repoList;
 	}
 
-	private List<String> getRespositoriesFromCollection() throws HttpException {
-		List<String> repoList = new LinkedList<String>();
+	protected List<String> getRespositoriesFromCollection() throws HttpException {
+		LinkedHashSet<String> repoList = null;
 
 		try {
+			ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(30);
+			List<Future<URL>> futures = new LinkedList<Future<URL>>();
+			
+			// get list of exposures
 			Collection expose = getCollection( collectionEndpoint );
+
+			// spawn a job for every link
 			for(Link expLink : expose.getLinks() ) {
-				URL newLink = transformExposureUrl( expLink.getHref().toURL() );
-				if( newLink != null )
-					repoList.add( newLink.toString() );
+				ExposureTransformJob job = new ExposureTransformJob( expLink.getHref().toURL() );
+				futures.add( executor.submit(job) );
 			}
+			
+			// wait for the jobs
+			executor.shutdown();
+			while( !executor.awaitTermination(5, TimeUnit.SECONDS) ) {
+				log.debug("Awaiting completion of URL transformation");
+			}
+			
+			// transform Futures
+			repoList = new LinkedHashSet<String>( futures.size()/2 );
+			for( Future<URL> jobFuture : futures ) {
+				try {
+					if( jobFuture.isDone() && jobFuture.get() != null )
+						repoList.add( jobFuture.get().toString() );
+				} catch (ExecutionException e) {
+					log.warn("ExecutionException occured!", e);
+				}
+			}
+			
 		} catch (IOException e) {
 			throw new HttpException("IOException while getting exposure list", e);
+		} catch (InterruptedException e) {
+			throw new HttpException("Was interrupted while waiting for completion of URL transformation", e);
 		}
-		return repoList;
+		return new ArrayList<String>( repoList );
 	}
 
-	private Collection getCollection( URL url ) throws IOException {
+	protected Collection getCollection( URL url ) throws IOException {
 		URLConnection connection = url.openConnection();
 		connection.setRequestProperty("Accept", "application/json");
 		connection.setRequestProperty("Content-Type", "application/json");
 		connection.connect();
-		if( "application/vnd.collection+json".equals(connection.getContentType()) == false )
+		String contentType = connection.getContentType();
+		if( contentType == null || contentType.startsWith("application/vnd.") == false )
 			throw new IOException("Returned message is not Collection+JSON");
 
 		return new CollectionParser().parse( connection.getInputStream() );
 	}
-
-	private URL transformExposureUrl(URL link) {
+	
+	protected class ExposureTransformJob implements Callable<URL> {
+		private URL expLink = null;
+		
+		public ExposureTransformJob(URL expLink) {
+			this.expLink = expLink;
+		}
+		
+		@Override
+		public URL call() throws Exception {
+			return transformExposureUrl(expLink);
+		}
+	}
+	
+	protected URL transformExposureUrl(URL link) {
 
 		try {
 			InputStream exposureStream = link.openStream();

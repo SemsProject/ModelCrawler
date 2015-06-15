@@ -1,5 +1,6 @@
 package de.unirostock.sems.ModelCrawler;
 
+import java.beans.DesignMode;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -10,6 +11,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -53,6 +57,7 @@ public class Config implements Serializable {
 			mapper = new ObjectMapper();
 			mapper.enable( SerializationFeature.INDENT_OUTPUT );
 			mapper.enable( SerializationFeature.WRITE_NULL_MAP_VALUES );
+			mapper.enable( Feature.ALLOW_COMMENTS );
 		}
 		
 		return mapper;
