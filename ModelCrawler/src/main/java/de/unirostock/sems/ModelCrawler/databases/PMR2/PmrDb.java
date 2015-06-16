@@ -176,16 +176,12 @@ public class PmrDb extends ModelDatabase {
 
 	@Override
 	public Map<String, ChangeSet> call() {
-		List<String> repositories = null;
+		LinkedHashSet<String> repositories = null;
 
 		if( morreClient == null && Config.getWorkingMode() != WorkingMode.NO_MORRE ) {
 			log.error("No Morre crawler interface provided!");
 			throw new IllegalArgumentException("No Morre crawler interface provided!");
 		}
-
-		// Http only!
-		if( repoListUrl != null && !repoListUrl.getProtocol().toLowerCase().startsWith("http") )
-			throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
 
 		// init Document classifier
 		classifier = new DocumentClassifier ();
@@ -200,16 +196,24 @@ public class PmrDb extends ModelDatabase {
 		// list all available Repos
 		try {
 			if( repoListUrl != null ) {
+				
+				// Http only!
+				if( repoListUrl != null && !repoListUrl.getProtocol().toLowerCase().startsWith("http") )
+					throw new IllegalArgumentException("Only http is supported for the Repository List at the moment!");
+				
 				if( log.isInfoEnabled() )
 					log.info( MessageFormat.format("Init new PMR2 Connector based on Repolist: {0}", this.repoListUrl) );
-
+				
 				repositories = getRepositoryList();
 			}
-			else if( collectionEndpoint != null ) {
+			if( collectionEndpoint != null ) {
 				if( log.isInfoEnabled() )
 					log.info( MessageFormat.format("Init new PMR2 Connector based on Collection+JSON: {0}", this.repoListUrl) );
 
-				repositories = getRespositoriesFromCollection();
+				if( repositories == null )
+					repositories = getRepositoriesFromCollection();
+				else
+					repositories.addAll( getRepositoriesFromCollection() );
 			}
 			else
 				log.fatal("No suitable endpoint was passed");
@@ -222,8 +226,15 @@ public class PmrDb extends ModelDatabase {
 		if( limit > 0 ) {
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format("Limit processed Repositories to {0}", limit) );
-
-			repositories = repositories.subList(0, limit);
+			
+			// create new limited list
+			LinkedHashSet<String> newRepositoryList = new LinkedHashSet<String>( limit );
+			for( String repo : repositories ) {
+				newRepositoryList.add(repo);
+				if( newRepositoryList.size() >= limit )
+					break;
+			}
+			repositories = newRepositoryList;
 		}
 
 		if( log.isInfoEnabled() )
@@ -309,8 +320,8 @@ public class PmrDb extends ModelDatabase {
 	 * @return
 	 * @throws HttpException
 	 */
-	protected List<String> getRepositoryList() throws HttpException {
-		List<String> repoList = new LinkedList<String>();
+	protected LinkedHashSet<String> getRepositoryList() throws HttpException {
+		LinkedHashSet<String> repoList = new LinkedHashSet<String>();
 
 		try {
 			InputStream input = repoListUrl.openStream();
@@ -333,7 +344,7 @@ public class PmrDb extends ModelDatabase {
 		return repoList;
 	}
 
-	protected List<String> getRespositoriesFromCollection() throws HttpException {
+	protected LinkedHashSet<String> getRepositoriesFromCollection() throws HttpException {
 		LinkedHashSet<String> repoList = null;
 
 		try {
@@ -371,7 +382,7 @@ public class PmrDb extends ModelDatabase {
 		} catch (InterruptedException e) {
 			throw new HttpException("Was interrupted while waiting for completion of URL transformation", e);
 		}
-		return new ArrayList<String>( repoList );
+		return repoList;
 	}
 
 	protected Collection getCollection( URL url ) throws IOException {
