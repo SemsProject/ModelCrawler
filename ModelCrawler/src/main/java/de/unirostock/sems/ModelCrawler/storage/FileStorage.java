@@ -62,9 +62,14 @@ public class FileStorage extends FileBasedStorage {
 		}
 		
 	}
-
+	
 	@Override
 	protected void storeFile(InputStream source, String path) throws StorageException {
+		storeFile(source, path, false);
+	}
+	
+	@Override
+	protected void storeFile(InputStream source, String path, boolean override) throws StorageException {
 		File file = new File(baseDir, path);
 		
 		try {

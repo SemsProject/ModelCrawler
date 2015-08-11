@@ -46,6 +46,7 @@ public abstract class FileBasedStorage extends ModelStorage {
 	protected abstract void closeConnection();
 	protected abstract void makeDirs( String path ) throws StorageException;
 	protected abstract void storeFile( InputStream source, String path ) throws StorageException;
+	protected abstract void storeFile( InputStream source, String path, boolean override ) throws StorageException;
 	protected abstract InputStream getFile( String path ) throws StorageException;
 	protected abstract void linkFiles( String sourcePath, String targetPath ) throws StorageException;
 	
@@ -299,7 +300,7 @@ public abstract class FileBasedStorage extends ModelStorage {
 			// serialize info buffer to input stream
 			ByteArrayInputStream input = new ByteArrayInputStream( Config.getObjectMapper().writeValueAsBytes(info) );
 			// write file
-			storeFile(input, outerPath + Constants.VERSION_INFO_FILENAME);
+			storeFile(input, outerPath + Constants.VERSION_INFO_FILENAME, true);
 			input.close();
 		} catch (IOException | StorageException e) {
 			log.error("Cannot write VersionInfo", e);

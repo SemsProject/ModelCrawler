@@ -169,4 +169,11 @@ public class FtpStorage extends FileBasedStorage {
 		this.ftpPass = ftpPass;
 	}
 
+	@Override
+	protected void storeFile(InputStream source, String path, boolean override)
+			throws StorageException {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
