@@ -76,9 +76,14 @@ public class FileStorage extends FileBasedStorage {
 			// check if file already exists and if it is symbolic link
 			if( Files.isSymbolicLink(file.toPath()) )
 				file.delete();
-			else if( file.exists() )
+			else if( file.exists() ) {
 				// file exists and is not a sym link
-				throw new StorageException( MessageFormat.format("File exists already. Cannot overrid {0}", file) );
+				if( override == false )
+					throw new StorageException( MessageFormat.format("File exists already. Cannot override {0}", file) );
+				else
+					// override enabled
+					file.delete();
+			}
 			
 			// open output file
 			OutputStream output = new FileOutputStream(file);
