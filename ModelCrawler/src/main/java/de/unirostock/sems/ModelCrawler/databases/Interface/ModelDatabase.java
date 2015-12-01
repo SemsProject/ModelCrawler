@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.unirostock.sems.ModelCrawler.Config;
+import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.BioModelsDb;
 import de.unirostock.sems.ModelCrawler.databases.PMR2.PmrDb;
 import de.unirostock.sems.ModelCrawler.storage.ModelStorage;
@@ -74,13 +74,14 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	protected synchronized File createTempDir() {
 		
 		// create temp dir
+		Config config = Config.getConfig();
 		try {
-			tempDir = Files.createTempDirectory( Config.getConfig().getTempDirPrefix(),
-							PosixFilePermissions.asFileAttribute( PosixFilePermissions.fromString("rwx------")
-					)).toFile();
+			tempDir = Files.createTempDirectory( config.getTempDir().toPath(), config.getTempDirPrefix(), Constants.TEMP_DIR_POSIX_ATTRIBUTES ).toFile();
+			tempDir.deleteOnExit();
 		} catch (IOException e) {
-			tempDir = new File("temp/" + new Random( new Date().getTime() ).nextLong() );
+			tempDir = new File( config.getTempDir(), String.valueOf(new Random( new Date().getTime() ).nextLong()) );
 			tempDir.mkdirs();
+			tempDir.deleteOnExit();
 			
 			log.error("Cannot create TempDirectory, using '" + tempDir.getAbsolutePath() + "' instead.", e);
 		}

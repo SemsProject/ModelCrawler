@@ -3,6 +3,8 @@ package de.unirostock.sems.ModelCrawler;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +49,11 @@ public class Config implements Serializable {
 		return instance;
 	}
 	
+	/**
+	 * returns the default jackson object mapper for serializing and deserializing json objects
+	 * 
+	 * @return
+	 */
 	public static ObjectMapper getObjectMapper() {
 		
 		// create new mapper
@@ -115,6 +122,7 @@ public class Config implements Serializable {
 	// ----------------------------------------
 	
 	private File workingDir = null;
+	private File tempDir = null;
 	private String encoding = "UTF-8";
 	private char pathSeparator = '/';
 	private String[] extensionBlacklist = { "png", "bmp", "jpg", "jpeg", "html", "xhtml", "svg", "pdf", "json", "pl", "rdf", "rar", "msh", "zip" };
@@ -158,6 +166,32 @@ public class Config implements Serializable {
 
 	public void setWorkingDir(File workingDir) {
 		this.workingDir = workingDir;
+	}
+	
+	public File getTempDir() {
+		if( tempDir == null ) {
+			try {
+				log.warn("Creates default temp dir, because config parameter was not set");
+				tempDir = Files.createTempDirectory(Constants.DEFAULT_TEMP_PREFIX, Constants.TEMP_DIR_POSIX_ATTRIBUTES).toFile();
+				log.info( MessageFormat.format("temp directory was set to {0}", tempDir.getAbsolutePath()) );
+				tempDir.deleteOnExit();
+			} catch (IOException e) {
+				log.error("Not able to create default temp directory", e);
+				return null;
+			}
+		}
+		
+		return tempDir;
+	}
+
+	public void setTempDir(File tempDir) {
+		if( tempDir == null )
+			return;
+		
+		this.tempDir = tempDir;
+		tempDir.mkdirs();
+		tempDir.deleteOnExit();
+		log.info( MessageFormat.format("temp directory was set to {0}", tempDir.getAbsolutePath()) );
 	}
 
 	public String getEncoding() {

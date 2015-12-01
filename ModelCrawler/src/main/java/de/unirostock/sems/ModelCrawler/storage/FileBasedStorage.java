@@ -9,7 +9,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +18,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
 import de.unirostock.sems.ModelCrawler.Constants;
