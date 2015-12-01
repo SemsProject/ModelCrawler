@@ -111,6 +111,9 @@ public class App {
 				log.info( MessageFormat.format("finished crawling for {0}", database.getClass().getName()) );
 		}
 		
+		int changeSetCount = 0;
+		int modelCount = 0;
+		
 		if( Config.getWorkingMode() == WorkingMode.TEST )
 			log.info("Do not push ChangeSets to morre or store them in test-mode");
 		else if( Config.getWorkingMode() == WorkingMode.NO_MORRE )
@@ -120,7 +123,9 @@ public class App {
 	    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
 	    	while( changesSetIterator.hasNext() ) {
 	    		// ... and process them
-	    		processChangeSet( changesSetIterator.next() );
+	    		int count = processChangeSet( changesSetIterator.next() );
+	    		changeSetCount++;
+	    		modelCount = modelCount + count;
 	    	}
 	    	
 	    	storage.close();
@@ -130,6 +135,7 @@ public class App {
 		close();
 
 		log.info("finished crawling");
+		log.info( MessageFormat.format("pushed {0} changesets with {1} models, {3} models per changeset", changeSetCount, modelCount, (double) (modelCount/changeSetCount) ));
 	}
 
 	private static void printHelp() {
@@ -188,11 +194,12 @@ public class App {
 		}
 	}
 
-	private static void processChangeSet( ChangeSet changeSet ) {
+	private static int processChangeSet( ChangeSet changeSet ) {
 		
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Start processing ChangeSet for model {0} with {1} entrie(s)", changeSet.getFileId(), changeSet.getChanges().size() ) );
 		
+		int modelCount = 0;
 		Iterator<Change> changeIterator = changeSet.getChanges().iterator();
 		Change change = null;
 		try {
@@ -211,6 +218,7 @@ public class App {
 				
 				// insert the model into MaSyMos via Morre
 				morreClient.addModel(change);
+				modelCount++;
 			}
 		} catch (IOException e) {
 			log.fatal( MessageFormat.format("Some IO stuff went wrong while pushing model {0} !", change), e);
@@ -220,6 +228,7 @@ public class App {
 			log.fatal( MessageFormat.format("Something went wrong while pushing model {0} !", change), e);
 		}
 
+		return modelCount;
 	}
-
+	
 }
