@@ -135,7 +135,7 @@ public class App {
 		close();
 
 		log.info("finished crawling");
-		log.info( MessageFormat.format("pushed {0} changesets with {1} models, {3} models per changeset", changeSetCount, modelCount, (double) (modelCount/changeSetCount) ));
+		log.info( MessageFormat.format("pushed {0} changesets with {1} models, {2,number,##.#} models per changeset", changeSetCount, modelCount, (double) (modelCount/changeSetCount) ));
 	}
 
 	private static void printHelp() {
