@@ -26,33 +26,36 @@ import de.unirostock.sems.morre.client.exception.MorreException;
 import de.unirostock.sems.morre.client.impl.HttpMorreClient;
 
 public class App {
+	private static App instance = null;
+
 	private static final Log log = LogFactory.getLog( App.class );
 	
 	private static MorreCrawlerInterface morreClient;
 	private static ModelStorage storage = null;
+	private static Map<String, ChangeSet> changes = null;
+	
 
-	public static void main( String[] args ) {
-		File configFile = null;
-		
-		if( args.length == 0 ) {
-			printHelp();
-			System.exit(0);
+	// avoid creating more than one crawler
+	public static App getApp(String[] args) {
+		if( instance == null ){
+			instance = new App(args);
 		}
+		return instance;
+	}
+	
+	
+	
+	//public static void main( String[] args ) {
+	/* create a crawler from the provided configuration
+	 * and crawls the provided datasets
+	 */
+	private App ( String[] args ) {
 		
-		for( int index = 0; index < args.length; index++ ) {
-			
-			if( args[index].equals("-c") || args[index].equals("--config") )
-				configFile = new File(args[++index]);
-			else if( args[index].equals("--template") )
-				Config.setWorkingMode( WorkingMode.TEMPLATE_CONFIG );
-			else if( args[index].equals("--test") )
-				Config.setWorkingMode( WorkingMode.TEST );
-			else if( args[index].equals("--no-morre") )
-				Config.setWorkingMode( WorkingMode.NO_MORRE );
-		}
+		File configFile = configureCrawler(args); // TODO: cleanup the Config object, then isolate the config-related stuff in one function so to deal with the different operation modes there
 		
-		log.info("ModelCrawler startet");
+		log.info("ModelCrawler started");
 		
+		// before-crawling operations for mode TEMPLATE_CONFIG
 		if( Config.getWorkingMode() == WorkingMode.TEMPLATE_CONFIG ) {
 			if( configFile == null ) {
 				log.error("No config file provided, use -c flag");
@@ -77,21 +80,21 @@ public class App {
 			System.exit(0);
 		}
 		
-		// load config
+		// get the provided configuration from the configuration file
 		try {
 			if( configFile != null )
 				Config.load( configFile );
 		} catch (ConfigurationException e) {
 			log.fatal( MessageFormat.format("Can not load config file {0}", configFile), e );
 		}
-		
+		Config config = Config.getConfig();
 		
 		// Connectors
-		Config config = Config.getConfig();
 		initConnectors( config );
 		
 		// map for all changes!
-		Map<String, ChangeSet> changes = new HashMap<String, ChangeSet>();
+		// Map<String, ChangeSet> changes = new HashMap<String, ChangeSet>();
+		changes = new HashMap<String, ChangeSet>();
 
 		// run it!
 		for( ModelDatabase database : config.getDatabases() ) {
@@ -114,10 +117,13 @@ public class App {
 		int changeSetCount = 0;
 		int modelCount = 0;
 		
-		if( Config.getWorkingMode() == WorkingMode.TEST )
+		// after-crawling operations for mode TEST
+		if( Config.getWorkingMode() == WorkingMode.TEST ) {
 			log.info("Do not push ChangeSets to morre or store them in test-mode");
-		else if( Config.getWorkingMode() == WorkingMode.NO_MORRE )
+		}
+		else if( Config.getWorkingMode() == WorkingMode.NO_MORRE ) {
 			log.info("Do not push ChangeSets to morre in NO_MORRE mode.");
+		}
 		else {
 			
 	    	Iterator<ChangeSet> changesSetIterator = changes.values().iterator();
@@ -137,7 +143,37 @@ public class App {
 		log.info("finished crawling");
 		log.info( MessageFormat.format("pushed {0} changesets with {1} models, {2,number,##.#} models per changeset", changeSetCount, modelCount, (double) (changeSetCount > 0 ? modelCount/changeSetCount : 0.0) ));
 	}
+	
+	
+	/* configure the crawler
+	 * 
+	 */
+	private static File configureCrawler(String[] args){
+		File configFile = null;
+		
+		// validate the provided configuration
+		if( args.length == 0 ) {
+			printHelp();
+			System.exit(0);
+		}
 
+		// set the working mode
+		for( int index = 0; index < args.length; index++ ) {
+			
+			if( args[index].equals("-c") || args[index].equals("--config") )
+				configFile = new File(args[++index]);
+			else if( args[index].equals("--template") )
+				Config.setWorkingMode( WorkingMode.TEMPLATE_CONFIG );
+			else if( args[index].equals("--test") )
+				Config.setWorkingMode( WorkingMode.TEST );
+			else if( args[index].equals("--no-morre") )
+				Config.setWorkingMode( WorkingMode.NO_MORRE );
+		}
+		
+		return configFile;
+	}
+
+	
 	private static void printHelp() {
 		System.out.println("ModelCrawler");
 		System.out.println(
@@ -229,6 +265,10 @@ public class App {
 		}
 
 		return modelCount;
+	}
+	
+	public Map<String, ChangeSet> getChanges(){
+		return changes;
 	}
 	
 }
