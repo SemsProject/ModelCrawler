@@ -94,7 +94,7 @@ public class CrawlerAPI {
      * @param field
      * @return
      */
-    private String getChange(Change change, String field) {
+    private static String getChange(Change change, String field) {
 	String result = null;
 	if (field.equals(REPOSITORY_URL)) {
 	    result = change.getChangeRepositoryUrl(change);
@@ -119,43 +119,61 @@ public class CrawlerAPI {
      * @param modelName
      * @return
      */
-    public ChangeSet getModelChangeSet(Map<String, ChangeSet> changesPerRelease, String modelName) {
+    public static ChangeSet getModelChangeSet(Map<String, ChangeSet> changesPerRelease, String modelName) {
 	return changesPerRelease.get(modelName);
     }
     
     
     /**
-     * Return a specific field within the specified change of the given modelName
-     * @param changesPerRelease
-     * @param modelName
+     * Return a specific field within the provided model's change
      * @param change
      * @param field
      * @return
      */
-    public String getModelChangeRepositoryUrl(Map<String, ChangeSet> changesPerRelease,
-	    String modelName, Change change, String field) {
-	String result = null;
-	Iterator<Change> changeIterator = changesPerRelease.get(modelName).getChanges().iterator();
-	while(changeIterator.hasNext()) {
-	    Change c = changeIterator.next();
-	    if(c.equals(change)) {
-		result = getChange(c, field);
-	    }
-	}
-	return result;
+    public static String getModelChange(Change change, String field) {
+	return getChange(change, field);
     }
     
     
-    /*
-     * DEMO CrawlerAPI
+    
+    /**
+     * Class demo. Uncomment the procedure you wish to test
+     * @param args
      */
     public static void main(String[] args){
 	CrawlerAPI crawlerAPI = new CrawlerAPI(args);
 	
+	// retrieve and print all downloaded models
+	/*
 	ArrayList<String> models = getDownloadedModels(crawlerAPI.crawler);
 	printDownloadedModels(models); // print all retrieved models
+	 */
 	
+	// retrieve and print all downloaded models' changes 
+	/*
 	Map<String, ChangeSet> changesPerRelease = getChangesPerRelease(crawlerAPI.crawler);
 	printChangesPerRelease(changesPerRelease); // print all retrieved changes per release
+	 */
+	
+	// retrieve all downloaded models' changes and display a given model's
+	// change set using the provided API
+	Map<String, ChangeSet> changesPerRelease = getChangesPerRelease(crawlerAPI.crawler);
+	String targetModelName = new String("BIOMD0000000057.xml");
+	
+	System.err.println("Retrieve model " + targetModelName + "'s change set:");
+	ChangeSet modelChangeSet = getModelChangeSet(changesPerRelease, targetModelName); // use API method
+	System.err.println("  Model " + targetModelName + " has change set object " + modelChangeSet.toString() + " containing:");
+	
+	Iterator<Change> changeIterator = modelChangeSet.getChanges().iterator(); // TODO: API to retrieve a specific change?
+	while(changeIterator.hasNext()) {
+	    Change modelChange = changeIterator.next();
+	    System.err.println("    Change " + targetModelName + " with associated metadata:");
+	    System.err.println("      repository URL " + getModelChange(modelChange, CrawlerAPI.REPOSITORY_URL)); // use API method
+	    System.err.println("      file path " + getModelChange(modelChange, CrawlerAPI.FILE_PATH)); // use API method
+	    System.err.println("      file name " + getModelChange(modelChange, CrawlerAPI.FILE_NAME)); // use API method
+	    System.err.println("      version ID " + getModelChange(modelChange, CrawlerAPI.VERSION_ID)); // use API method
+	    System.err.println("      version date " + getModelChange(modelChange, CrawlerAPI.VERSION_DATE)); // use API method
+	    System.err.println("      crawled date " + getModelChange(modelChange, CrawlerAPI.CRAWLED_DATE)); // use API method
+	}
     }
 }
