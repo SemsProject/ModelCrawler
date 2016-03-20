@@ -28,12 +28,13 @@ public class BioModelsChange extends Change {
 	
 	public final static String META_HASH = "filehash";
 	
-	public BioModelsChange( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
-		super( repositoryUrl, filePath, versionId, versionDate, crawledDate );
+	public BioModelsChange( URL repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
+		super( repositoryUrl, fileName, versionId, versionDate, crawledDate );
 	}
 	
-	public BioModelsChange( String repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws MalformedURLException, URISyntaxException {
-		this( new URL(repositoryUrl), filePath, versionId, versionDate, crawledDate );
+	
+	public BioModelsChange( String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws MalformedURLException, URISyntaxException {
+		this( new URL(repositoryUrl), fileName, versionId, versionDate, crawledDate );
 	}
 	
 	public boolean setXmlFile(File xmlFile, String hash) {

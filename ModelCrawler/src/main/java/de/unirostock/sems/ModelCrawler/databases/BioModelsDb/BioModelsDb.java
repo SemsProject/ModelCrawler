@@ -34,6 +34,7 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.ftp.FTP;
@@ -698,8 +699,17 @@ public class BioModelsDb extends ModelDatabase {
 			repositoryUrl = new URL( ftpUrl.getProtocol(), ftpUrl.getHost(), filePath );
 			
 			// create the Change-Entry
-			//change = new BioModelsChange(repositoryUrl, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
-			change = new BioModelsChange(repositoryUrl, filePath, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+			change = new BioModelsChange(repositoryUrl, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+			//change = new BioModelsChange(repositoryUrl, filePath, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+			/*
+			System.err.println(" repository URL " + change.getChangeRepositoryUrl(change));
+			System.err.println(" file path " + change.getChangeFilePath(change));
+			System.err.println(" file name " + change.getChangeFileName(change));
+			System.err.println(" version ID " + change.getChangeVersionId(change));
+			System.err.println(" version date " + change.getChangeVersionDate(change));
+			System.err.println(" crawled date " + change.getChangeCrawledDate(change));
+			System.exit(1);
+			*/
 			
 			// sets soure meta information
 			change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB);
@@ -822,6 +832,37 @@ public class BioModelsDb extends ModelDatabase {
 			
 			if( log.isDebugEnabled() )
 				log.debug("put new version into change set");
+			
+			//
+			//
+			Iterator<String> elementIterator = changeSetMap.keySet().iterator();
+			while(elementIterator.hasNext()) {
+			    String element = elementIterator.next();
+			    System.err.println("-------------------------------");
+			    System.err.println("  next element " + element);
+			    System.err.println("    has associated changeset:");
+			    			    
+			    ChangeSet elementChangeSet = changeSetMap.get(element);
+			    if (elementChangeSet.getChanges().size() == 0) {
+				System.err.println("Empty :(");
+				System.exit(1);
+			    }
+			    Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
+			    while(changeIterator.hasNext()) {
+				Change c = changeIterator.next();
+				System.err.println("      repository URL " + c.getChangeRepositoryUrl(c));
+				System.err.println("      file path " + c.getChangeFilePath(c));
+				System.err.println("      file name " + c.getChangeFileName(c));
+				System.err.println("      version ID " + c.getChangeVersionId(c));
+				System.err.println("      version date " + c.getChangeVersionDate(c));
+				System.err.println("      crawled date " + c.getChangeCrawledDate(c));
+				System.err.println("-------------------------------");
+			    }
+			}
+			//System.exit(1);
+			//
+			//
+			
 			
 		} else if( log.isDebugEnabled() ) {
 			log.debug("not a new version of model");

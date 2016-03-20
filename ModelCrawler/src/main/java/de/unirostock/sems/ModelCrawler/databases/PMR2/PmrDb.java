@@ -1002,6 +1002,17 @@ public class PmrDb extends ModelDatabase {
 				PmrChange change = null;
 				try {
 					change = new PmrChange(file.getRepositoryUrl(), file.getFilePath(), currentName.toString (), currentVersionDate, crawledDate);
+					//change = new PmrChange(file.getRepositoryUrl(), file.getFilePath(), FilenameUtils.getBaseName(file.getFilePath()), currentName.toString (), currentVersionDate, crawledDate);
+					/*
+					System.err.println(" repository URL " + change.getChangeRepositoryUrl(change));
+					System.err.println(" file path " + change.getChangeFilePath(change));
+					System.err.println(" file name " + change.getChangeFileName(change));
+					System.err.println(" version ID " + change.getChangeVersionId(change));
+					System.err.println(" version date " + change.getChangeVersionDate(change));
+					System.err.println(" crawled date " + change.getChangeCrawledDate(change));
+					System.exit(1);
+					*/
+					
 				} catch (URISyntaxException e) {
 					log.error("Error while creating Change Object. Abort processing current repo.", e);
 					return;

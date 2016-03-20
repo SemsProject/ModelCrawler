@@ -27,25 +27,30 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 	
 
 	
-	public Change( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
-		super( generateFileId(repositoryUrl, filePath), versionId, versionDate, crawledDate );
+	public Change( URL repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
+	//public Change( URL repositoryUrl, String filePath, String fileName, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
+		super( generateFileId(repositoryUrl, fileName), versionId, versionDate, crawledDate );
 		
 		// keep this meta-data on the retrieved change
 		this.repositoryUrl = repositoryUrl;
-		this.filePath = filePath;
-		this.fileName = new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath));
+		
+		//this.filePath = filePath; // ATTENTION: THE PASSED filePath IS THE FILE NAME, NOT THE PATH
+		//this.fileName = new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath));
+		this.fileName = fileName;
+		
 		this.versionId = versionId;
 		this.versionDate = versionDate;
 		this.crawledDate = crawledDate;
 		/*
-		System.err.println("      repository URL " + this.repositoryUrl);
-		System.err.println("      file path " + this.filePath);
-		System.err.println("      file name " + this.fileName);
-		System.err.println("      version ID " + this.versionId);
-		System.err.println("      version ID " + this.versionDate);
-		System.err.println("      version ID " + this.crawledDate);
+		System.err.println(" repository URL " + this.repositoryUrl);
+		System.err.println(" file path " + this.filePath);
+		System.err.println(" file name " + this.fileName);
+		System.err.println(" version ID " + this.versionId);
+		System.err.println(" version date " + this.versionDate);
+		System.err.println(" crawled date " + this.crawledDate);
 		System.exit(1);
 		*/
+		
 	}
 	
 	public static String generateFileId( URL repositoryUrl, String filePath ) throws URISyntaxException {

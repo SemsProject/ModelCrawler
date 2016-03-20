@@ -12,6 +12,13 @@ import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
  */
 public class CrawlerAPI {
     
+    public static final String REPOSITORY_URL = new String("repositoryUrl");
+    public static final String FILE_PATH = new String("filePath");
+    public static final String FILE_NAME = new String("fileName");
+    public static final String VERSION_ID = new String("versionId");
+    public static final String VERSION_DATE = new String("versionDate");
+    public static final String CRAWLED_DATE = new String("crawledDate");
+    
     private App crawler = null;
     
     /*
@@ -56,10 +63,10 @@ public class CrawlerAPI {
     /*
      * print the given list of changes per release
      */
-    private static void printChangesPerRelease(Map<String, ChangeSet> changesPerRelease){
+    private static void printChangesPerRelease(Map<String, ChangeSet> changesPerRelease) {
 	
 	Iterator<String> elementIterator = changesPerRelease.keySet().iterator();
-	while(elementIterator.hasNext()){
+	while(elementIterator.hasNext()) {
 	    String element = elementIterator.next();
 	    System.err.println("-------------------------------");
 	    System.err.println("  next element " + element);
@@ -67,18 +74,77 @@ public class CrawlerAPI {
 	    
 	    ChangeSet elementChangeSet = changesPerRelease.get(element);
 	    Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
-	    while(changeIterator.hasNext()){
+	    while(changeIterator.hasNext()) {
 		Change c = changeIterator.next();
 		System.err.println("      repository URL " + c.getChangeRepositoryUrl(c));
 		System.err.println("      file path " + c.getChangeFilePath(c));
 		System.err.println("      file name " + c.getChangeFileName(c));
 		System.err.println("      version ID " + c.getChangeVersionId(c));
-		System.err.println("      version ID " + c.getChangeVersionDate(c));
-		System.err.println("      version ID " + c.getChangeCrawledDate(c));
+		System.err.println("      version date " + c.getChangeVersionDate(c));
+		System.err.println("      crawled date " + c.getChangeCrawledDate(c));
 		System.err.println("-------------------------------");
 	    }
 	}
     }
+    
+    
+    /**
+     * Return a specific field of the given change
+     * @param change
+     * @param field
+     * @return
+     */
+    private String getChange(Change change, String field) {
+	String result = null;
+	if (field.equals(REPOSITORY_URL)) {
+	    result = change.getChangeRepositoryUrl(change);
+	} else if (field.equals(FILE_PATH)) {
+	    result = change.getChangeFilePath(change);
+	} else if (field.equals(FILE_NAME)) {
+	    result = change.getChangeFileName(change);
+	} else if (field.equals(VERSION_ID)) {
+	    result = change.getChangeVersionId(change);
+	} else if (field.equals(VERSION_DATE)) {
+	    result = change.getChangeVersionDate(change);
+	} else if (field.equals(CRAWLED_DATE)) {
+	    result = change.getChangeCrawledDate(change);
+	}
+	return result;
+    }
+    
+    
+    /**
+     * Return all ChangeSet changes associated with the given modelName
+     * @param changesPerRelease
+     * @param modelName
+     * @return
+     */
+    public ChangeSet getModelChangeSet(Map<String, ChangeSet> changesPerRelease, String modelName) {
+	return changesPerRelease.get(modelName);
+    }
+    
+    
+    /**
+     * Return a specific field within the specified change of the given modelName
+     * @param changesPerRelease
+     * @param modelName
+     * @param change
+     * @param field
+     * @return
+     */
+    public String getModelChangeRepositoryUrl(Map<String, ChangeSet> changesPerRelease,
+	    String modelName, Change change, String field) {
+	String result = null;
+	Iterator<Change> changeIterator = changesPerRelease.get(modelName).getChanges().iterator();
+	while(changeIterator.hasNext()) {
+	    Change c = changeIterator.next();
+	    if(c.equals(change)) {
+		result = getChange(c, field);
+	    }
+	}
+	return result;
+    }
+    
     
     /*
      * DEMO CrawlerAPI
