@@ -47,6 +47,7 @@ import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
+import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ModelDatabase;
 import de.unirostock.sems.ModelCrawler.exceptions.StorageException;
@@ -57,7 +58,7 @@ import de.unirostock.sems.morre.client.exception.MorreException;
 public class BioModelsDb extends ModelDatabase {
 	
 	private static final long serialVersionUID = -1180005276710581809L;
-
+	
 	@JsonIgnore
 	private final Log log = LogFactory.getLog( BioModelsDb.class );
 	
@@ -128,6 +129,8 @@ public class BioModelsDb extends ModelDatabase {
 	
 	@Override
 	public Map<String, ChangeSet> call() {
+		//super.release_maps = new HashMap<String, String>();
+		
 		List<BioModelRelease> newReleases = new ArrayList<BioModelRelease>();
 		
 		if( ftpUrl == null ) {
@@ -199,17 +202,20 @@ public class BioModelsDb extends ModelDatabase {
 			newReleases = newReleases.subList(0, limit);
 		}
 
-		// going throw the new release list an downloads every
+		// going through the new release list an downloads every
 		for( BioModelRelease release : newReleases ) {
 			// do it (download, extract, compare to previous versions)
 			processRelease( release );
+			//Map<String, String> release_map = processRelease( release );
+			//release_maps.put(release, release_map);
 
-			// if the download was succesfull, add the release to the known releases
+			// if the download was successful, add the release to the known releases
 			if( release.isDownloaded() && release.isExtracted() )
 				config.getKnownReleases().add( release.getReleaseName() );
 		}
 
-		log.info("finished cloning BioModelsDatabase!");
+		log.info("finished cloning BioModelsDatabase!");		
+		
 		return changeSetMap;
 	}
 
@@ -219,7 +225,9 @@ public class BioModelsDb extends ModelDatabase {
 	 * 
 	 * @param release
 	 */
+	//protected Map<String, String> processRelease( BioModelRelease release ) {
 	protected void processRelease( BioModelRelease release ) {
+		//Map<String, String> release_map = null;
 		
 		// getting the current Date, for crawling TimeStamp
 		Date crawledDate = new Date();
@@ -231,10 +239,12 @@ public class BioModelsDb extends ModelDatabase {
 		try {
 			if( downloadRelease(release) == false ) {
 				log.fatal( MessageFormat.format("Can not process release {0}", release.getReleaseName()) );
+				//return release_map;
 				return;
 			}
 		} catch (UnsupportedCompressionAlgorithmException e) {
 			log.fatal("Can not download-extract the release! Unsupported CompressionAlgorithm" , e);
+			//return release_map;
 			return;
 		}
 
@@ -244,9 +254,11 @@ public class BioModelsDb extends ModelDatabase {
 		}
 		catch (IllegalArgumentException e) {
 			log.fatal("Something went wrong with the release Object! (IllegalArgumentException) ", e);
+			//return release_map;
 			return;
 		} catch (ExtractException e) {
 			log.fatal("Error while extracting", e);
+			//return release_map;
 			return;
 		}
 		
@@ -256,6 +268,7 @@ public class BioModelsDb extends ModelDatabase {
 		// transfer the index from release
 		Iterator<String> iter = release.getModelList().iterator();
 		while( iter.hasNext() ) {
+			//release_map = 
 			tranferChange( iter.next(), release, crawledDate );
 		}
 		
@@ -265,6 +278,8 @@ public class BioModelsDb extends ModelDatabase {
 		} catch (IOException e) {
 			log.warn("Cannot clean up tmp dir for repository", e);
 		}
+		
+		//return release_map;
 	}
 
 	protected void init() {
@@ -683,7 +698,8 @@ public class BioModelsDb extends ModelDatabase {
 			repositoryUrl = new URL( ftpUrl.getProtocol(), ftpUrl.getHost(), filePath );
 			
 			// create the Change-Entry
-			change = new BioModelsChange(repositoryUrl, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+			//change = new BioModelsChange(repositoryUrl, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+			change = new BioModelsChange(repositoryUrl, filePath, release.getReleaseName(), release.getReleaseDate(), crawledDate);
 			
 			// sets soure meta information
 			change.setMeta(CrawledModelRecord.META_SOURCE, CrawledModelRecord.SOURCE_BIOMODELS_DB);
@@ -797,7 +813,7 @@ public class BioModelsDb extends ModelDatabase {
 				return;
 			}
 			
-			// pushs it into changeSet
+			// pushes it into changeSet
 			changeSet.addChange(change);
 			if( !changeSetMap.containsKey(fileName) ) {
 				// make this changeset public!
@@ -806,6 +822,7 @@ public class BioModelsDb extends ModelDatabase {
 			
 			if( log.isDebugEnabled() )
 				log.debug("put new version into change set");
+			
 		} else if( log.isDebugEnabled() ) {
 			log.debug("not a new version of model");
 		}

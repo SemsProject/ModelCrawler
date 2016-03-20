@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
+import de.unirostock.sems.ModelCrawler.databases.Interface.Change;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
 
 /*
@@ -24,14 +25,17 @@ public class CrawlerAPI {
 	/*
 	 * get all downloaded models
 	 */
-	//public ArrayList<String> downloadFiles (File storage){}
-	public static ArrayList<String> getDownloadModels (App crawler){
+	public static ArrayList<String> getDownloadedModels (App crawler){
 		ArrayList<String> models = new ArrayList<String>();
 		
 		for(Map.Entry<String, ChangeSet> entry : crawler.getChanges().entrySet()){
 			models.add(entry.getKey());
 		}
 		return models;
+	}
+	
+	public static Map<String, ChangeSet> getChangesPerRelease (App crawler){
+		return crawler.getChangesPerRelease();
 	}
 	
 	
@@ -51,6 +55,33 @@ public class CrawlerAPI {
 		}
 	}
 	
+	/*
+	 * print the given list of changes per release
+	 */
+	private static void printChangesPerRelease(Map<String, ChangeSet> changesPerRelease){
+		
+		Iterator<String> elementIterator = changesPerRelease.keySet().iterator();
+		while(elementIterator.hasNext()){
+			String element = elementIterator.next();
+			System.err.println("-------------------------------");
+			System.err.println("  next element " + element);
+			System.err.println("    has associated changeset:");
+			
+			ChangeSet elementChangeSet = changesPerRelease.get(element);
+			Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
+			while(changeIterator.hasNext()){
+				Change c = changeIterator.next();
+				System.err.println("      repository URL " + c.getChangeRepositoryUrl(c));
+				System.err.println("      file path " + c.getChangeFilePath(c));
+				System.err.println("      file name " + c.getChangeFileName(c));
+				System.err.println("      version ID " + c.getChangeVersionId(c));
+				System.err.println("      version ID " + c.getChangeVersionDate(c));
+				System.err.println("      version ID " + c.getChangeCrawledDate(c));
+				System.err.println("-------------------------------");
+			}
+		}
+	}
+	
 	
 	
 	/*
@@ -59,10 +90,12 @@ public class CrawlerAPI {
 	public static void main(String[] args){
 		CrawlerAPI crawlerAPI = new CrawlerAPI(args);
 		
-		ArrayList<String> models = getDownloadModels(crawlerAPI.crawler);
-		
+		ArrayList<String> models = getDownloadedModels(crawlerAPI.crawler);
 		// print all retrieved models
 		printDownloadedModels(models);
 		
+		Map<String, ChangeSet> changesPerRelease = getChangesPerRelease(crawlerAPI.crawler);
+		// print all retrieved changes per release
+		printChangesPerRelease(changesPerRelease);
 	}
 }

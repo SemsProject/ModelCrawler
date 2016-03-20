@@ -33,6 +33,7 @@ public class App {
 	private static MorreCrawlerInterface morreClient;
 	private static ModelStorage storage = null;
 	private static Map<String, ChangeSet> changes = null;
+	private static Map<String, ChangeSet> changesPerRelease = null;
 	
 
 	// avoid creating more than one crawler
@@ -105,7 +106,7 @@ public class App {
 			if( log.isInfoEnabled() )
 				log.info( MessageFormat.format("running crawler for {0}", database.getClass().getName()) );
 			
-			database.call();
+			changesPerRelease = database.call();
 			
 			// add all changes to the change Map
 			changes.putAll( database.listChanges() );
@@ -269,6 +270,10 @@ public class App {
 	
 	public Map<String, ChangeSet> getChanges(){
 		return changes;
+	}
+	
+	public Map<String, ChangeSet> getChangesPerRelease(){
+		return changesPerRelease;
 	}
 	
 }

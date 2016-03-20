@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Date;
 
+import org.apache.commons.io.FilenameUtils;
+
 import de.unirostock.sems.ModelCrawler.Config;
 import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
@@ -17,16 +19,33 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 	
 	protected transient File xmlFile = null;
 	protected transient URL repositoryUrl = null;
+	
 	protected transient String filePath = null;
+	
+	protected String fileName = null;
+	protected String versionId = null;
+	
+
 	
 	public Change( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
 		super( generateFileId(repositoryUrl, filePath), versionId, versionDate, crawledDate );
 		
+		// keep this meta-data on the retrieved change
 		this.repositoryUrl = repositoryUrl;
 		this.filePath = filePath;
-		
+		this.fileName = new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath));
+		this.versionId = versionId;
 		this.versionDate = versionDate;
 		this.crawledDate = crawledDate;
+		/*
+		System.err.println("      repository URL " + this.repositoryUrl);
+		System.err.println("      file path " + this.filePath);
+		System.err.println("      file name " + this.fileName);
+		System.err.println("      version ID " + this.versionId);
+		System.err.println("      version ID " + this.versionDate);
+		System.err.println("      version ID " + this.crawledDate);
+		System.exit(1);
+		*/
 	}
 	
 	public static String generateFileId( URL repositoryUrl, String filePath ) throws URISyntaxException {
@@ -146,6 +165,44 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 	@Override
 	public String toString() {
 		return "Chg:" + getFileId()+"@"+getVersionId();
+	}
+	
+	
+	/*
+	 * get a change's repository URL
+	 */
+	public String getChangeRepositoryUrl(Change change){
+		return change.repositoryUrl.toString();
+	}
+	/*
+	 * get a change's file path
+	 */
+	public String getChangeFilePath(Change change){
+		return change.filePath;
+	}
+	/*
+	 * get a change's file name
+	 */
+	public String getChangeFileName(Change change){
+		return change.fileName;
+	}
+	/*
+	 * get a change's version ID
+	 */
+	public String getChangeVersionId(Change change){
+		return change.versionId;
+	}
+	/*
+	 * get a change's version date
+	 */
+	public String getChangeVersionDate(Change change){
+		return change.versionDate.toString();
+	}
+	/*
+	 * get a change's crawled date
+	 */
+	public String getChangeCrawledDate(Change change){
+		return change.crawledDate.toString();
 	}
 	
 }

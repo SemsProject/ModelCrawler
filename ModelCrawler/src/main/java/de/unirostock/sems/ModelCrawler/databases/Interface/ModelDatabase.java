@@ -42,6 +42,8 @@ import de.unirostock.sems.morre.client.MorreCrawlerInterface;
 public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>, Closeable, Serializable {
 	
 	private static final long serialVersionUID = -3406749011901702763L;
+	
+	//public static Map<String, String> release_maps = null;
 
 	public abstract class DatabaseTypes {
 		public static final String NONE = "";
