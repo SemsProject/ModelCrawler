@@ -147,18 +147,22 @@ public class CrawlerAPI {
 	/*
 	ArrayList<String> models = getDownloadedModels(crawlerAPI.crawler);
 	printDownloadedModels(models); // print all retrieved models
-	 */
-	
-	// retrieve and print all downloaded models' changes 
+	*/
+	// retrieve and print all downloaded models' changes
 	/*
 	Map<String, ChangeSet> changesPerRelease = getChangesPerRelease(crawlerAPI.crawler);
 	printChangesPerRelease(changesPerRelease); // print all retrieved changes per release
-	 */
+	*/
 	
 	// retrieve all downloaded models' changes and display a given model's
 	// change set using the provided API
 	Map<String, ChangeSet> changesPerRelease = getChangesPerRelease(crawlerAPI.crawler);
+	
+	// IMPORTANT: enable this if you crawled BMDB
 	String targetModelName = new String("BIOMD0000000057.xml");
+	
+	// IMPORTANT: enable this if you crawled CellML
+	//String targetModelName = new String("urn:model:models.cellml.org:workspace:zhang_holden_kodama_honjo_lei_varghese_boyett_2000:!:zhang_holden_kodama_honjo_lei_varghese_boyett_2000.cellml");
 	
 	System.err.println("Retrieve model " + targetModelName + "'s change set:");
 	ChangeSet modelChangeSet = getModelChangeSet(changesPerRelease, targetModelName); // use API method
@@ -167,7 +171,7 @@ public class CrawlerAPI {
 	Iterator<Change> changeIterator = modelChangeSet.getChanges().iterator(); // TODO: API to retrieve a specific change?
 	while(changeIterator.hasNext()) {
 	    Change modelChange = changeIterator.next();
-	    System.err.println("    Change " + targetModelName + " with associated metadata:");
+	    System.err.println("    Change with associated metadata:");
 	    System.err.println("      repository URL " + getModelChange(modelChange, CrawlerAPI.REPOSITORY_URL)); // use API method
 	    System.err.println("      file path " + getModelChange(modelChange, CrawlerAPI.FILE_PATH)); // use API method
 	    System.err.println("      file name " + getModelChange(modelChange, CrawlerAPI.FILE_NAME)); // use API method

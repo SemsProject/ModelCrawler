@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -28,14 +29,21 @@ public class BioModelsChange extends Change {
 	
 	public final static String META_HASH = "filehash";
 	
-	public BioModelsChange( URL repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
-		super( repositoryUrl, fileName, versionId, versionDate, crawledDate );
+	//public BioModelsChange( URL repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
+	//	super( repositoryUrl, fileName, versionId, versionDate, crawledDate );
+	//}
+	public BioModelsChange( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
+		super( repositoryUrl, filePath, versionId, versionDate, crawledDate );
 	}
 	
-	
-	public BioModelsChange( String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws MalformedURLException, URISyntaxException {
-		this( new URL(repositoryUrl), fileName, versionId, versionDate, crawledDate );
-	}
+	// old:
+	//public BioModelsChange( String repositoryUrl, String fileName, String versionId, Date versionDate, Date crawledDate ) throws MalformedURLException, URISyntaxException {
+	//	this( new URL(repositoryUrl), fileName, versionId, versionDate, crawledDate );
+	//}
+	// new:
+	//public BioModelsChange( String repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws MalformedURLException, URISyntaxException {
+	//	this( new URL(repositoryUrl), new String(FilenameUtils.getBaseName(filePath) + ".xml"), versionId, versionDate, crawledDate ); // dirty fix
+	//}
 	
 	public boolean setXmlFile(File xmlFile, String hash) {
 		//REMIND the xml file can only be setted once in a Change

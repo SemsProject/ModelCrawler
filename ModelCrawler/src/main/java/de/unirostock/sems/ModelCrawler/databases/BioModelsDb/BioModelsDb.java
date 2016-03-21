@@ -699,8 +699,8 @@ public class BioModelsDb extends ModelDatabase {
 			repositoryUrl = new URL( ftpUrl.getProtocol(), ftpUrl.getHost(), filePath );
 			
 			// create the Change-Entry
-			change = new BioModelsChange(repositoryUrl, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
-			//change = new BioModelsChange(repositoryUrl, filePath, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+			//change = new BioModelsChange(repositoryUrl, fileName, release.getReleaseName(), release.getReleaseDate(), crawledDate);
+			change = new BioModelsChange(repositoryUrl, filePath, release.getReleaseName(), release.getReleaseDate(), crawledDate);
 			/*
 			System.err.println(" repository URL " + change.getChangeRepositoryUrl(change));
 			System.err.println(" file path " + change.getChangeFilePath(change));

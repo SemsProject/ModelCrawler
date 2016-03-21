@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -648,7 +649,36 @@ public class PmrDb extends ModelDatabase {
 			if( file.getChangeSet() != null ) {
 				// when the RelevantFile class contains a ChangeSet Object
 				// than there are some changes to store, so we can it to the changeSetMap
+			        //System.err.println("ABOUT TO PUT " + file.getFileId());// System.exit(1);
 				changeSetMap.put( file.getFileId(), file.getChangeSet() );
+				
+				//
+				//
+				System.err.println("-------------------------------");
+				System.err.println("  next element " + file.getFileId());
+				System.err.println("    has associated changeset:");
+				    			    
+				ChangeSet elementChangeSet = file.getChangeSet();
+				/*
+				if (elementChangeSet.getChanges().size() == 0) {
+				    System.err.println("Empty :(");
+				    System.exit(1);
+				}
+				*/
+				Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
+				while(changeIterator.hasNext()) {
+				    Change c = changeIterator.next();
+				    System.err.println("      repository URL " + c.getChangeRepositoryUrl(c));
+				    System.err.println("      file path " + c.getChangeFilePath(c));
+				    System.err.println("      file name " + c.getChangeFileName(c));
+				    System.err.println("      version ID " + c.getChangeVersionId(c));
+				    System.err.println("      version date " + c.getChangeVersionDate(c));
+				    System.err.println("      crawled date " + c.getChangeCrawledDate(c));
+				    System.err.println("-------------------------------");
+				}
+				//System.exit(1);
+				//
+				//
 			}
 		}
 
@@ -1003,16 +1033,6 @@ public class PmrDb extends ModelDatabase {
 				try {
 					change = new PmrChange(file.getRepositoryUrl(), file.getFilePath(), currentName.toString (), currentVersionDate, crawledDate);
 					//change = new PmrChange(file.getRepositoryUrl(), file.getFilePath(), FilenameUtils.getBaseName(file.getFilePath()), currentName.toString (), currentVersionDate, crawledDate);
-					/*
-					System.err.println(" repository URL " + change.getChangeRepositoryUrl(change));
-					System.err.println(" file path " + change.getChangeFilePath(change));
-					System.err.println(" file name " + change.getChangeFileName(change));
-					System.err.println(" version ID " + change.getChangeVersionId(change));
-					System.err.println(" version date " + change.getChangeVersionDate(change));
-					System.err.println(" crawled date " + change.getChangeCrawledDate(change));
-					System.exit(1);
-					*/
-					
 				} catch (URISyntaxException e) {
 					log.error("Error while creating Change Object. Abort processing current repo.", e);
 					return;
@@ -1042,6 +1062,16 @@ public class PmrDb extends ModelDatabase {
 
 					// add the change to the ChangeSet (ChangeSet is controlled by RelevantFile)
 					file.addChange(change);
+					
+					System.err.println(" repository URL " + change.getChangeRepositoryUrl(change));
+					System.err.println(" file path " + change.getChangeFilePath(change));
+					System.err.println(" file name " + change.getChangeFileName(change));
+					System.err.println(" version ID " + change.getChangeVersionId(change));
+					System.err.println(" version date " + change.getChangeVersionDate(change));
+					System.err.println(" crawled date " + change.getChangeCrawledDate(change));
+					//System.exit(1);
+					
+					
 				}
 				else if( latestVersionId != null ) {
 					// Model has no changes -> symlink to parent version
@@ -1060,6 +1090,30 @@ public class PmrDb extends ModelDatabase {
 			}
 
 		}
+		
+		
+		/*
+		Iterator<String> elementIterator = changeSetMap.keySet().iterator();
+		while(elementIterator.hasNext()) {
+		    String element = elementIterator.next();
+		    System.err.println("@-------------------------------");
+		    System.err.println("@  next element " + element);
+		    System.err.println("@    has associated changeset:");
+		    
+		    ChangeSet elementChangeSet = changeSetMap.get(element);
+		    Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
+		    while(changeIterator.hasNext()) {
+			Change c = changeIterator.next();
+			System.err.println("@      repository URL " + c.getChangeRepositoryUrl(c));
+			System.err.println("@      file path " + c.getChangeFilePath(c));
+			System.err.println("@      file name " + c.getChangeFileName(c));
+			System.err.println("@      version ID " + c.getChangeVersionId(c));
+			System.err.println("@      version date " + c.getChangeVersionDate(c));
+			System.err.println("@      crawled date " + c.getChangeCrawledDate(c));
+			System.err.println("@-------------------------------");
+		    }
+		}
+		*/
 	}
 
 }
