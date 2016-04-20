@@ -147,6 +147,27 @@
 		</dependency>
 	</dependencies>
 
+	<repositories>
+		<repository>
+			<id>sems-maven-repository-releases</id>
+			<name>SEMS Maven Repo</name>
+			<url>http://mvn.sems.uni-rostock.de/releases/</url>
+			<layout>default</layout>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>sems-maven-repository-snapshots</id>
+			<name>SEMS Maven Repo</name>
+			<url>http://mvn.sems.uni-rostock.de/snapshots/</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</repository>
+	</repositories>
+
 	<build>
 		<plugins>
 			<!-- Setting the Java Version -->
