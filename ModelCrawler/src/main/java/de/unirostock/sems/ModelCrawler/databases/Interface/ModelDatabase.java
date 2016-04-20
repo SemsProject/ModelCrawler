@@ -78,7 +78,7 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 		try {
 			tempDir = Files.createTempDirectory( config.getTempDir().toPath(), config.getTempDirPrefix(), Constants.TEMP_DIR_POSIX_ATTRIBUTES ).toFile();
 			tempDir.deleteOnExit();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			tempDir = new File( config.getTempDir(), String.valueOf(new Random( new Date().getTime() ).nextLong()) );
 			tempDir.mkdirs();
 			tempDir.deleteOnExit();
