@@ -158,7 +158,7 @@ public abstract class FileBasedStorage extends ModelStorage {
 			
 			// add file name
 			accessPath = accessPath + pathToFile + fileName;
-			URI uri = new URI( httpAccessPath.getProtocol(), httpAccessPath.getHost(), accessPath, null);
+			URI uri = new URI( httpAccessPath.getProtocol(), null, httpAccessPath.getHost(), httpAccessPath.getPort(), accessPath, null, null);
 			return uri;
 		}
 		catch (StorageException e) {
