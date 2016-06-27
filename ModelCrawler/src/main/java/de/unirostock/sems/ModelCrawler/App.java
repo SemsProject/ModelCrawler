@@ -138,7 +138,7 @@ public class App {
 	    	storage.close();
 		}
 
-		// After everthing is done: Hide the bodies...
+		// After everything is done: Hide the bodies...
 		close();
 
 		log.info("finished crawling");
