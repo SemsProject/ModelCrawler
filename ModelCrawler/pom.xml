@@ -113,13 +113,8 @@
 		<!-- WebService connector -->
 		<dependency>
 			<groupId>de.unirostock.sems</groupId>
-			<artifactId>XmlFileServerClient</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>de.unirostock.sems</groupId>
 			<artifactId>morre.client</artifactId>
-			<version>0.0.7-SNAPSHOT</version>
+			<version>0.0.9-SNAPSHOT</version>
 		</dependency>
 
 		<!-- Jackson -->
