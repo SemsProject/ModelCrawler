@@ -40,8 +40,8 @@ public class CrawlerAPI {
 	return models;
     }
     
-    public static Map<String, ChangeSet> getChangesPerRelease (App crawler){
-	return crawler.getChangesPerRelease();
+    public static Map<String, ChangeSet> getChangesPerRelease (CrawlerAPI api){
+	return api.crawler.getChangesPerRelease();
     }
     
     /*
@@ -156,7 +156,7 @@ public class CrawlerAPI {
 	
 	// retrieve all downloaded models' changes and display a given model's
 	// change set using the provided API
-	Map<String, ChangeSet> changesPerRelease = getChangesPerRelease(crawlerAPI.crawler);
+	Map<String, ChangeSet> changesPerRelease = getChangesPerRelease(crawlerAPI);
 	
 	// IMPORTANT: enable this if you crawled BMDB
 	String targetModelName = new String("BIOMD0000000057.xml");
