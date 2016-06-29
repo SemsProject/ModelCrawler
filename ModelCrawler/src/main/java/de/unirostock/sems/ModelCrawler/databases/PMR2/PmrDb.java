@@ -654,27 +654,30 @@ public class PmrDb extends ModelDatabase {
 				
 				//
 				//
-				System.err.println("-------------------------------");
-				System.err.println("  next element " + file.getFileId());
-				System.err.println("    has associated changeset:");
-				    			    
-				ChangeSet elementChangeSet = file.getChangeSet();
-				/*
-				if (elementChangeSet.getChanges().size() == 0) {
-				    System.err.println("Empty :(");
-				    System.exit(1);
-				}
-				*/
-				Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
-				while(changeIterator.hasNext()) {
-				    Change c = changeIterator.next();
-				    System.err.println("      repository URL " + c.getChangeRepositoryUrl(c));
-				    System.err.println("      file path " + c.getChangeFilePath(c));
-				    System.err.println("      file name " + c.getChangeFileName(c));
-				    System.err.println("      version ID " + c.getChangeVersionId(c));
-				    System.err.println("      version date " + c.getChangeVersionDate(c));
-				    System.err.println("      crawled date " + c.getChangeCrawledDate(c));
-				    System.err.println("-------------------------------");
+				if (log.isDebugEnabled())
+				{
+					log.debug("-------------------------------");
+					log.debug("  next element " + file.getFileId());
+					log.debug("    has associated changeset:");
+					    			    
+					ChangeSet elementChangeSet = file.getChangeSet();
+					/*
+					if (elementChangeSet.getChanges().size() == 0) {
+					    log.debug("Empty :(");
+					    System.exit(1);
+					}
+					*/
+					Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
+					while(changeIterator.hasNext()) {
+					    Change c = changeIterator.next();
+					    log.debug("      repository URL " + c.getChangeRepositoryUrl(c));
+					    log.debug("      file path " + c.getChangeFilePath(c));
+					    log.debug("      file name " + c.getChangeFileName(c));
+					    log.debug("      version ID " + c.getChangeVersionId(c));
+					    log.debug("      version date " + c.getChangeVersionDate(c));
+					    log.debug("      crawled date " + c.getChangeCrawledDate(c));
+					    log.debug("-------------------------------");
+					}
 				}
 				//System.exit(1);
 				//
@@ -1063,12 +1066,15 @@ public class PmrDb extends ModelDatabase {
 					// add the change to the ChangeSet (ChangeSet is controlled by RelevantFile)
 					file.addChange(change);
 					
-					System.err.println(" repository URL " + change.getChangeRepositoryUrl(change));
-					System.err.println(" file path " + change.getChangeFilePath(change));
-					System.err.println(" file name " + change.getChangeFileName(change));
-					System.err.println(" version ID " + change.getChangeVersionId(change));
-					System.err.println(" version date " + change.getChangeVersionDate(change));
-					System.err.println(" crawled date " + change.getChangeCrawledDate(change));
+					if (log.isDebugEnabled())
+					{
+						log.debug(" repository URL " + change.getChangeRepositoryUrl(change));
+						log.debug(" file path " + change.getChangeFilePath(change));
+						log.debug(" file name " + change.getChangeFileName(change));
+						log.debug(" version ID " + change.getChangeVersionId(change));
+						log.debug(" version date " + change.getChangeVersionDate(change));
+						log.debug(" crawled date " + change.getChangeCrawledDate(change));
+					}
 					//System.exit(1);
 					
 					

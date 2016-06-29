@@ -835,29 +835,32 @@ public class BioModelsDb extends ModelDatabase {
 			
 			//
 			//
-			Iterator<String> elementIterator = changeSetMap.keySet().iterator();
-			while(elementIterator.hasNext()) {
-			    String element = elementIterator.next();
-			    System.err.println("-------------------------------");
-			    System.err.println("  next element " + element);
-			    System.err.println("    has associated changeset:");
-			    			    
-			    ChangeSet elementChangeSet = changeSetMap.get(element);
-			    if (elementChangeSet.getChanges().size() == 0) {
-				System.err.println("Empty :(");
-				System.exit(1);
-			    }
-			    Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
-			    while(changeIterator.hasNext()) {
-				Change c = changeIterator.next();
-				System.err.println("      repository URL " + c.getChangeRepositoryUrl(c));
-				System.err.println("      file path " + c.getChangeFilePath(c));
-				System.err.println("      file name " + c.getChangeFileName(c));
-				System.err.println("      version ID " + c.getChangeVersionId(c));
-				System.err.println("      version date " + c.getChangeVersionDate(c));
-				System.err.println("      crawled date " + c.getChangeCrawledDate(c));
-				System.err.println("-------------------------------");
-			    }
+			if (log.isDebugEnabled())
+			{
+				Iterator<String> elementIterator = changeSetMap.keySet().iterator();
+				while(elementIterator.hasNext()) {
+				    String element = elementIterator.next();
+				    log.debug("-------------------------------");
+				    log.debug("  next element " + element);
+				    log.debug("    has associated changeset:");
+				    			    
+				    ChangeSet elementChangeSet = changeSetMap.get(element);
+				    if (elementChangeSet.getChanges().size() == 0) {
+					log.debug("Empty :(");
+					System.exit(1);
+				    }
+				    Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
+				    while(changeIterator.hasNext()) {
+					Change c = changeIterator.next();
+					log.debug("      repository URL " + c.getChangeRepositoryUrl(c));
+					log.debug("      file path " + c.getChangeFilePath(c));
+					log.debug("      file name " + c.getChangeFileName(c));
+					log.debug("      version ID " + c.getChangeVersionId(c));
+					log.debug("      version date " + c.getChangeVersionDate(c));
+					log.debug("      crawled date " + c.getChangeCrawledDate(c));
+					log.debug("-------------------------------");
+				    }
+				}
 			}
 			//System.exit(1);
 			//

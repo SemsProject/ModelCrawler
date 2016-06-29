@@ -4,7 +4,7 @@
 
 	<groupId>de.unirostock.sems</groupId>
 	<artifactId>ModelCrawler</artifactId>
-	<version>0.0.4</version>
+	<version>0.1</version>
 	<packaging>jar</packaging>
 
 	<name>ModelCrawler</name>
@@ -24,6 +24,16 @@
 			<id>martinP</id>
 			<name>Martin Peters</name>
 			<email>martin@freakybytes.net</email>
+		</developer>
+		<developer>
+			<id>andrea</id>
+			<name>Andrea Bagnacani</name>
+			<email>andrea.bagnacani@uni-rostock.de</email>
+		</developer>
+		<developer>
+			<id>martin</id>
+			<name>Martin Scharm</name>
+			<email>martin@binfalse.de</email>
 		</developer>
 	</developers>
 
