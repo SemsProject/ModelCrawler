@@ -208,7 +208,7 @@ public class PmrDb extends ModelDatabase {
 			}
 			if( collectionEndpoint != null ) {
 				if( log.isInfoEnabled() )
-					log.info( MessageFormat.format("Init new PMR2 Connector based on Collection+JSON: {0}", this.repoListUrl) );
+					log.info( MessageFormat.format("Init new PMR2 Connector based on Collection+JSON: {0}", this.collectionEndpoint) );
 
 				if( repositories == null )
 					repositories = getRepositoriesFromCollection();
@@ -391,7 +391,7 @@ public class PmrDb extends ModelDatabase {
 		connection.setRequestProperty("Content-Type", "application/json");
 		connection.connect();
 		String contentType = connection.getContentType();
-		if( contentType == null || contentType.startsWith("application/vnd.") == false )
+		if( contentType == null || !(contentType.startsWith("application/vnd.") || contentType.equals("application/json")) )
 			throw new IOException("Returned message is not Collection+JSON");
 
 		return new CollectionParser().parse( connection.getInputStream() );
