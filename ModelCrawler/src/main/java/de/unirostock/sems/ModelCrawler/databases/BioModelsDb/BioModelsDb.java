@@ -43,8 +43,8 @@ import org.apache.commons.net.ftp.FTPFile;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.unirostock.sems.ModelCrawler.Config;
-import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.Config.WorkingMode;
+import de.unirostock.sems.ModelCrawler.Constants;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.ExtractException;
 import de.unirostock.sems.ModelCrawler.databases.BioModelsDb.exceptions.FtpConnectionException;
 import de.unirostock.sems.ModelCrawler.databases.Interface.ChangeSet;
