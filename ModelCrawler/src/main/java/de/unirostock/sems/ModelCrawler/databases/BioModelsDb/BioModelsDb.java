@@ -74,6 +74,7 @@ public class BioModelsDb extends ModelDatabase {
 			return knownReleases;
 		}
 
+		@SuppressWarnings("unused")
 		public void setKnownReleases(HashSet<String> knownReleases) {
 			this.knownReleases = knownReleases;
 		}
