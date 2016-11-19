@@ -31,17 +31,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import net.hamnaberg.json.Collection;
-import net.hamnaberg.json.Link;
-import net.hamnaberg.json.parser.CollectionParser;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -75,6 +70,9 @@ import de.unirostock.sems.ModelCrawler.helper.CrawledModelRecord;
 import de.unirostock.sems.bives.tools.DocumentClassifier;
 import de.unirostock.sems.morre.client.exception.MorreCommunicationException;
 import de.unirostock.sems.morre.client.exception.MorreException;
+import net.hamnaberg.json.Collection;
+import net.hamnaberg.json.Link;
+import net.hamnaberg.json.parser.CollectionParser;
 
 public class PmrDb extends ModelDatabase {
 
@@ -209,7 +207,7 @@ public class PmrDb extends ModelDatabase {
 			}
 			if( collectionEndpoint != null ) {
 				if( log.isInfoEnabled() )
-					log.info( MessageFormat.format("Init new PMR2 Connector based on Collection+JSON: {0}", this.repoListUrl) );
+					log.info( MessageFormat.format("Init new PMR2 Connector based on Collection+JSON: {0}", this.collectionEndpoint) );
 
 				if( repositories == null )
 					repositories = getRepositoriesFromCollection();
@@ -392,7 +390,7 @@ public class PmrDb extends ModelDatabase {
 		connection.setRequestProperty("Content-Type", "application/json");
 		connection.connect();
 		String contentType = connection.getContentType();
-		if( contentType == null || contentType.startsWith("application/vnd.") == false )
+		if( contentType == null || !(contentType.startsWith("application/vnd.") || contentType.equals("application/json")) )
 			throw new IOException("Returned message is not Collection+JSON");
 
 		return new CollectionParser().parse( connection.getInputStream() );

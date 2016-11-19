@@ -122,13 +122,8 @@
 		<!-- WebService connector -->
 		<dependency>
 			<groupId>de.unirostock.sems</groupId>
-			<artifactId>XmlFileServerClient</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>de.unirostock.sems</groupId>
 			<artifactId>morre.client</artifactId>
-			<version>0.0.7-SNAPSHOT</version>
+			<version>0.0.9-SNAPSHOT</version>
 		</dependency>
 
 		<!-- Jackson -->
@@ -156,25 +151,26 @@
 		</dependency>
 	</dependencies>
 
-
-    <distributionManagement>
-        <downloadUrl>http://mvn.sems.uni-rostock.de</downloadUrl>
-        <snapshotRepository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>sems-maven-repository</id>
-            <name>SEMS Maven Release Repository</name>
-            <url>scp://sems.uni-rostock.de:/home/stuff/web/mvn/snapshots/</url>
-            <layout>default</layout>
-        </snapshotRepository>
-
-        <repository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>sems-maven-repository</id>
-            <name>Enterprise Systems Maven Repository</name>
-            <url>scp://sems.uni-rostock.de:/home/stuff/web/mvn/releases/</url>
-            <layout>default</layout>
-        </repository>
-    </distributionManagement>
+	<repositories>
+		<repository>
+			<id>sems-maven-repository-releases</id>
+			<name>SEMS Maven Repo</name>
+			<url>http://mvn.sems.uni-rostock.de/releases/</url>
+			<layout>default</layout>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>sems-maven-repository-snapshots</id>
+			<name>SEMS Maven Repo</name>
+			<url>http://mvn.sems.uni-rostock.de/snapshots/</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
