@@ -115,7 +115,7 @@ public class Config implements Serializable {
 	/**
 	 * Sets the current working mode of the crawler
 	 * 
-	 * @param workingMode
+	 * @param workingMode the working mode
 	 */
 	public static void setWorkingMode(WorkingMode workingMode) {
 		Config.workingMode = workingMode; 
@@ -147,10 +147,10 @@ public class Config implements Serializable {
 	}
 	
 	/**
-	 * Saves the current config to disk
-	 * 
-	 * @param location
-	 * @throws ConfigurationException 
+	 * Saves the current config to disk.
+	 *
+	 * @param location the location to write to
+	 * @throws ConfigurationException the configuration exception
 	 */
 	public synchronized void save( File location ) throws ConfigurationException {
 		

@@ -23,9 +23,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Creates a new CrawledModelRecord based on a simple CrawledModel Dataholder
-	 * 
-	 * @param model
+	 * Creates a new CrawledModelRecord based on a simple CrawledModel Dataholder.
+	 *
+	 * @param model the model
 	 */
 	public CrawledModelRecord( CrawledModel model ) {
 		super( model.getFileId(), model.getVersionId(), model.getXmldoc(), model.getParentMap(), model.getMetaMap(), model.getModelType() );
@@ -81,10 +81,10 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Sets the value of a meta field and overrides the previous value
-	 * 
-	 * @param metaField
-	 * @param value
+	 * Sets the value of a meta field and overrides the previous value.
+	 *
+	 * @param metaField the meta field
+	 * @param value the value
 	 */
 	public void setMeta( String metaField, String value ) {
 		Map<String, String> metaMap = getMetaMap();
@@ -117,9 +117,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Sets the VersionDate in the Meta Field
-	 * 
-	 * @param versionDate
+	 * Sets the VersionDate in the Meta Field.
+	 *
+	 * @param versionDate the version date
 	 */
 	public void setVersionDate( Date versionDate ) {
 		setMeta(META_VERSION_DATE, new SimpleDateFormat(DATE_FORMAT).format(versionDate) );
@@ -157,9 +157,9 @@ public class CrawledModelRecord extends CrawledModel {
 	
 	/**
 	 * Adds a parent to this model.
-	 * 
-	 * @param parentFileId
-	 * @param parentVersionId
+	 *
+	 * @param parentFileId the parent file id
+	 * @param parentVersionId the parent version id
 	 */
 	public void addParent( String parentFileId, String parentVersionId ) {
 		
@@ -187,9 +187,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Adds a parent to this model with the same fileId
-	 * 
-	 * @param parentVersionId
+	 * Adds a parent to this model with the same fileId.
+	 *
+	 * @param parentVersionId the parent version id
 	 */
 	public void addParent( String parentVersionId ) {
 		addParent( getFileId(), parentVersionId );

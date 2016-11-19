@@ -482,10 +482,10 @@ public class PmrDb extends ModelDatabase {
 	}
 
 	/**
-	 * Gets the Path to the Repository Directory out of Workspace config or null if it fails
-	 * 
-	 * @param repository
-	 * @return File
+	 * Gets the Path to the Repository Directory out of Workspace config or null if it fails.
+	 *
+	 * @param repository the repository
+	 * @return the repo file
 	 */
 	protected File getRepositoryDirectory( String repository ) {
 		String repoHash = calculateRepositoryHash(repository);

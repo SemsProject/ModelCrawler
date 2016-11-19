@@ -41,10 +41,9 @@ public abstract class ModelStorage implements Serializable, Closeable {
 	
 	/**
 	 * Connects to the storage destination, is supposed to be called
-	 * before every other operation
-	 * 
-	 * @throws StorageException 
-	 *  
+	 * before every other operation.
+	 *
+	 * @throws StorageException the storage exception
 	 */
 	public abstract void connect() throws StorageException;
 	
@@ -79,7 +78,7 @@ public abstract class ModelStorage implements Serializable, Closeable {
 	 * Puts a whole ChangeSet of models into the storage system.
 	 *
 	 * @param changeSet the change set
-	 * @return the list< ur i>
+	 * @return the list of stored changes
 	 * @throws StorageException the storage exception
 	 */
 	public List<URI> storeModelChangeSet( ChangeSet changeSet ) throws StorageException {

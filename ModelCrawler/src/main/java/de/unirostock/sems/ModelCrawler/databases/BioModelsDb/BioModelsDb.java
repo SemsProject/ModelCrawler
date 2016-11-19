@@ -224,9 +224,9 @@ public class BioModelsDb extends ModelDatabase {
 
 	/**
 	 * Downloads, extracts and indexes the gives release
-	 * must called for each new release CHRONOLOGICAL
-	 * 
-	 * @param release
+	 * must called for each new release CHRONOLOGICAL.
+	 *
+	 * @param release the release
 	 */
 	//protected Map<String, String> processRelease( BioModelRelease release ) {
 	protected void processRelease( BioModelRelease release ) {

@@ -102,15 +102,15 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	 * Returns a map with all changes made after the last crawl <br>
 	 * the fileId is the map key.
 	 * 
-	 * @return Map<fileId, ChangeSet>
+	 * @return the list of changes
 	 */
 	@JsonIgnore
 	public abstract Map<String, ChangeSet> listChanges();
 	
-	/** 
-	 * Returns the ChangeSet only for one specific model
-	 * 
-	 * @param fileId
+	/**
+	 * Returns the ChangeSet only for one specific model.
+	 *
+	 * @param fileId the file id
 	 * @return ChangeSet
 	 */
 	@JsonIgnore
