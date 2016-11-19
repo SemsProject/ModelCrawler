@@ -30,7 +30,8 @@ public abstract class Change extends CrawledModelRecord implements Comparable<Ch
 	public Change( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
 		
 		//super( generateFileId(repositoryUrl, fileName), versionId, versionDate, crawledDate );
-	        super( generateFileId(repositoryUrl, new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath))), versionId, versionDate, crawledDate );
+    super( generateFileId(repositoryUrl, filePath), versionId, versionDate, crawledDate );
+    //super( generateFileId(repositoryUrl, new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath))), versionId, versionDate, crawledDate );
 		//super( generateFileId(repositoryUrl, filePath), versionId, versionDate, crawledDate );
 	        
 		// keep this meta-data on the retrieved change

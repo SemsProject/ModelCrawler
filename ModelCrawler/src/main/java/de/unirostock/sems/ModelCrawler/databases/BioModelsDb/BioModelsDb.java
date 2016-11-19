@@ -123,7 +123,8 @@ public class BioModelsDb extends ModelDatabase {
 		
 		// deletes the tempDir recursively
 		try {
-			FileUtils.deleteDirectory(tempDir);
+			if (tempDir != null && tempDir.exists ())
+				FileUtils.deleteDirectory(tempDir);
 		} catch (IOException e) {
 			log.error("Error while cleaning up the temp dir!", e);
 		}

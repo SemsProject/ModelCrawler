@@ -608,7 +608,7 @@ public class PmrDb extends ModelDatabase {
 
 		if( log.isInfoEnabled() )
 			log.info( MessageFormat.format("Start scanning {0} for changes", repoUrl) );
-
+		
 		// select all relevant files
 		relevantFiles = scanRepository(location);
 
@@ -628,7 +628,7 @@ public class PmrDb extends ModelDatabase {
 		catch (MalformedURLException | URISyntaxException e) {
 			log.fatal("Unsupported Encoding. Can not generate fileId", e);
 		}
-
+		
 		// detect all relevant versions
 		relevantVersions = detectRelevantVersions(repo, relevantFiles);
 
@@ -986,7 +986,7 @@ public class PmrDb extends ModelDatabase {
 
 				if( log.isInfoEnabled() )
 					log.info( MessageFormat.format("Check model {0}", file.getFileId()) );
-
+				
 				File fileLocation = new File( location, file.getFilePath() );
 				if( !fileLocation.exists() ) {
 					// file does not exists -> skip
@@ -1002,7 +1002,6 @@ public class PmrDb extends ModelDatabase {
 						// skip this file
 						if( log.isInfoEnabled() )
 							log.info("Current version is to old -> no changes.");
-
 						continue;
 					}
 					else 
