@@ -68,9 +68,9 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	public ModelDatabase() {}		
 	
 	/**
-	 * creates a new and empty temporary directory and sets the class variable
-	 * 
-	 * @return
+	 * creates a new and empty temporary directory and sets the class variable.
+	 *
+	 * @return the temporary directory object
 	 */
 	protected synchronized File createTempDir() {
 		
@@ -123,9 +123,9 @@ public abstract class ModelDatabase implements Callable<Map<String, ChangeSet>>,
 	public abstract void close();
 	
 	/**
-	 * Starts the prozess of crawling for this specific Database
-	 * @return 
-	 * 
+	 * Starts the process of crawling for this specific Database.
+	 *
+	 * @return the map of files and changes
 	 */
 	@JsonIgnore
 	public abstract Map<String, ChangeSet> call();

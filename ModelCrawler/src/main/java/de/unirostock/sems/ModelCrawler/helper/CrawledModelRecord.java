@@ -49,8 +49,8 @@ public class CrawledModelRecord extends CrawledModel {
 	
 	/**
 	 * Checks if the model dataholder is valid.
-	 * 
-	 * @return
+	 *
+	 * @return true, if is available
 	 */
 	public boolean isAvailable() {
 		
@@ -67,10 +67,10 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Returns the value of a meta field or null
-	 * 
-	 * @param metaField
-	 * @return
+	 * Returns the value of a meta field or null.
+	 *
+	 * @param metaField the meta field
+	 * @return the meta
 	 */
 	public String getMeta( String metaField ) {
 		Map<String, String> metaMap = getMetaMap();
@@ -96,9 +96,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Returns the parsed VersionDate if it is set, or null
-	 * 
-	 * @return
+	 * Returns the parsed VersionDate if it is set, or null.
+	 *
+	 * @return the version date
 	 */
 	public Date getVersionDate() {
 		Date versionDate = null;
@@ -126,9 +126,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Returns the parsed CrawledDate if it is set, or null
-	 * 
-	 * @return
+	 * Returns the parsed CrawledDate if it is set, or null.
+	 *
+	 * @return the crawled date
 	 */
 	public Date getCrawledDate() {
 		Date crawledDate = null;
@@ -147,9 +147,9 @@ public class CrawledModelRecord extends CrawledModel {
 	}
 	
 	/**
-	 * Sets the CrawledDate in the Meta Field
-	 * 
-	 * @param versionDate
+	 * Sets the CrawledDate in the Meta Field.
+	 *
+	 * @param crawledDate the crawled date
 	 */
 	public void setCrawledDate( Date crawledDate ) {
 		setMeta(META_CRAWLED_DATE, new SimpleDateFormat(DATE_FORMAT).format(crawledDate) );

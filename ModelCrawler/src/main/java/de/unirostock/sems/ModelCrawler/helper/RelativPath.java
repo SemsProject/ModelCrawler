@@ -8,7 +8,7 @@ public class RelativPath {
 
 	/**
 	 * Returns the path of one File relative to another. <br>
-	 * copy'n'paste from {@link http://stackoverflow.com/a/1269907}
+	 * copy'n'paste from @see <a href="http://stackoverflow.com/a/1269907">stackoverflow.com/a/1269907</a>
 	 * 
 	 * @param target the target directory
 	 * @param base the base directory

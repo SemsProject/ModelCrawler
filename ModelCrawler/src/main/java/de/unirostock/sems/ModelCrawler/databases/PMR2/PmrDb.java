@@ -280,8 +280,9 @@ public class PmrDb extends ModelDatabase {
 	}
 
 	/**
-	 * Returns a non existent temporary file
-	 * @return
+	 * Returns a non existent temporary file.
+	 *
+	 * @return the temp file
 	 */
 	protected File getTempFile() {
 		File temp = new File( tempDir, UUID.randomUUID().toString() );
@@ -314,10 +315,10 @@ public class PmrDb extends ModelDatabase {
 
 
 	/**
-	 * Retrieves the txt Repository List and puts it in a list
-	 * 
-	 * @return
-	 * @throws HttpException
+	 * Retrieves the txt Repository List and puts it in a list.
+	 *
+	 * @return the repository list
+	 * @throws HttpException the http exception
 	 */
 	protected LinkedHashSet<String> getRepositoryList() throws HttpException {
 		LinkedHashSet<String> repoList = new LinkedHashSet<String>();
@@ -431,10 +432,10 @@ public class PmrDb extends ModelDatabase {
 	}
 
 	/**
-	 * Creates the directory for the given Repository
-	 *  
-	 * @param repository
-	 * @return
+	 * Creates the directory for the given Repository.
+	 *
+	 * @param repository the repository
+	 * @return the file object representing the new repository directory
 	 */
 	protected File makeRepositoryDirectory( String repository ) {
 
@@ -497,10 +498,10 @@ public class PmrDb extends ModelDatabase {
 	}
 
 	/**
-	 * Calculates the hash from the Repository URL
-	 * 
-	 * @param repository
-	 * @return
+	 * Calculates the hash from the Repository URL.
+	 *
+	 * @param repository the repository
+	 * @return the repo hash
 	 */
 	private String calculateRepositoryHash( String repository ) {
 		String repoHash = null;
@@ -742,11 +743,11 @@ public class PmrDb extends ModelDatabase {
 
 	/**
 	 * Checks if the file is a model aka relevant <br>
-	 * Returns a RelevantFile object if it is or null
-	 * 
-	 * @param base
-	 * @param model
-	 * @return
+	 * Returns a RelevantFile object if it is or null.
+	 *
+	 * @param base the base
+	 * @param model the model
+	 * @return true if file is relevant, otherwise false
 	 */
 	private RelevantFile isRelevant( File base, File model ) {
 		int type = 0;

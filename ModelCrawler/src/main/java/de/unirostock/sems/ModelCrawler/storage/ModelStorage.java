@@ -55,32 +55,32 @@ public abstract class ModelStorage implements Serializable, Closeable {
 	public abstract void close();
 	
 	/**
-	 * Puts a model into the storage system and returns the URI
-	 * 
-	 * @param modelChange
-	 * @return
-	 * @throws StorageException 
+	 * Puts a model into the storage system and returns the URI.
+	 *
+	 * @param modelChange the model change
+	 * @return the uri to the model
+	 * @throws StorageException the storage exception
 	 */
 	public abstract URI storeModel( Change modelChange ) throws StorageException;
 	
 	/**
-	 * Links the source Version to the target Version 
-	 * (The target Version should exist already)
-	 * 
-	 * @param fileId
-	 * @param sourceVersionId
-	 * @param targetVersionId
-	 * @return
-	 * @throws StorageException
+	 * Links the source Version to the target Version
+	 * (The target Version should exist already).
+	 *
+	 * @param fileId the file id
+	 * @param sourceVersionId the source version id
+	 * @param targetVersionId the target version id
+	 * @return the uri
+	 * @throws StorageException the storage exception
 	 */
 	public abstract URI linkModelVersion( String fileId, String sourceVersionId, String targetVersionId) throws StorageException;
 	
 	/**
-	 * Puts a whole ChangeSet of models into the storage system
-	 * 
-	 * @param changeSet
-	 * @return
-	 * @throws StorageException 
+	 * Puts a whole ChangeSet of models into the storage system.
+	 *
+	 * @param changeSet the change set
+	 * @return the list< ur i>
+	 * @throws StorageException the storage exception
 	 */
 	public List<URI> storeModelChangeSet( ChangeSet changeSet ) throws StorageException {
 		List<URI> result = new LinkedList<URI>();

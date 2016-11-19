@@ -89,10 +89,11 @@ public class CrawlerAPI {
     
     
     /**
-     * Return a specific field of the given change
-     * @param change
-     * @param field
-     * @return
+     * Return a specific field of the given change.
+     *
+     * @param change the change
+     * @param field the field
+     * @return the change
      */
     private static String getChange(Change change, String field) {
 	String result = null;
@@ -114,10 +115,11 @@ public class CrawlerAPI {
     
     
     /**
-     * Return all ChangeSet changes associated with the given modelName
-     * @param changesPerRelease
-     * @param modelName
-     * @return
+     * Return all ChangeSet changes associated with the given modelName.
+     *
+     * @param changesPerRelease the changes per release
+     * @param modelName the model name
+     * @return the model change set
      */
     public static ChangeSet getModelChangeSet(Map<String, ChangeSet> changesPerRelease, String modelName) {
 	return changesPerRelease.get(modelName);
@@ -125,10 +127,11 @@ public class CrawlerAPI {
     
     
     /**
-     * Return a specific field within the provided model's change
-     * @param change
-     * @param field
-     * @return
+     * Return a specific field within the provided model's change.
+     *
+     * @param change the change
+     * @param field the field
+     * @return the model change
      */
     public static String getModelChange(Change change, String field) {
 	return getChange(change, field);

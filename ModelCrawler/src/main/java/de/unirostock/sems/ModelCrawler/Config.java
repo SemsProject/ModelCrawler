@@ -39,7 +39,7 @@ public class Config implements Serializable {
 	/** 
 	 * Gets the config instance
 	 * 
-	 * @return
+	 * @return the config
 	 */
 	public static Config getConfig() {
 
@@ -52,7 +52,7 @@ public class Config implements Serializable {
 	/**
 	 * returns the default jackson object mapper for serializing and deserializing json objects
 	 * 
-	 * @return
+	 * @return a default jackson object mapper
 	 */
 	public static ObjectMapper getObjectMapper() {
 		
@@ -68,9 +68,11 @@ public class Config implements Serializable {
 	}
 	
 	/**
-	 * Loads the config from a Json file
-	 * @return
-	 * @throws ConfigurationException 
+	 * Loads the config from a Json file.
+	 *
+	 * @param location the location
+	 * @return the config as stored in `location`
+	 * @throws ConfigurationException the configuration exception
 	 */
 	public synchronized static Config load( File location ) throws ConfigurationException {
 		
@@ -89,9 +91,9 @@ public class Config implements Serializable {
 	}
 	
 	/**
-	 * Loads some default config parameters
-	 * 
-	 * @return
+	 * Loads some default config parameters.
+	 *
+	 * @return a default config
 	 */
 	public synchronized static Config defaultConfig() {
 		
@@ -104,7 +106,7 @@ public class Config implements Serializable {
 	
 	/**
 	 * Gets the current working mode of the crawler
-	 * @return
+	 * @return the current working mode
 	 */
 	public static WorkingMode getWorkingMode() {
 		return Config.workingMode;
@@ -138,7 +140,7 @@ public class Config implements Serializable {
 	/**
 	 * Default private constructor.
 	 * 
-	 * use {@link getConfig} or {@link load} instead
+	 * use {@link #getConfig()} or {@link #load(File)} instead
 	 */
 	private Config() {
 		

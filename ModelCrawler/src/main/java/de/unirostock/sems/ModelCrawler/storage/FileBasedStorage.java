@@ -220,13 +220,15 @@ public abstract class FileBasedStorage extends ModelStorage {
 	}
 
 	/**
-	 * Splits the fileId into handy parts<br>
-	 *  0 - outerPath<br>
-	 *  1 - innerPath<br>
-	 *  2 - fileName<br>
-	 *  
-	 * @param fileId
-	 * @return
+	 * Splits the fileId into handy parts
+	 * <ul>
+	 * <li>0 - outerPath</li>
+	 * <li>1 - innerPath</li>
+	 * <li>2 - fileName</li>
+	 * </ul>
+	 * 
+	 * @param fileId the file id
+	 * @return the plitted field
 	 */
 	private String[] splitFileId( String fileId ) {
 		final int OUTER_PATH = 0;
