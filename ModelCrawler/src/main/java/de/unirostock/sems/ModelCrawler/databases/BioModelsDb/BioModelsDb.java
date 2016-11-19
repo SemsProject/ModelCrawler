@@ -849,7 +849,7 @@ public class BioModelsDb extends ModelDatabase {
 				    ChangeSet elementChangeSet = changeSetMap.get(element);
 				    if (elementChangeSet.getChanges().size() == 0) {
 					log.debug("Empty :(");
-					System.exit(1);
+//					System.exit(1);
 				    }
 				    Iterator<Change> changeIterator = elementChangeSet.getChanges().iterator();
 				    while(changeIterator.hasNext()) {
