@@ -33,7 +33,8 @@ public class BioModelsChange extends Change {
 	//	super( repositoryUrl, fileName, versionId, versionDate, crawledDate );
 	//}
 	public BioModelsChange( URL repositoryUrl, String filePath, String versionId, Date versionDate, Date crawledDate ) throws URISyntaxException {
-		super( repositoryUrl, filePath, versionId, versionDate, crawledDate );
+		super( repositoryUrl, new String(FilenameUtils.getBaseName(filePath) + "." + FilenameUtils.getExtension(filePath)), versionId, versionDate, crawledDate );
+		//super( repositoryUrl, filePath, versionId, versionDate, crawledDate );
 	}
 	
 	// old:
