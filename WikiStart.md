@@ -1,13 +1,15 @@
 sample config 
 --------------
+
 can be created using 
+
 ```
 java -cp ~/unisonSyncPrivate/education/dev/modelcrawler/ModelCrawler/target/ModelCrawler-0.0.4-jar-with-dependencies.jar de.unirostock.sems.ModelCrawler.App --template
 ```
 
 example:
-```
-#!js
+
+```json
 {
   "workingDir" : "/home/martin/zzzZZZzzz/muell/modelcrawler",
   "encoding" : "UTF-8",
@@ -41,9 +43,11 @@ example:
 
 run 
 ----
+
 ```
 java -jar target/ModelCrawler-0.0.4-jar-with-dependencies.jar -c /tmp/modelcrawler.config --test
 ```
+
 ```
 -c               Path to config
 --config
@@ -56,20 +60,25 @@ java -jar target/ModelCrawler-0.0.4-jar-with-dependencies.jar -c /tmp/modelcrawl
 
 IDs 
 ----
+
 Only the combination of fileId and versionId is unique.
 
 ### fileId 
+
 ```
 urn:model:models.cellml.org:workspace:19f:!:chloride-ion:model.xml
 ```
 The fileId represented as an urn is separated by an **!** into 2 parts: The first one specifies the path to the workspace and the second one the path within the workspace. To link to a specific version, it is possible to add the versionId behind the **!** or ship it as a second field.
 
 ### versionId 
+
 Either the commit hash (PMR2) or the date of the release (BMDB).
 
 info.js 
 --------
-Every /FileBasedStorage creates an ```info.json``` with information about crawled versions and models located in the base dir of a workspace. It consists of a map of models, linking the fileId to information about the available versions and the time of the version as UNIX Timestamp.
+
+Every FileBasedStorage creates an `info.json` with information about crawled versions and models located in the base dir of a workspace. It consists of a map of models, linking the fileId to information about the available versions and the time of the version as UNIX Timestamp.
+
 ```
 {
   "models" : {
