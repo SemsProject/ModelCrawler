@@ -115,11 +115,3 @@ Every FileBasedStorage creates an `info.json` with information about crawled ver
 }
 ```
 
-Starting Points 
-----------------
- * /TracGuide --  Built-in Documentation
- * [The Trac project](http://trac.edgewall.org/) -- Trac Open Source Project
- * [Trac FAQ](http://trac.edgewall.org/wiki///TracFaq) -- Frequently Asked Questions
- * /TracSupport --  Trac Support
-
-For a complete list of local wiki pages, see /TitleIndex.
