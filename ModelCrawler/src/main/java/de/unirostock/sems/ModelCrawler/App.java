@@ -35,7 +35,12 @@ public class App {
 	private static Map<String, ChangeSet> changes = null;
 	private static Map<String, ChangeSet> changesPerRelease = null;
 	
-
+	
+	public static void main(String [] args) {
+		getApp(args);
+	}
+	
+	
 	// avoid creating more than one crawler
 	public static App getApp(String[] args) {
 		if( instance == null ){
@@ -43,8 +48,6 @@ public class App {
 		}
 		return instance;
 	}
-	
-	
 	
 	//public static void main( String[] args ) {
 	/* create a crawler from the provided configuration
