@@ -1,17 +1,24 @@
+ModelCrawler
+============
+
+The ModelCrawler is a command line tool to crawl all model versions from database like [BioModels Database](https://www.ebi.ac.uk/biomodels-main/) and [PMR2](http://models.cellml.org) and push the them to the [MaSyMoS](https://semsproject.github.io/masymos-core/) search index.
+
+ * lean how to [build the ModelCrawler](build)
+ 
 sample config 
 --------------
 
 can be created using 
 
 ```
-java -cp ~/unisonSyncPrivate/education/dev/modelcrawler/ModelCrawler/target/ModelCrawler-0.0.4-jar-with-dependencies.jar de.unirostock.sems.ModelCrawler.App --template
+java -jar target/ModelCrawler-0.2.2-jar-with-dependencies.jar -c modelcrawler.json --template
 ```
 
 example:
 
 ```json
 {
-  "workingDir" : "/home/martin/zzzZZZzzz/muell/modelcrawler",
+  "workingDir" : "/tmp/modelcrawler",
   "encoding" : "UTF-8",
   "pathSeparator" : "/", 
   "extensionBlacklist" : [ "png", "bmp", "jpg", "jpeg", "html", "xhtml", "svg", "pdf", "json", "pl", "rdf", "rar", "msh", "zip", "htm" ],
@@ -36,7 +43,7 @@ example:
   "storage" : {
     "type" : "file",
     "httpAccessPath" : "http://localhost/models/",
-    "baseDir" : "/home/martin/zzzZZZzzz/muell/modelcrawler-storage"
+    "baseDir" : "/var/www/models"
   }
 }
 ```
@@ -45,10 +52,8 @@ run
 ----
 
 ```
-java -jar target/ModelCrawler-0.0.4-jar-with-dependencies.jar -c /tmp/modelcrawler.config --test
-```
+$ java -jar target/ModelCrawler-0.2.2-jar-with-dependencies.jar -c modelcrawler.json --test
 
-```
 -c               Path to config
 --config
 --template       Writes down a template config file (overrides existing config!)
