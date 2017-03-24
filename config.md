@@ -57,7 +57,7 @@ Prefix used to create new temporary directories in the
 ### `tempDir`
 Path to a directory used as temporary directory. This directory does not need to be persistent between different runs of
 the ModelCrawler. If not set a temporary directory will be created in the systems default temp path,
-with [`tempDirPrefix`](#tempDirPrefix) and a random character string
+with [`tempDirPrefix`](#tempdirprefix) and a random character string
 
 ### `pathSeparator`
 The character used for path separation. Set to `\` (backslash) on Windows machines, otherwise leave it to `/` (slash).
@@ -69,7 +69,7 @@ The default encoding used. It is strongly recommended to set this to `UTF-8`.
 List of file extensions the ModelCrawler ignores without even checking, if the file could be parsed as a model file.
 
 ### `workingDirConfig`
-Name of the config file stored in the [working directory](#workingDir). This file contains references to cached information
+Name of the config file stored in the [working directory](#workingdir). This file contains references to cached information
 so the crawling process is speed up.
 
 ### `urnNamespace`
@@ -79,10 +79,10 @@ Namespace for the URNs, which are used as `modelID`. Default is `model`.
 URL to Morre. Shall not include any endpoint specific URL parts.
 
 ### `databases`
-List of database implementations, cf. [BioModels Database](#BioModels-Database-Settings) and [PMR2](#PMR2-Settings).
+List of database implementations, cf. [BioModels Database](#biomodels-database-settings) and [PMR2](#pmr2-settings).
 
 ### `storage`
-Definition of the target storage, cf. [File Storage](#File-Storage-Settings).
+Definition of the target storage, cf. [File Storage](#file-storage-settings).
 
 
 BioModels Database Settings
@@ -96,7 +96,7 @@ Must be set to `BMDB`.
 Must be set to `true`, otherwise this database won't be crawled.
 
 ### `workingDir`
-Subdirectory in the common [working directory](#workingDir) for this database.
+Subdirectory in the common [working directory](#workingdir) for this database.
 
 ### `limit`
 Limits the numbers of releases, which are downloaded in during one execution of the ModelCrawler.
@@ -119,7 +119,7 @@ Must be set to `PMR2`.
 Must be set to `true`, otherwise this database won't be crawled.
 
 ### `workingDir`
-Subdirectory in the common [working directory](#workingDir) for this database.
+Subdirectory in the common [working directory](#workingdir) for this database.
 
 ### `limit`
 Limits the numbers of releases, which are downloaded in during one execution of the ModelCrawler.
@@ -132,11 +132,11 @@ Defaults to `MD5`.
 
 ### `repoListUrl`
 URL to an txt file containing all public available repositories. This is an legacy settings, please
-use [`collectionEndpoin`](#collectionEndpoint) instead.
+use [`collectionEndpoin`](#collectionendpoint) instead.
 Defaults to `http://models.cellml.org/workspace_list_txt`
 
 ### `collectionEndpoint`
-URL to the JSON/vnd endpoint listing all publicly available exposures. This is to be preferred over [`repoListUrl`](#repoListUrl).
+URL to the JSON/vnd endpoint listing all publicly available exposures. This is to be preferred over [`repoListUrl`](#repolisturl).
 e.g. `http://models.cellml.org/exposure`
 
 
