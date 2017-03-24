@@ -3,7 +3,8 @@ ModelCrawler
 
 The ModelCrawler is a command line tool to crawl all model versions from database like [BioModels Database](https://www.ebi.ac.uk/biomodels-main/) and [PMR2](http://models.cellml.org) and push the them to the [MaSyMoS](https://semsproject.github.io/masymos-core/) search index.
 
- * lean how to [build the ModelCrawler](build)
+ * learn how to [build the ModelCrawler](build)
+ * learn how to [configure the ModelCrawler](config)
  
 sample config 
 --------------
