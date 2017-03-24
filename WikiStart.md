@@ -6,54 +6,13 @@ The ModelCrawler is a command line tool to crawl all model versions from databas
  * learn how to [build the ModelCrawler](build)
  * learn how to [configure the ModelCrawler](config)
  
-sample config 
---------------
-
-can be created using 
-
-```
-java -jar target/ModelCrawler-0.2.2-jar-with-dependencies.jar -c modelcrawler.json --template
-```
-
-example:
-
-```json
-{
-  "workingDir" : "/tmp/modelcrawler",
-  "encoding" : "UTF-8",
-  "pathSeparator" : "/", 
-  "extensionBlacklist" : [ "png", "bmp", "jpg", "jpeg", "html", "xhtml", "svg", "pdf", "json", "pl", "rdf", "rar", "msh", "zip", "htm" ],
-  "tempDirPrefix" : "ModelCrawler",
-  "workingDirConfig" : "config.json",
-  "urnNamespace" : "model",
-  "morreUrl" : "http://localhost:7474/morre/",
-  "databases" : [ {
-    "type" : "BMDB",
-    "enabled" : true,
-    "workingDir" : "wd-biomodels",
-    "limit" : -1, 
-    "ftpUrl" : "ftp://ftp.ebi.ac.uk/pub/databases/biomodels/releases/"
-  }, { 
-    "type" : "PMR2",
-    "enabled" : true,
-    "workingDir" : "wd-cellml",
-    "limit" : -1, 
-    "hashAlgo" : "MD5",
-    "repoListUrl" : "http://models.cellml.org/workspace_list_txt"
-  } ], 
-  "storage" : {
-    "type" : "file",
-    "httpAccessPath" : "http://localhost/models/",
-    "baseDir" : "/var/www/models"
-  }
-}
-```
-
 run 
 ----
 
-```
-$ java -jar target/ModelCrawler-0.2.2-jar-with-dependencies.jar -c modelcrawler.json --test
+### View possible commandline arguments
+
+```sh
+$ java -jar target/ModelCrawler-0.2.2-jar-with-dependencies.jar
 
 -c               Path to config
 --config
@@ -62,6 +21,18 @@ $ java -jar target/ModelCrawler-0.2.2-jar-with-dependencies.jar -c modelcrawler.
 --no-morre       Do not utilize morre to determine the latest known version nor
                  stores any model in the database. Just download and store models.
                  May cause doubles, when used for BioModels
+```
+
+### Start the crawling
+
+```sh
+$ java -jar target/ModelCrawler-0.2.2-jar-with-dependencies.jar -c conf.json
+```
+
+### Do a dry run
+
+```sh
+$ java -jar target/ModelCrawler-0.2.2-jar-with-dependencies.jar -c conf.json --test
 ```
 
 IDs 
