@@ -5,9 +5,10 @@ The ModelCrawler is a command line tool to crawl all model versions from databas
 
  * learn how to [build the ModelCrawler](build)
  * learn how to [configure the ModelCrawler](config)
- 
-run 
-----
+
+
+Run the ModelCrawler
+--------------------
 
 ### View possible commandline arguments
 
