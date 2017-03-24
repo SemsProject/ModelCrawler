@@ -155,6 +155,3 @@ URL which points to a HTTP accessable resource, which serves the files and folde
 are then send to Morre for import. Therefore it is important that this URL (and sub-URLs) are accessable for Morre as well.
 Further Morre does not support HTTPS, therefore and inforcing policy regarding transport encryption will not work. 
 
-### `httpAccessPath`
-
-
