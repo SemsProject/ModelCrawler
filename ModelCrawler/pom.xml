@@ -3,7 +3,7 @@
 
 	<groupId>de.uni-rostock.sbi</groupId>
 	<artifactId>ModelCrawler</artifactId>
-	<version>0.2.6</version>
+	<version>0.2.7</version>
 	<packaging>jar</packaging>
 	<description>Command line tool to crawl all model versions from database like BioModels Database and PMR2</description>
 	<name>ModelCrawler</name>
@@ -140,17 +140,17 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.9.8</version>
+			<version>[2.9.9,)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.9.8</version>
+			<version>[2.9.9,)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.9.8</version>
+			<version>[2.9.9,)</version>
 		</dependency>
 
 		<!-- Collection+JSON -->
